@@ -23,7 +23,7 @@ export class AppMenu {
             {
                 label: 'Home',
                 items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] },
-                        { label: 'Admin Page', icon: 'pi pi-fw pi-globe',  routerLink: ['/landing']},
+                        { label: 'Admin Page', icon: 'pi pi-fw pi-globe',  routerLink: ['/adminPage'] },
                         { label: 'Campañas', icon: 'pi pi-fw pi-id-card', routerLink: ['/uikit/formlayout']},
                         { label: 'Reportes', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/uikit/charts'] },
                         { label: 'Usuarios', icon: 'pi pi-fw pi-id-card', routerLink: ['/uikit/formlayout'] },

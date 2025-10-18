@@ -11,6 +11,9 @@ import { InputGroupModule } from 'primeng/inputgroup';
 import { TextareaModule } from 'primeng/textarea';
 import { StepperModule } from 'primeng/stepper';
 import { MessageModule } from 'primeng/message';
+import { Tenant } from '../model/tenat.component';
+import { TenantService } from './service/tenant.service';
+import { ImageService } from '../service/image.service';
 
 @Component({
     selector: 'app-landing-editor',
@@ -21,6 +24,7 @@ import { MessageModule } from 'primeng/message';
 })
 export class LandingEditorComponent {
     private logoObjectUrl: string | null = null;
+    email: string = 'jakatox466@gddcorp.com';
     step: number = 1;
     landingForm: FormGroup;
     socialPlatforms = [
@@ -30,8 +34,14 @@ export class LandingEditorComponent {
         { name: 'LinkedIn', icon: 'pi pi-linkedin', control: 'linkedin' },
         { name: 'X', icon: 'pi pi-twitter', control: 'x' }
     ];
+    tenantId: number = 0;
 
-    constructor(private fb: FormBuilder, private cdr: ChangeDetectorRef) {
+
+    constructor(private fb: FormBuilder,
+                private cdr: ChangeDetectorRef,
+                private tenantService: TenantService,
+                private imageService: ImageService
+    ) {
         this.landingForm = this.fb.group({
             logo: [null, Validators.required],
             businessName: ['', Validators.required],
@@ -48,15 +58,13 @@ export class LandingEditorComponent {
             linkedin: [''],
             x: ['']
         });
-        // Setear logo momentáneamente
-        this.landingForm.patchValue({
-            logo: 'https://res.cloudinary.com/dnaqqulme/image/upload/c_scale,w_100,h_32/v1759897946/laltix_logo_tjzhlw.png'
-        });
+
     }
 
     nextStep() {
         if (this.isStepValid(this.step)) {
             this.step++;
+            this.createTenant(this.step);
         } else {
             this.landingForm.markAllAsTouched();
         }
@@ -69,7 +77,6 @@ export class LandingEditorComponent {
     isStepValid(step: number): boolean {
         switch (step) {
             case 1:
-                // Validar logo, businessName y slogan (los únicos requeridos en el paso 1 según el HTML actual)
                 return !!this.landingForm.get('logo')?.valid &&
                        !!this.landingForm.get('businessName')?.valid &&
                        !!this.landingForm.get('slogan')?.valid;
@@ -82,6 +89,40 @@ export class LandingEditorComponent {
                        !!this.landingForm.get('schedule')?.valid;
             default:
                 return true;
+        }
+    }
+
+    createTenant(step: number) {
+        debugger;
+        const tenantData: Tenant = this.landingForm.value;
+        const email = 'jakatox466@gddcorp.com';
+        const nombreNegocio = this.landingForm.value.businessName;
+        const slogan = this.landingForm.value.slogan;
+        const logoFile = this.landingForm.get('logo')?.value;
+        if (step === 2 && logoFile) {
+            this.imageService.uploadImage(logoFile, 'logo', email, nombreNegocio, slogan).subscribe({
+                next: (tenantId: number) => {
+                    this.tenantId = tenantId;
+                },
+                error: (error) => {
+                    console.error('Error uploading image:', error);
+                }
+            });
+        } else {
+            tenantData.id = this.tenantId;
+            tenantData.direccion = this.landingForm.value.address;
+            tenantData.telefono = this.landingForm.value.phone;
+            tenantData.bussinessEmail = this.landingForm.value.email;
+            tenantData.schedules = this.landingForm.value.schedule;
+
+            this.tenantService.createTenant(tenantData).subscribe({
+                next: (response) => {
+                    console.log('Tenant created successfully:', response);
+                },
+                error: (error) => {
+                    console.error('Error creating tenant:', error);
+                }
+            });
         }
     }
 

@@ -81,8 +81,8 @@
             <p-message *ngIf="landingForm.get('phone')?.invalid && landingForm.get('phone')?.touched" severity="error" variant="text" size="small">El teléfono es requerido</p-message>
           </div>
           <div class="flex flex-col gap-2 mb-2">
-            <label class="font-semibold text-gray-800" for="email">Email</label>
-            <input pInputText id="email" formControlName="email" placeholder="Email" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" />
+            <label class="font-semibold text-gray-800" for="email">Bussines Email</label>
+            <input pInputText id="email" formControlName="email" placeholder="Email del negocio" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" />
             <p-message *ngIf="landingForm.get('email')?.invalid && landingForm.get('email')?.touched" severity="error" variant="text" size="small">Email inválido o requerido</p-message>
           </div>
           <div class="flex flex-col gap-2">

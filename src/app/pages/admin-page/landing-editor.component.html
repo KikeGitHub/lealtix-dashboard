@@ -1,0 +1,153 @@
+
+<div class="flex flex-col md:flex-row gap-8">
+  <div class="w-full">
+    <div class="card flex flex-col gap-6 bg-white rounded-xl shadow-md p-6">
+      <div class="w-full overflow-x-auto">
+  <p-stepper [value]="step" (valueChange)="step = $event ?? 1" orientation="vertical" class="mb-4 min-w-[180px] md:min-w-0">
+          <p-step-list>
+            <p-step [value]="1">Datos Generales</p-step>
+            <p-step [value]="2">Historia y Filosofía</p-step>
+            <p-step [value]="3">Información de Contacto</p-step>
+            <p-step [value]="4">Redes Sociales</p-step>
+            <p-step [value]="5">Vista Previa</p-step>
+          </p-step-list>
+        </p-stepper>
+      </div>
+
+      <form [formGroup]="landingForm" class="flex flex-col gap-6">
+        <ng-container [ngSwitch]="step">
+        <!-- Paso 1: Datos Generales -->
+  <div *ngSwitchCase="1" class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2 mb-2">
+            <label class="font-semibold text-gray-800" for="logo">Logo del negocio</label>
+            <p-fileUpload mode="basic" name="logo" accept="image/*" maxFileSize="1000000" (onSelect)="onFileSelect($event)"></p-fileUpload>
+            <ng-container *ngIf="getLogoPreview()">
+              <div class="flex items-center mt-2 mb-1">
+                <img
+                  [src]="getLogoPreview()"
+                  alt="Logo preview"
+                  class="rounded shadow border border-gray-200"
+                  style="max-width:100px; max-height:32px; width:auto; height:auto; object-fit:contain; display:block;"
+                />
+              </div>
+            </ng-container>
+            <p-message *ngIf="landingForm.get('logo')?.invalid && landingForm.get('logo')?.touched" severity="error" variant="text" size="small">El logo es requerido</p-message>
+          </div>
+          <div class="flex flex-col gap-2 mb-2">
+            <label class="font-semibold text-gray-800" for="businessName">Nombre del negocio</label>
+            <input pInputText id="businessName" formControlName="businessName" placeholder="Escribe el nombre del negocio" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" maxlength="50"/>
+            <p-message *ngIf="landingForm.get('businessName')?.invalid && landingForm.get('businessName')?.touched" severity="error" variant="text" size="small">El nombre es requerido</p-message>
+          </div>
+
+          <div class="flex flex-col gap-2 mb-2">
+            <label class="font-semibold text-gray-800" for="slogan">Eslogan o breve descripción</label>
+            <textarea pTextarea id="slogan" formControlName="slogan" rows="2" placeholder="Escribe tu eslogan" maxlength="100"
+                      class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900"></textarea>
+            <p-message *ngIf="landingForm.get('slogan')?.invalid && landingForm.get('slogan')?.touched" severity="error" variant="text" size="small">El eslogan es requerido</p-message>
+          </div>
+        </div>
+
+        <!-- Paso 2: Historia y Filosofía -->
+        <div *ngSwitchCase="2" class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2 mb-2">
+            <label class="font-semibold text-gray-800" for="history">Historia</label>
+            <textarea pTextarea id="history" formControlName="history" rows="4" maxlength="500"
+                     placeholder="✨ Cuéntanos tu historia...
+📍 ¿Cómo nació tu negocio?
+🍰 ¿Qué te inspira cada día?"
+                     maxlength="500" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900"></textarea>
+            <p-message *ngIf="landingForm.get('history')?.invalid && landingForm.get('history')?.touched" severity="error" variant="text" size="small">La historia es requerida</p-message>
+          </div>
+          <div class="flex flex-col gap-2 mb-2">
+            <label class="font-semibold text-gray-800" for="vision">Visión</label>
+            <textarea pTextarea id="vision" formControlName="vision" rows="4"
+            placeholder="👀 Cuéntanos tu visión...
+✨ ¿Cómo quieres impactar a tus clientes, tu comunidad o el mundo?"
+            maxlength="500" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900"></textarea>
+            <p-message *ngIf="landingForm.get('vision')?.invalid && landingForm.get('vision')?.touched" severity="error" variant="text" size="small">La visión es requerida</p-message>
+          </div>
+        </div>
+
+        <!-- Paso 3: Información de Contacto -->
+        <div *ngSwitchCase="3" class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2 mb-2">
+            <label class="font-semibold text-gray-800" for="address">Dirección</label>
+            <textarea pTextarea id="address" formControlName="address" rows="2" placeholder="Dirección" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900"></textarea>
+            <p-message *ngIf="landingForm.get('address')?.invalid && landingForm.get('address')?.touched" severity="error" variant="text" size="small">La dirección es requerida</p-message>
+          </div>
+          <div class="flex flex-col gap-2 mb-2">
+            <label class="font-semibold text-gray-800" for="phone">Teléfono</label>
+            <input pInputText id="phone" formControlName="phone" placeholder="Teléfono" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" />
+            <p-message *ngIf="landingForm.get('phone')?.invalid && landingForm.get('phone')?.touched" severity="error" variant="text" size="small">El teléfono es requerido</p-message>
+          </div>
+          <div class="flex flex-col gap-2 mb-2">
+            <label class="font-semibold text-gray-800" for="email">Bussines Email</label>
+            <input pInputText id="email" formControlName="email" placeholder="Email del negocio" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" />
+            <p-message *ngIf="landingForm.get('email')?.invalid && landingForm.get('email')?.touched" severity="error" variant="text" size="small">Email inválido o requerido</p-message>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="font-semibold text-gray-800" for="schedule">Horarios</label>
+            <textarea pTextarea id="schedule" formControlName="schedule" rows="4" maxlength="250"
+            placeholder="🕐 Indica tus horarios de atención
+Ejemplo:
+Lunes a Viernes de 8:00 a 20:00 Hrs.
+Sábados y Domingos de 9:00 a 18:00 Hrs."
+            class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900"></textarea>
+          </div>
+        </div>
+
+        <!-- Paso 4: Redes Sociales -->
+        <div *ngSwitchCase="4" class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2" *ngFor="let social of socialPlatforms">
+            <label class="font-semibold text-gray-800" [for]="social.control">{{social.name}}   </label>
+            <div class="p-inputgroup">
+              <span class="p-inputgroup-addon bg-gray-100 rounded-l mr-4"><i [class]="social.icon"></i></span>
+              <input pInputText [id]="social.control" [formControlName]="social.control" placeholder="{{social.name}}" class="rounded-r border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 5: Vista Previa -->
+        <div *ngSwitchCase="5" class="flex flex-col gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <p-card header="Datos Generales" class="rounded-xl">
+              <ng-container *ngIf="getLogoPreview()">
+                <div class="flex items-center gap-2">
+                  <b>Logo:</b>
+                  <img [src]="getLogoPreview()" alt="Logo" class="preview-logo rounded border border-gray-200 ml-4" style="width:100px; height:32px; object-fit:contain;" />
+                </div>
+              </ng-container>
+              <div class="text-gray-800"><b>Nombre:</b> {{landingForm.value.businessName}}</div>
+              <div class="text-gray-800"><b>Eslogan:</b> {{landingForm.value.slogan}}</div>
+            </p-card>
+            <p-card header="Historia y Filosofía" class="rounded-xl">
+              <div class="text-gray-800"><b>Historia:</b> <span [innerHTML]="landingForm.value.history"></span></div>
+              <div class="text-gray-800"><b>Visión:</b> <span [innerHTML]="landingForm.value.vision"></span></div>
+            </p-card>
+            <p-card header="Contacto" class="rounded-xl">
+              <div class="text-gray-800"><b>Dirección:</b> {{landingForm.value.address}}</div>
+              <div class="text-gray-800"><b>Teléfono:</b> {{landingForm.value.phone}}</div>
+              <div class="text-gray-800"><b>Email:</b> {{landingForm.value.email}}</div>
+              <div class="text-gray-800"><b>Horarios:</b> {{landingForm.value.schedule}}</div>
+            </p-card>
+            <p-card header="Redes Sociales" class="rounded-xl">
+              <div *ngFor="let social of socialPlatforms" class="text-gray-800">
+                <b>{{social.name}}:</b> {{landingForm.value[social.control]}}
+              </div>
+            </p-card>
+          </div>
+          <div class="flex flex-row gap-4 justify-end">
+            <button pButton type="button" label="Volver a editar" class="p-button-secondary rounded" (click)="edit()"></button>
+            <button pButton type="button" label="Guardar cambios" class="p-button-success rounded" (click)="save()"></button>
+          </div>
+        </div>
+      </ng-container>
+
+      <div class="flex flex-row gap-4 justify-end" *ngIf="step < 5">
+        <button pButton type="button" label="Anterior" class="p-button-secondary rounded" (click)="prevStep()" [disabled]="step === 1"></button>
+        <button pButton type="button" label="Siguiente" class="p-button-primary rounded" (click)="nextStep()"></button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>

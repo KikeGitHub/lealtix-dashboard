@@ -28,7 +28,7 @@ import { ConfettiComponent } from '@/confetti/confetti.component';
 })
 export class LandingEditorComponent implements OnInit {
     private logoObjectUrl: string | null = null;
-    email: string = 'jakatox466@gddcorp.com';
+    email: string = '';
     step: number = 1;
     landingForm: FormGroup;
     socialPlatforms = [
@@ -71,15 +71,24 @@ export class LandingEditorComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        const user = sessionStorage.getItem('usuario');
-        if (user) {
-          const userObj = JSON.parse(user);
-          //this.email = userObj.email;
+        try {
+            let stored = localStorage.getItem('loginObject');
+            if (!stored) {
+                stored = sessionStorage.getItem('loginObject');
+            }
+
+            if (stored) {
+                const loginObj = JSON.parse(stored) as { accessToken?: string; userEmail?: string; userId?: number };
+                if (loginObj && loginObj.userEmail) {
+                    this.email = loginObj.userEmail;
+                }
+            }
+        } catch (e) {
+            console.warn('No se pudo parsear loginObject desde storage', e);
         }
-        debugger;
+
         this.tenantService.getTenantByEmail(this.email).subscribe({
             next: (tenant: any) => {
-                debugger;
                 if (tenant) {
                     this.tenantId = tenant.object.id ?? 0;
                     this.landingForm.patchValue({

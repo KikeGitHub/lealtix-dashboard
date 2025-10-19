@@ -1,4 +1,5 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -6,6 +7,7 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { EditorModule } from 'primeng/editor';
 import { CardModule } from 'primeng/card';
+import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { TextareaModule } from 'primeng/textarea';
@@ -14,15 +16,17 @@ import { MessageModule } from 'primeng/message';
 import { Tenant } from '../model/tenat.component';
 import { TenantService } from './service/tenant.service';
 import { ImageService } from '../service/image.service';
+import { ConfettiService } from '@/confetti/confetti.service';
+import { ConfettiComponent } from '@/confetti/confetti.component';
 
 @Component({
     selector: 'app-landing-editor',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FileUploadModule, InputTextModule, TextareaModule, EditorModule, CardModule, ButtonModule, InputGroupModule, StepperModule, MessageModule ],
+    imports: [CommonModule, ReactiveFormsModule, FileUploadModule, InputTextModule, TextareaModule, EditorModule, CardModule, ButtonModule, InputGroupModule, StepperModule, MessageModule, DialogModule, ConfettiComponent ],
     templateUrl: './landing-editor.component.html',
     styleUrls: ['./landing-editor.component.scss']
 })
-export class LandingEditorComponent {
+export class LandingEditorComponent implements OnInit {
     private logoObjectUrl: string | null = null;
     email: string = 'jakatox466@gddcorp.com';
     step: number = 1;
@@ -36,11 +40,16 @@ export class LandingEditorComponent {
     ];
     tenantId: number = 0;
 
+    showCongrats: boolean = false;
 
-    constructor(private fb: FormBuilder,
-                private cdr: ChangeDetectorRef,
-                private tenantService: TenantService,
-                private imageService: ImageService
+
+    constructor(
+        private fb: FormBuilder,
+        private cdr: ChangeDetectorRef,
+        private tenantService: TenantService,
+        private imageService: ImageService,
+        private confettiService: ConfettiService,
+        private router: Router
     ) {
         this.landingForm = this.fb.group({
             logo: [null, Validators.required],
@@ -59,6 +68,40 @@ export class LandingEditorComponent {
             x: ['']
         });
 
+    }
+
+    ngOnInit(): void {
+        const user = sessionStorage.getItem('usuario');
+        if (user) {
+          const userObj = JSON.parse(user);
+          //this.email = userObj.email;
+        }
+        debugger;
+        this.tenantService.getTenantByEmail(this.email).subscribe({
+            next: (tenant: any) => {
+                debugger;
+                if (tenant) {
+                    this.tenantId = tenant.object.id ?? 0;
+                    this.landingForm.patchValue({
+                        logo: tenant.object.logoUrl,
+                        businessName: tenant.object.nombreNegocio,
+                        slogan: tenant.object.slogan,
+                        history: tenant.object.history,
+                        vision: tenant.object.vision,
+                        slug: tenant.object.slug,
+                        address: tenant.object.direccion,
+                        phone: tenant.object.telefono,
+                        email: tenant.object.bussinessEmail,
+                        schedule: tenant.object.schedules,
+                        facebook: tenant.object.facebook,
+                        instagram: tenant.object.instagram,
+                        tiktok: tenant.object.tiktok,
+                        linkedin: tenant.object.linkedin,
+                        x: tenant.object.x
+                    });
+                }
+            }
+        });
     }
 
     nextStep() {
@@ -93,7 +136,6 @@ export class LandingEditorComponent {
     }
 
     createTenant(step: number) {
-        debugger;
         const tenantData: Tenant = this.landingForm.value;
         const email = 'jakatox466@gddcorp.com';
         const nombreNegocio = this.landingForm.value.businessName;
@@ -114,6 +156,11 @@ export class LandingEditorComponent {
             tenantData.telefono = this.landingForm.value.phone;
             tenantData.bussinessEmail = this.landingForm.value.email;
             tenantData.schedules = this.landingForm.value.schedule;
+            tenantData.facebook = this.landingForm.value.facebook;
+            tenantData.instagram = this.landingForm.value.instagram;
+            tenantData.tiktok = this.landingForm.value.tiktok;
+            tenantData.linkedin = this.landingForm.value.linkedin;
+            tenantData.x = this.landingForm.value.x;
 
             this.tenantService.createTenant(tenantData).subscribe({
                 next: (response) => {
@@ -155,11 +202,15 @@ export class LandingEditorComponent {
         }
     }
 
+
     save() {
-        if (this.landingForm.valid) {
-            // Aquí se enviaría la data al backend
-            alert('¡Cambios guardados!');
-        }
+        this.confettiService.trigger({ action: 'burst' });
+        this.showCongrats = true;
+    }
+
+    goToMenuConfig() {
+        this.showCongrats = false;
+        this.router.navigate(['/menu/configuracion']);
     }
 
     edit(){}

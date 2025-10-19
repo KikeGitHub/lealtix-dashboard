@@ -151,3 +151,28 @@ Sábados y Domingos de 9:00 a 18:00 Hrs."
     </div>
   </div>
 </div>
+<app-confetti></app-confetti>
+
+<p-dialog
+  [(visible)]="showCongrats"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '30rem', textAlign: 'center', borderRadius: '1.5rem', overflow: 'hidden' }"
+  contentStyle="padding:2.5rem 2rem; border-radius:1.5rem;"
+  baseZIndex="2000"
+>
+  <div class="flex flex-col items-center justify-center gap-4">
+    <div style="font-size:2.2rem;">🎉</div>
+    <h2 class="font-bold text-2xl text-primary-700 mb-2">¡Felicidades!</h2>
+    <div class="text-lg text-gray-700 mb-2">
+      Estás a un paso de dejar tu página lista.<br>
+      ¡Configura tu menú y haz que tus clientes se enamoren de tus productos! 🍰☕
+    </div>
+    <button pButton
+        label="Configura tu menú"
+        icon="pi pi-cog"
+        class="p-button-rounded p-button-success mt-3"
+        (click)="goToMenuConfig()">
+    </button>
+  </div>
+</p-dialog>

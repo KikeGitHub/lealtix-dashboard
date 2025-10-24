@@ -1,0 +1,100 @@
+<p-toolbar styleClass="mb-6">
+    <ng-template #start>
+        <p-button label="Nuevo Producto" icon="pi pi-plus" severity="secondary" class="mr-2" styleClass="text-sm p-button-sm" (onClick)="openNew()" />
+        <p-button severity="secondary" label="Borrar" icon="pi pi-trash" outlined (onClick)="deleteSelectedProducts()"
+            [disabled]="!selectedProducts || !selectedProducts.length" />
+    </ng-template>
+
+    <ng-template #end>
+        <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+    </ng-template>
+</p-toolbar>
+
+<p-table #dt [value]="products()" [rows]="10" [columns]="cols" [paginator]="true" [globalFilterFields]="['name', 'description', 'categoryName']"
+    [tableStyle]="{ 'min-width': '75rem' }" [(selection)]="selectedProducts" [rowHover]="true" dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products" [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[10, 30, 50]">
+    <ng-template #caption>
+        <div class="flex items-center justify-between">
+            <h5 class="m-0">Productos del Menu</h5>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #header>
+        <tr>
+            <th style="width: 3rem">
+                <p-tableHeaderCheckbox />
+            </th>
+            <th pSortableColumn="categoryName" style="min-width:10rem">
+                Categoria
+                <p-sortIcon field="categoryName" />
+            </th>
+            <th pSortableColumn="name" style="min-width:10rem">
+                Nombre
+                <p-sortIcon field="name" />
+            </th>
+            <th pSortableColumn="description" style="min-width:18rem">
+                Descripción
+                <p-sortIcon field="description" />
+            </th>
+            <th pSortableColumn="price" style="min-width: 8rem">
+                Precio
+                <p-sortIcon field="price" />
+            </th>
+            <th style="min-width: 16rem">Imagen</th>
+            <th pSortableColumn="isActive" style="min-width: 10rem">
+                Status
+                <p-sortIcon field="isActive" />
+            </th>
+            <th style="min-width: 10rem"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-product>
+        <tr>
+            <td style="width: 3rem">
+                <p-tableCheckbox [value]="product" />
+            </td>
+            <td style="min-width: 10rem">{{ product.categoryName}}</td>
+            <td style="min-width: 10rem">{{ product.name }}</td>
+            <td style="min-width: 18rem">{{ product.description }}</td>
+            <td>{{ product.price | currency: 'MXN' }}</td>
+            <td style="min-width: 16rem">
+                <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" style="width: 120px" class="rounded" />
+            </td>
+
+            <td>
+                <p-tag [value]="getStatusTitle(product.isActive)" [severity]="getSeverity(product.isActive)" />
+            </td>
+            <td>
+                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                    (click)="editProduct(product)" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                    (click)="deleteProduct(product)" />
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<app-product-dialog
+    [(visible)]="productDialog"
+    [product]="product"
+    [productForm]="productForm"
+    [categoryForm]="categoryForm"
+    [categoryDialog]="categoryDialog"
+    [productImagePreview]="productImagePreview"
+    [categoriesArrayValue]="categoriesArray.value"
+    [submitted]="submitted"
+    (save)="saveProduct()"
+    (hide)="hideDialog()"
+    (openNewCategory)="openNewCategory()"
+    (openEditCategory)="openEditCategory()"
+    (createCategory)="createCategory()"
+    (onProductFileSelect)="onProductFileSelect($event)"
+    (categoryDialogChange)="categoryDialog = $event"
+    (categoryChange)="onCategorySelect($event)"
+></app-product-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }" />

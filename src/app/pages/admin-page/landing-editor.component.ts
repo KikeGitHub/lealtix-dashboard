@@ -28,7 +28,7 @@ import { ConfettiComponent } from '@/confetti/confetti.component';
 })
 export class LandingEditorComponent implements OnInit {
     private logoObjectUrl: string | null = null;
-    email: string = 'jakatox466@gddcorp.com';
+    email: string = '';
     step: number = 1;
     landingForm: FormGroup;
     socialPlatforms = [
@@ -137,7 +137,7 @@ export class LandingEditorComponent implements OnInit {
 
     createTenant(step: number) {
         const tenantData: Tenant = this.landingForm.value;
-        const email = 'jakatox466@gddcorp.com';
+        const email = this.landingForm.value.email;
         const nombreNegocio = this.landingForm.value.businessName;
         const slogan = this.landingForm.value.slogan;
         const logoFile = this.landingForm.get('logo')?.value;

@@ -24,6 +24,7 @@ export class AppMenu {
                 label: 'Home',
                 items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] },
                         { label: 'Admin Page', icon: 'pi pi-fw pi-globe',  routerLink: ['/adminPage'] },
+                        { label: 'Menu de Productos', icon: 'pi pi-fw pi-bars',  routerLink: ['/adminMenu'] },
                         { label: 'Campañas', icon: 'pi pi-fw pi-id-card', routerLink: ['/uikit/formlayout']},
                         { label: 'Reportes', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/uikit/charts'] },
                         { label: 'Usuarios', icon: 'pi pi-fw pi-id-card', routerLink: ['/uikit/formlayout'] },

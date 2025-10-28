@@ -2,6 +2,7 @@ import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray, FormControl } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -26,6 +27,7 @@ import { Product } from '../model/product.component';
 import { ProductService } from './service/product.service';
 import { ImageService } from '../service/image.service';
 import { ProductDialogComponent } from './product-dialog.component';
+import { forkJoin } from 'rxjs';
 
 interface Column {
     field: string;
@@ -50,6 +52,7 @@ interface ExportColumn {
         RippleModule,
         ToastModule,
         ToolbarModule,
+    ProgressSpinnerModule,
         RatingModule,
         InputTextModule,
         TextareaModule,
@@ -67,18 +70,21 @@ interface ExportColumn {
     ProductDialogComponent
     ],
     templateUrl: './products-menu.component.html',
+    styleUrls: ['./products-menu.component.scss'],
     providers: [MessageService, ProductService, ConfirmationService]
 })
 export class ProductMenuComponent implements OnInit {
+    // spinner flag: cuando true muestra el spinner global
+    loading: boolean = false;
+
+    startLoading() { this.loading = true; }
+    stopLoading() { this.loading = false; }
+
     productDialog: boolean = false;
-    tenantId: number = 3;
+    tenantId: number = 0;
 
     products = signal<Product[]>([]);
 
-    // Categories are stored inside the reactive form as a FormArray (categories)
-
-    // Model for creating a new category
-    // Legacy model (kept for compatibility) and reactive form
     newCategory: { name?: string; description?: string; tenantId?: string; active: boolean } = {
         name: '',
         description: '',
@@ -88,10 +94,8 @@ export class ProductMenuComponent implements OnInit {
 
     categoryForm!: FormGroup;
 
-    // Dialog visibility for creating category
     categoryDialog: boolean = false;
 
-    // if set, indicates we're editing an existing category (value = categoryId)
     editingCategoryId: string | number | null = null;
 
     constructor(
@@ -123,6 +127,13 @@ export class ProductMenuComponent implements OnInit {
     }
 
      ngOnInit() {
+
+        debugger;
+        const user = sessionStorage.getItem('usuario');
+        if (user) {
+          const userObj = JSON.parse(user);
+          //this.email = userObj.email;
+        }
         this.loadCategories();
         this.loadProducts();
     }
@@ -234,6 +245,7 @@ export class ProductMenuComponent implements OnInit {
 
     // Load categories from backend for the category select
     loadCategories() {
+        this.startLoading();
         this.productService.getCategoriesByTenantId(this.tenantId).subscribe({
             next: (data) => {
                 const mapped = data.object.map((item: any) => ({
@@ -250,25 +262,57 @@ export class ProductMenuComponent implements OnInit {
             error: (err) => {
                 console.error('Failed to load categories', err);
                 this.setCategoriesFormArray([]);
+            },
+            complete: () => {
+                this.stopLoading();
             }
         });
     }
 
     // Load products from backend
     loadProducts() {
+        this.startLoading();
         this.productService.getProductsByTenantId(this.tenantId).subscribe({
             next: (data) => {
-                this.products.set(data.object);
+                // Preserve original image URLs (do not modify Cloudinary URLs here)
+                this.products.set(data.object || []);
             },
             error: (err) => {
                 console.error('Failed to load products', err);
                 this.products.set([]);
+            },
+            complete: () => {
+                this.stopLoading();
             }
         });
     }
 
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    }
+
+    getOptimizedImage(url: string): string {
+        if (!url) return '';
+
+        try {
+            // If the url already contains '/upload/', remove any existing transformation segment
+            // so we don't double-apply transformations which may cause distortion.
+            const parts = url.split('/upload/');
+            if (parts.length === 2) {
+                const after = parts[1];
+                // strip leading transformation parts (they usually contain = or commas and underscores)
+                const restIndex = after.indexOf('/');
+                const imagePath = restIndex >= 0 ? after.substring(restIndex + 1) : after;
+        // Restore previous optimized transform used before: width 266x110 with c_limit
+        const transform = 'w_266,h_110,c_limit,f_auto,q_auto';
+                return parts[0] + '/upload/' + transform + '/' + imagePath;
+            }
+            // If url doesn't match expected Cloudinary pattern, return as-is
+            return url;
+        } catch (e) {
+            // fallback: return original url
+            return url;
+        }
     }
 
     openNew() {
@@ -278,6 +322,9 @@ export class ProductMenuComponent implements OnInit {
         this.submitted = false;
     // reset product form (clear productImage as well)
     this.productForm.reset({ id: null, name: '', description: '', price: null, img_url: '', productImage: null });
+    // ensure preview and internal file reference are cleared when creating new
+    this.productImagePreview = null;
+    this.productForm.get('productImage')?.setValue(null);
         this.productDialog = true;
     }
 
@@ -304,14 +351,42 @@ export class ProductMenuComponent implements OnInit {
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.products.set(this.products().filter((val) => !this.selectedProducts?.includes(val)));
+                // show global spinner while deleting
+                this.startLoading();
+                const deletes = (this.selectedProducts || []).map(product => {
+                    if (product && product.id !== undefined && product.id !== null) {
+                        const idNum = typeof product.id === 'number' ? product.id : Number(product.id);
+                        if (!Number.isNaN(idNum)) {
+                            return this.productService.deleteProductById(idNum);
+                        }
+                    }
+                    return null;
+                }).filter(Boolean) as any[];
+
+                if (deletes.length > 0) {
+                    // run all deletes in parallel and refresh once done
+                    forkJoin(deletes).subscribe({
+                        next: () => {
+                            this.loadProducts();
+                            this.messageService.add({
+                                severity: 'success',
+                                summary: 'Successful',
+                                detail: 'Products Deleted',
+                                life: 3000
+                            });
+                        },
+                        error: (err) => {
+                            console.error('Error deleting products', err);
+                            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error deleting some products', life: 3000 });
+                        },
+                        complete: () => {
+                            this.stopLoading();
+                        }
+                    });
+                } else {
+                    this.stopLoading();
+                }
                 this.selectedProducts = null;
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Products Deleted',
-                    life: 3000
-                });
             }
         });
     }
@@ -319,6 +394,12 @@ export class ProductMenuComponent implements OnInit {
     hideDialog() {
         this.productDialog = false;
         this.submitted = false;
+        // clear image preview and selected file when dialog closes
+        this.productImagePreview = null;
+        if (this.productForm) {
+            this.productForm.get('productImage')?.setValue(null);
+            this.productForm.get('img_url')?.setValue('');
+        }
     }
 
     deleteProduct(product: Product) {
@@ -327,14 +408,43 @@ export class ProductMenuComponent implements OnInit {
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.products.set(this.products().filter((val) => val.id !== product.id));
-                this.product = {};
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Product Deleted',
-                    life: 3000
-                });
+                const idValue = product?.id;
+                const idNum = typeof idValue === 'number' ? idValue : Number(idValue);
+
+                if (!Number.isNaN(idNum)) {
+                    this.startLoading();
+                    this.productService.deleteProductById(idNum).subscribe({
+                        next: () => {
+                            this.loadProducts();
+                            this.messageService.add({
+                                severity: 'success',
+                                summary: 'Successful',
+                                detail: 'Product Deleted',
+                                life: 3000
+                            });
+                        },
+                        error: (err) => {
+                            console.error('Failed to delete product:', err);
+                            this.messageService.add({
+                                severity: 'error',
+                                summary: 'Error',
+                                detail: 'No se pudo eliminar el producto',
+                                life: 3000
+                            });
+                        },
+                        complete: () => {
+                            this.stopLoading();
+                        }
+                    });
+                } else {
+                    console.warn('Skipping delete for product with invalid id', product);
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'Advertencia',
+                        detail: 'ID de producto inválido, no se pudo eliminar',
+                        life: 3000
+                    });
+                }
             }
         });
     }
@@ -389,7 +499,6 @@ export class ProductMenuComponent implements OnInit {
             return;
         }
 
-        debugger;
         const prod = this.productForm.value;
         const imgFile: File | Blob | null = this.productForm.get('productImage')?.value || null;
 
@@ -397,6 +506,7 @@ export class ProductMenuComponent implements OnInit {
 
         const createProductAndClose = (imageUrl?: string) => {
             const newProduct: Product = {
+                id: prod.id,
                 categoryId: selectedCategoryId,
                 tenantId: this.tenantId,
                 name: prod.name,
@@ -404,7 +514,7 @@ export class ProductMenuComponent implements OnInit {
                 price: prod.price,
                 imageUrl: imageUrl ?? prod.img_url
             } as any;
-
+            this.startLoading();
             this.productService.createProduct(newProduct).subscribe({
                 next: (resp) => {
                     this.loadProducts();
@@ -413,6 +523,9 @@ export class ProductMenuComponent implements OnInit {
                 error: (err) => {
                     console.error('Error creating product:', err);
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear el producto', life: 3000 });
+                },
+                complete: () => {
+                    this.stopLoading();
                 }
             });
 
@@ -422,6 +535,7 @@ export class ProductMenuComponent implements OnInit {
         // If we have a real File/Blob, upload first and then create product with returned URL
         if (imgFile instanceof File || imgFile instanceof Blob) {
             // Cast to File because uploadImageProd expects a File. We already ensure imgFile is a File or Blob above.
+            this.startLoading();
             this.imageService.uploadImageProd(imgFile as File, 'product', this.tenantId, prod.name).subscribe({
                 next: (imgURresp: string) => {
                     prod.img_url = imgURresp;
@@ -431,6 +545,9 @@ export class ProductMenuComponent implements OnInit {
                     console.error('Error uploading image:', error);
                     // fallback: still attempt to create using existing img_url (if any)
                     createProductAndClose();
+                },
+                complete: () => {
+                    // createProductAndClose will call stopLoading when create completes; ensure we don't stop prematurely here
                 }
             });
         } else {
@@ -463,11 +580,19 @@ export class ProductMenuComponent implements OnInit {
             payload.id = this.editingCategoryId;
         }
 
+        this.startLoading();
         this.productService.createCategory(payload).subscribe({
             next: (resp) => {
                 this.loadCategories();
                 this.hideCategoryDialog();
                 this.messageService.add({ severity: 'success', summary: 'Categoría creada', detail: `${value} creada`, life: 3000 });
+            },
+            error: (err) => {
+                console.error('Error creating category', err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear la categoría', life: 3000 });
+            },
+            complete: () => {
+                this.stopLoading();
             }
         });
     }
@@ -491,7 +616,9 @@ export class ProductMenuComponent implements OnInit {
     }
 
     clearProductImage() {
-        this.productForm.get('img_url')?.setValue('');
+    this.productForm.get('img_url')?.setValue('');
+    this.productImagePreview = null;
+    this.productForm.get('productImage')?.setValue(null);
     }
 
     // preview for product image selected via FileUpload

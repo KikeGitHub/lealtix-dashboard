@@ -10,6 +10,14 @@
     </ng-template>
 </p-toolbar>
 
+<!-- Global loading overlay -->
+<div class="global-loading-overlay" *ngIf="loading">
+    <div class="global-loading-backdrop"></div>
+    <div class="global-loading-spinner">
+        <p-progressSpinner strokeWidth="6" styleClass="custom-spinner"></p-progressSpinner>
+    </div>
+</div>
+
 <p-table #dt [value]="products()" [rows]="10" [columns]="cols" [paginator]="true" [globalFilterFields]="['name', 'description', 'categoryName']"
     [tableStyle]="{ 'min-width': '75rem' }" [(selection)]="selectedProducts" [rowHover]="true" dataKey="id"
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products" [showCurrentPageReport]="true"
@@ -44,7 +52,7 @@
                 Precio
                 <p-sortIcon field="price" />
             </th>
-            <th style="min-width: 16rem">Imagen</th>
+            <th >Imagen</th>
             <th pSortableColumn="isActive" style="min-width: 10rem">
                 Status
                 <p-sortIcon field="isActive" />
@@ -53,7 +61,7 @@
         </tr>
     </ng-template>
     <ng-template #body let-product>
-        <tr>
+        <tr class="fixed-row">
             <td style="width: 3rem">
                 <p-tableCheckbox [value]="product" />
             </td>
@@ -62,7 +70,9 @@
             <td style="min-width: 18rem">{{ product.description }}</td>
             <td>{{ product.price | currency: 'MXN' }}</td>
             <td style="min-width: 16rem">
-                <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" style="width: 120px" class="rounded" />
+                <div class="img-cell">
+                    <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="product-thumb rounded" />
+                </div>
             </td>
 
             <td>

@@ -10,6 +10,7 @@ import { AppFloatingConfigurator } from "@/layout/component/app.floatingconfigur
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { CommonModule } from '@angular/common';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-login',
@@ -32,33 +33,68 @@ export class LoginComponent {
 
     submit() {
         this.errorMessage = null;
+
+        const email = (this.email || '').trim();
+        const password = (this.password || '').trim();
+
+        if (!email || !password) {
+            this.errorMessage = !email && !password
+                ? 'Email y Password son requeridos.'
+                : !email
+                    ? 'Email es requerido.'
+                    : 'Password es requerido.';
+            this.loading = false;
+            return;
+        }
+
         this.loading = true;
-        this.authService.loginAndStore({ email: this.email, password: this.password }).subscribe({
-            next: (res) => {
-                this.loading = false;
-                if (res && res.code === 200) {
-                    // Guardar el objeto de login en localStorage o sessionStorage según el checkbox
-                    try {
-                        const serialized = JSON.stringify(res.object);
-                        if (this.checked) {
-                            localStorage.setItem('loginObject', serialized);
-                        } else {
-                            sessionStorage.setItem('loginObject', serialized);
-                        }
-                    } catch (e) {
-                        console.warn('No se pudo guardar el objeto de login', e);
+        this.authService.loginAndStore({ email, password })
+            .pipe(finalize(() => (this.loading = false)))
+            .subscribe({
+                next: (res: any) => {
+                    if (!res) {
+                        this.handleErrorResponse('Respuesta inválida del servidor');
+                        return;
                     }
 
-                    // Redirige al dashboard o ruta principal
-                    this.router.navigate(['/adminPage']);
-                } else {
-                    this.errorMessage = res?.message || 'Error en login';
+                    if (res.code === 200) {
+                        this.saveLoginObject(res.object);
+                        this.router.navigate(['/adminPage']);
+                        return;
+                    } else if (res.code === 401) {
+                        this.errorMessage = res.message || 'Credenciales inválidas';
+                        return;
+                    }
+
+                    this.handleErrorResponse(res?.message || 'Error en login');
+                },
+                error: (err: any) => {
+                    if (err?.error?.code === 401) {
+                        this.errorMessage = err.error.message || 'Credenciales inválidas';
+                        return;
+                    }
+
+                    this.handleErrorResponse(err?.error?.message || 'Error de red o servidor');
                 }
-            },
-            error: (err) => {
-                this.loading = false;
-                this.errorMessage = err?.error?.message || 'Error de red o servidor';
+            });
+    }
+
+    private saveLoginObject(obj: any): void {
+        try {
+            const serialized = JSON.stringify(obj);
+            if (this.checked) {
+                localStorage.setItem('usuario', serialized);
+            } else {
+                sessionStorage.setItem('usuario', serialized);
             }
-        });
+        } catch (e) {
+            console.warn('No se pudo guardar el objeto de login', e);
+            this.router.navigate(['/auth/error']);
+        }
+    }
+
+    private handleErrorResponse(message: string): void {
+        this.errorMessage = message;
+        this.router.navigate(['/auth/error']);
     }
 }

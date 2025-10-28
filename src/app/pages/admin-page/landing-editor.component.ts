@@ -71,10 +71,20 @@ export class LandingEditorComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        const user = sessionStorage.getItem('usuario');
-        if (user) {
-          const userObj = JSON.parse(user);
-          //this.email = userObj.email;
+        debugger;
+        const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
+        if (userStr) {
+            try {
+                const userObj = JSON.parse(userStr);
+                // If the stored object contains an email, populate the component email
+                if (userObj && userObj.userEmail) {
+                    this.email = String(userObj.userEmail || '').trim();
+                    this.tenantId = userObj.userId;
+                }
+            } catch (e) {
+                // Fail safe: if parsing fails, just log and continue without blocking the component
+                console.warn('Failed to parse stored usuario:', e);
+            }
         }
         this.tenantService.getTenantByEmail(this.email).subscribe({
             next: (tenant: any) => {

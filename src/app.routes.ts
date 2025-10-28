@@ -4,10 +4,12 @@ import { Dashboard } from './app/pages/dashboard/dashboard';
 import { Documentation } from './app/pages/documentation/documentation';
 import { LandingEditorComponent } from '@/pages/admin-page/landing-editor.component';
 import { ProductMenuComponent } from '@/pages/products-menu/products-menu.component';
-import { Login } from '@/pages/auth/login';
+import { LoginComponent } from '@/auth/login/login.component';
+import { Error } from '@/auth/error/error';
 
 export const appRoutes: Routes = [
-    { path: 'auth/login', component: Login},
+    { path: 'auth/login', component: LoginComponent},
+    { path: 'auth/error', component: Error },
     {
         path: '',
         component: AppLayout,

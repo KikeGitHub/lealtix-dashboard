@@ -76,7 +76,6 @@ export class LandingEditorComponent implements OnInit {
           const userObj = JSON.parse(user);
           //this.email = userObj.email;
         }
-        debugger;
         this.tenantService.getTenantByEmail(this.email).subscribe({
             next: (tenant: any) => {
                 debugger;

@@ -29,6 +29,7 @@ export class ProductService {
       private apiUrlCreateCategory = `${environment.apiUrl}/tenant-menu-categories`;
       private apiUrlCreateProduct = `${environment.apiUrl}/tenant-menu-products`;
       private apiUrlProductsByTenant = `${environment.apiUrl}/tenant-menu-products/tenant`;
+      private apiURLDeleteProduct = `${environment.apiUrl}/tenant-menu-products`;
 
 
     getCategoriesByTenantId(tenantId: number) {
@@ -47,6 +48,9 @@ export class ProductService {
         return this.http.get<any>(`${this.apiUrlProductsByTenant}/${tenantId}`);
     }
 
+    deleteProductById(productId: number) {
+        return this.http.delete<any>(`${this.apiURLDeleteProduct}/${productId}`);
+    }
 
     status: string[] = ['ACTIVO', 'INACTIVO'];
 }

@@ -28,6 +28,7 @@ import { ProductService } from './service/product.service';
 import { ImageService } from '../service/image.service';
 import { ProductDialogComponent } from './product-dialog.component';
 import { forkJoin } from 'rxjs';
+import { TenantService } from '../admin-page/service/tenant.service';
 
 interface Column {
     field: string;
@@ -52,11 +53,11 @@ interface ExportColumn {
         RippleModule,
         ToastModule,
         ToolbarModule,
-    ProgressSpinnerModule,
+        ProgressSpinnerModule,
         RatingModule,
         InputTextModule,
         TextareaModule,
-    MessageModule,
+        MessageModule,
         SelectModule,
         RadioButtonModule,
         CheckboxModule,
@@ -65,9 +66,9 @@ interface ExportColumn {
         TagModule,
         InputIconModule,
         IconFieldModule,
-    FileUploadModule,
-    ConfirmDialogModule,
-    ProductDialogComponent
+        FileUploadModule,
+        ConfirmDialogModule,
+        ProductDialogComponent
     ],
     templateUrl: './products-menu.component.html',
     styleUrls: ['./products-menu.component.scss'],
@@ -77,8 +78,12 @@ export class ProductMenuComponent implements OnInit {
     // spinner flag: cuando true muestra el spinner global
     loading: boolean = false;
 
-    startLoading() { this.loading = true; }
-    stopLoading() { this.loading = false; }
+    startLoading() {
+        this.loading = true;
+    }
+    stopLoading() {
+        this.loading = false;
+    }
 
     productDialog: boolean = false;
     tenantId: number = 0;
@@ -101,11 +106,11 @@ export class ProductMenuComponent implements OnInit {
     constructor(
         private productService: ProductService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
-        , private fb: FormBuilder,
+        private confirmationService: ConfirmationService,
+        private fb: FormBuilder,
         private imageService: ImageService,
+        private tenantService: TenantService
     ) {
-        // initialize reactive form for category creation
         this.categoryForm = this.fb.group({
             id: [0],
             name: ['', Validators.required],
@@ -126,42 +131,56 @@ export class ProductMenuComponent implements OnInit {
         });
     }
 
-     ngOnInit() {
-
+    ngOnInit() {
         debugger;
-        const user = sessionStorage.getItem('usuario');
-        if (user) {
-          const userObj = JSON.parse(user);
-          //this.email = userObj.email;
+        const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
+        if (userStr) {
+            try {
+                const userObj = JSON.parse(userStr);
+                if (userObj && userObj.userEmail) {
+                    this.tenantService.getTenantByEmail(String(userObj.userEmail || '').trim()).subscribe({
+                        next: (resp) => {
+                            const tenant = resp?.object;
+                            this.tenantId = tenant?.id ?? 0;
+                            this.loadCategories();
+                            this.loadProducts();
+                        },
+                        error: (err) => {
+                            console.error('Error fetching tenant:', err);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Failed to parse stored usuario:', e);
+            }
         }
-        this.loadCategories();
-        this.loadProducts();
+
     }
 
     openNewCategory() {
-    // Reset only the individual category fields and keep the FormArray 'categories' intact
-    const tenant = this.newCategory.tenantId || (this.tenantId ? this.tenantId.toString() : '');
-    this.categoryForm.patchValue({ id: null, name: '', description: '', tenantId: tenant, active: true });
-    // ensure any validators / touched state are cleared for the controls we reset
-    this.categoryForm.get('name')?.markAsUntouched();
-    this.categoryForm.get('name')?.markAsPristine();
-    this.categoryForm.get('description')?.markAsUntouched();
-    this.categoryForm.get('description')?.markAsPristine();
-    this.categoryForm.get('active')?.setValue(true);
-    this.categoryDialog = true;
+        // Reset only the individual category fields and keep the FormArray 'categories' intact
+        const tenant = this.newCategory.tenantId || (this.tenantId ? this.tenantId.toString() : '');
+        this.categoryForm.patchValue({ id: null, name: '', description: '', tenantId: tenant, active: true });
+        // ensure any validators / touched state are cleared for the controls we reset
+        this.categoryForm.get('name')?.markAsUntouched();
+        this.categoryForm.get('name')?.markAsPristine();
+        this.categoryForm.get('description')?.markAsUntouched();
+        this.categoryForm.get('description')?.markAsPristine();
+        this.categoryForm.get('active')?.setValue(true);
+        this.categoryDialog = true;
     }
 
     hideCategoryDialog() {
-    this.categoryDialog = false;
-    this.categoryForm.markAsUntouched();
-    this.editingCategoryId = null;
+        this.categoryDialog = false;
+        this.categoryForm.markAsUntouched();
+        this.editingCategoryId = null;
     }
 
     onCategorySelect(selectedValue: string | number | null) {
         if (!selectedValue) {
             return;
         }
-    const cat = this.categoriesArray.value.find((c: any) => String(c.value) === String(selectedValue));
+        const cat = this.categoriesArray.value.find((c: any) => String(c.value) === String(selectedValue));
         if (!cat) return;
 
         const idCtrl = this.categoryForm.get('id');
@@ -218,8 +237,6 @@ export class ProductMenuComponent implements OnInit {
 
     cols!: Column[];
 
-
-
     get categoriesArray(): FormArray {
         return this.categoryForm.get('categories') as FormArray;
     }
@@ -240,8 +257,6 @@ export class ProductMenuComponent implements OnInit {
     exportCSV() {
         this.dt.exportCSV();
     }
-
-
 
     // Load categories from backend for the category select
     loadCategories() {
@@ -303,8 +318,8 @@ export class ProductMenuComponent implements OnInit {
                 // strip leading transformation parts (they usually contain = or commas and underscores)
                 const restIndex = after.indexOf('/');
                 const imagePath = restIndex >= 0 ? after.substring(restIndex + 1) : after;
-        // Restore previous optimized transform used before: width 266x110 with c_limit
-        const transform = 'w_266,h_110,c_limit,f_auto,q_auto';
+                // Restore previous optimized transform used before: width 266x110 with c_limit
+                const transform = 'w_266,h_110,c_limit,f_auto,q_auto';
                 return parts[0] + '/upload/' + transform + '/' + imagePath;
             }
             // If url doesn't match expected Cloudinary pattern, return as-is
@@ -316,19 +331,20 @@ export class ProductMenuComponent implements OnInit {
     }
 
     openNew() {
-    this.product = {};
-    // default category selection should be the placeholder (null)
-    (this.product as any).categoryId = null;
+        this.product = {};
+        // default category selection should be the placeholder (null)
+        (this.product as any).categoryId = null;
         this.submitted = false;
-    // reset product form (clear productImage as well)
-    this.productForm.reset({ id: null, name: '', description: '', price: null, img_url: '', productImage: null });
-    // ensure preview and internal file reference are cleared when creating new
-    this.productImagePreview = null;
-    this.productForm.get('productImage')?.setValue(null);
+        // reset product form (clear productImage as well)
+        this.productForm.reset({ id: null, name: '', description: '', price: null, img_url: '', productImage: null, isActive: true });
+        // ensure preview and internal file reference are cleared when creating new
+        this.productImagePreview = null;
+        this.productForm.get('productImage')?.setValue(null);
         this.productDialog = true;
     }
 
     editProduct(product: Product) {
+        debugger;
         this.product = { ...product };
         // populate productForm
         this.productForm.patchValue({
@@ -336,11 +352,11 @@ export class ProductMenuComponent implements OnInit {
             name: product.name ?? '',
             description: product.description ?? '',
             price: product.price ?? null,
-            img_url: product.imageUrl ?? ''
+            img_url: product.imageUrl ?? '',
+            isActive: product.isActive ?? true
+
         });
-        // ensure any previously selected File is cleared for edit mode
         this.productForm.get('productImage')?.setValue(null);
-        // set preview so editing modal shows existing image
         this.productImagePreview = product.imageUrl ?? null;
         this.productDialog = true;
     }
@@ -353,15 +369,17 @@ export class ProductMenuComponent implements OnInit {
             accept: () => {
                 // show global spinner while deleting
                 this.startLoading();
-                const deletes = (this.selectedProducts || []).map(product => {
-                    if (product && product.id !== undefined && product.id !== null) {
-                        const idNum = typeof product.id === 'number' ? product.id : Number(product.id);
-                        if (!Number.isNaN(idNum)) {
-                            return this.productService.deleteProductById(idNum);
+                const deletes = (this.selectedProducts || [])
+                    .map((product) => {
+                        if (product && product.id !== undefined && product.id !== null) {
+                            const idNum = typeof product.id === 'number' ? product.id : Number(product.id);
+                            if (!Number.isNaN(idNum)) {
+                                return this.productService.deleteProductById(idNum);
+                            }
                         }
-                    }
-                    return null;
-                }).filter(Boolean) as any[];
+                        return null;
+                    })
+                    .filter(Boolean) as any[];
 
                 if (deletes.length > 0) {
                     // run all deletes in parallel and refresh once done
@@ -471,15 +489,15 @@ export class ProductMenuComponent implements OnInit {
     }
 
     getSeverity(status: boolean) {
-        if(status) {
+        if (status) {
             return 'success';
-        }else{
+        } else {
             return 'danger';
         }
     }
 
     getStatusTitle(status: boolean) {
-        if(status) {
+        if (status) {
             return 'ACTIVO';
         } else {
             return 'INACTIVO';
@@ -487,6 +505,7 @@ export class ProductMenuComponent implements OnInit {
     }
 
     saveProduct() {
+        debugger;
         this.submitted = true;
         if (!this.product || (this.product as any).categoryId === null || (this.product as any).categoryId === undefined) {
             this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'Seleccione una categoría', life: 3000 });
@@ -558,6 +577,7 @@ export class ProductMenuComponent implements OnInit {
 
     // Create a new category and add it to the categories list
     createCategory() {
+        debugger;
         this.categoryForm.markAllAsTouched();
         if (this.categoryForm.invalid) {
             this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'Nombre y descripción son requeridos', life: 3000 });
@@ -570,7 +590,7 @@ export class ProductMenuComponent implements OnInit {
             description: payloadForm.description,
             tenantId: this.tenantId,
             active: payloadForm.active,
-            productsDTO: [],
+            productsDTO: []
         };
 
         if (payloadForm.id !== undefined && payloadForm.id !== null) {
@@ -616,9 +636,9 @@ export class ProductMenuComponent implements OnInit {
     }
 
     clearProductImage() {
-    this.productForm.get('img_url')?.setValue('');
-    this.productImagePreview = null;
-    this.productForm.get('productImage')?.setValue(null);
+        this.productForm.get('img_url')?.setValue('');
+        this.productImagePreview = null;
+        this.productForm.get('productImage')?.setValue(null);
     }
 
     // preview for product image selected via FileUpload

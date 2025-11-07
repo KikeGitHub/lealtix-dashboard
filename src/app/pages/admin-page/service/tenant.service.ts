@@ -18,6 +18,6 @@ export class TenantService {
   }
 
   getTenantByEmail(email: string) {
-      return this.http.get<Tenant>(`${this.apiUrlGetByEmail}/${email}`);
+      return this.http.get<any>(`${this.apiUrlGetByEmail}/${email}`);
   }
 }

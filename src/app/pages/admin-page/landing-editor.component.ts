@@ -39,6 +39,7 @@ export class LandingEditorComponent implements OnInit {
         { name: 'X', icon: 'pi pi-twitter', control: 'x' }
     ];
     tenantId: number = 0;
+    userId: number = 0;
 
     showCongrats: boolean = false;
 
@@ -71,21 +72,19 @@ export class LandingEditorComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        debugger;
         const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
         if (userStr) {
             try {
                 const userObj = JSON.parse(userStr);
-                // If the stored object contains an email, populate the component email
                 if (userObj && userObj.userEmail) {
                     this.email = String(userObj.userEmail || '').trim();
-                    this.tenantId = userObj.userId;
+                    this.userId = userObj.userId;
                 }
             } catch (e) {
-                // Fail safe: if parsing fails, just log and continue without blocking the component
                 console.warn('Failed to parse stored usuario:', e);
             }
         }
+        debugger;
         this.tenantService.getTenantByEmail(this.email).subscribe({
             next: (tenant: any) => {
                 debugger;
@@ -109,6 +108,9 @@ export class LandingEditorComponent implements OnInit {
                         x: tenant.object.x
                     });
                 }
+            },
+            error: (error) => {
+                console.error('No tenant found:');
             }
         });
     }
@@ -145,41 +147,64 @@ export class LandingEditorComponent implements OnInit {
     }
 
     createTenant(step: number) {
-        const tenantData: Tenant = this.landingForm.value;
-        const email = this.landingForm.value.email;
-        const nombreNegocio = this.landingForm.value.businessName;
-        const slogan = this.landingForm.value.slogan;
+        // Build a payload from the form once
+        const form = this.landingForm.value;
+        const tenantData: Tenant = {
+            ...form,
+            id: this.tenantId,
+            userId: this.userId,
+            logo: form.logo,
+            businessName: form.businessName,
+            slogan: form.slogan,
+            history: form.history,
+            vision: form.vision,
+            direccion: form.address,
+            telefono: form.phone,
+            bussinessEmail: form.email,
+            schedules: form.schedule,
+            facebook: form.facebook,
+            instagram: form.instagram,
+            tiktok: form.tiktok,
+            linkedin: form.linkedin,
+            x: form.x
+        } as Tenant;
+
         const logoFile = this.landingForm.get('logo')?.value;
+
+        const doCreate = () => {
+            // ensure tenantData.id is up-to-date
+            tenantData.id = this.tenantId;
+            this.postCreateTenant(tenantData);
+        };
+
+        // If we're in the image upload step and there is a file, upload first then create
         if (step === 2 && logoFile) {
+            const email = this.email;
+            const nombreNegocio = form.businessName;
+            const slogan = form.slogan;
             this.imageService.uploadImage(logoFile, 'logo', email, nombreNegocio, slogan).subscribe({
                 next: (tenantId: number) => {
                     this.tenantId = tenantId;
+                    doCreate();
                 },
                 error: (error) => {
                     console.error('Error uploading image:', error);
                 }
             });
         } else {
-            tenantData.id = this.tenantId;
-            tenantData.direccion = this.landingForm.value.address;
-            tenantData.telefono = this.landingForm.value.phone;
-            tenantData.bussinessEmail = this.landingForm.value.email;
-            tenantData.schedules = this.landingForm.value.schedule;
-            tenantData.facebook = this.landingForm.value.facebook;
-            tenantData.instagram = this.landingForm.value.instagram;
-            tenantData.tiktok = this.landingForm.value.tiktok;
-            tenantData.linkedin = this.landingForm.value.linkedin;
-            tenantData.x = this.landingForm.value.x;
-
-            this.tenantService.createTenant(tenantData).subscribe({
-                next: (response) => {
-                    console.log('Tenant created successfully:', response);
-                },
-                error: (error) => {
-                    console.error('Error creating tenant:', error);
-                }
-            });
+            doCreate();
         }
+    }
+
+    private postCreateTenant(tenantData: Tenant): void {
+        this.tenantService.createTenant(tenantData).subscribe({
+            next: (response) => {
+                console.log('Tenant created successfully:', response);
+            },
+            error: (error) => {
+                console.error('Error creating tenant:', error);
+            }
+        });
     }
 
     onFileSelect(event: any) {
@@ -219,7 +244,7 @@ export class LandingEditorComponent implements OnInit {
 
     goToMenuConfig() {
         this.showCongrats = false;
-        this.router.navigate(['/menu/configuracion']);
+        this.router.navigate(['/adminMenu']);
     }
 
     edit(){}

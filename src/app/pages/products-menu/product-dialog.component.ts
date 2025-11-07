@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -87,13 +87,28 @@ import { SelectModule } from 'primeng/select';
                     </div>
 
                     <div class="flex flex-col items-start gap-3">
-                        <div class="w-full">
-                            <label for="price" class="block font-medium mb-2">Precio</label>
-                            <p-inputnumber id="price" formControlName="price" mode="currency" currency="MXN" locale="en-US" class="w-40" />
-                            <p-message *ngIf="productForm.get('price')?.invalid && (productForm.get('price')?.touched || submitted)"
-                                severity="error" variant="text" size="small">Precio es requerido.</p-message>
+                        <!-- Price + Active checkbox row -->
+                        <div class="w-full flex items-start gap-4">
+                            <div class="flex-1">
+                                <label for="price" class="block font-medium mb-2">Precio</label>
+                                <p-inputnumber id="price" formControlName="price" mode="currency" currency="MXN" locale="en-US" class="w-40" />
+                                <p-message *ngIf="productForm?.get('price')?.invalid && (productForm.get('price')?.touched || submitted)"
+                                    severity="error" variant="text" size="small">Precio es requerido.</p-message>
+                            </div>
+
+                            <div class="flex-none flex items-center mt-6 gap-2">
+                                <!-- If parent form has an 'isActive' control, use formControlName, otherwise use ngModel on product.isActive -->
+                                <label for="isActive" class="block font-medium mb-2">Activo</label>
+                                    <ng-container *ngIf="productForm?.get('isActive'); else ngModelActive">
+                                        <p-checkbox formControlName="isActive" binary="true"></p-checkbox>
+                                    </ng-container>
+                                    <ng-template #ngModelActive>
+                                        <p-checkbox [(ngModel)]="product.isActive" binary="true" (ngModelChange)="onActiveChange($event)"></p-checkbox>
+                                    </ng-template>
+                            </div>
                         </div>
 
+                        <!-- Imagen (URL o subir) -->
                         <div class="w-full">
                             <label class="block font-medium mb-2">Imagen (URL o subir)</label>
                             <div class="flex items-center gap-3">
@@ -119,7 +134,7 @@ import { SelectModule } from 'primeng/select';
     </p-dialog>
     `
 })
-export class ProductDialogComponent {
+export class ProductDialogComponent implements OnChanges {
     @Input() visible: boolean = false;
     @Output() visibleChange = new EventEmitter<boolean>();
 
@@ -140,17 +155,11 @@ export class ProductDialogComponent {
     @Output() createCategory = new EventEmitter<void>();
     @Output() onProductFileSelect = new EventEmitter<any>();
     @Output() categoryChange = new EventEmitter<any>();
+    @Output() activeChange = new EventEmitter<boolean>();
 
     onHide() {
         this.visibleChange.emit(false);
         this.hide.emit();
-    }
-
-    // Keep localCategoryVisible in sync with parent input
-    ngOnChanges(changes: any) {
-        if (changes.categoryDialog) {
-            this.localCategoryVisible = changes.categoryDialog.currentValue;
-        }
     }
 
     closeCategoryDialog() {
@@ -176,5 +185,46 @@ export class ProductDialogComponent {
     onEditCategoryClick(event: Event) {
         event.stopPropagation();
         this.openEditCategory.emit();
+    }
+
+    // Keep product.isActive in sync and seed form control when dialog receives a product
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes['product']) {
+            // Ensure product object exists
+            this.product = this.product || {};
+
+            // If product.isActive is undefined/null, default to true
+            if (this.product.isActive === undefined || this.product.isActive === null) {
+                this.product.isActive = true;
+                this.activeChange.emit(true);
+            }
+
+            // If a reactive form with 'isActive' control is provided, set its value from the product
+            if (this.productForm && this.productForm.get) {
+                const isActiveControl = this.productForm.get('isActive');
+                if (isActiveControl) {
+                    try {
+                        isActiveControl.setValue(this.product.isActive, { emitEvent: false });
+                    } catch (e) {
+                        // ignore if unable to set
+                    }
+                }
+            }
+        }
+    }
+
+    onActiveChange(value: boolean) {
+        // If parent form contains the control, write value there; otherwise update product and emit
+        if (this.productForm && this.productForm.get && this.productForm.get('isActive')) {
+            try {
+                this.productForm.get('isActive').setValue(value);
+            } catch (e) {
+                // ignore
+            }
+        } else {
+            this.product = this.product || {};
+            this.product.isActive = value;
+            this.activeChange.emit(value);
+        }
     }
 }

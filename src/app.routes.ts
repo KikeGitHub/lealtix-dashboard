@@ -6,21 +6,36 @@ import { LandingEditorComponent } from '@/pages/admin-page/landing-editor.compon
 import { ProductMenuComponent } from '@/pages/products-menu/products-menu.component';
 import { LoginComponent } from '@/auth/login/login.component';
 import { Error } from '@/auth/error/error';
+import { AuthGuard } from './app/auth/auth.guard';
 
 export const appRoutes: Routes = [
-    { path: 'auth/login', component: LoginComponent},
-    { path: 'auth/error', component: Error },
+    // Everything under /dashboard/**
+    // Public auth routes under /dashboard/auth/
     {
-        path: '',
-        component: AppLayout,
+        path: 'dashboard',
         children: [
-            { path: '', component: Dashboard },
-            { path: 'adminPage', component: LandingEditorComponent },
-            { path: 'adminMenu', component: ProductMenuComponent },
-            { path: 'documentation', component: Documentation }
+            { path: 'auth/login', component: LoginComponent },
+            { path: 'auth/error', component: Error },
+
+            // Protected application routes: require authentication
+            {
+                path: '',
+                component: AppLayout,
+                canActivate: [AuthGuard],
+                canActivateChild: [AuthGuard],
+                children: [
+                    { path: '', redirectTo: 'kpis', pathMatch: 'full' },
+                    { path: 'kpis', component: Dashboard },
+                    { path: 'adminPage', component: LandingEditorComponent },
+                    { path: 'adminMenu', component: ProductMenuComponent },
+                    { path: 'documentation', component: Documentation }
+                ]
+            }
         ]
     },
 
-    { path: '**', redirectTo: '/notfound' },
+    // Default: always go to login page
+    { path: '', redirectTo: '/dashboard/auth/login', pathMatch: 'full' },
+    { path: '**', redirectTo: '/dashboard/auth/login' }
 
 ];

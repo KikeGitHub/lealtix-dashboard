@@ -19,16 +19,16 @@ export class AppMenu {
     model: MenuItem[] = [];
 
     ngOnInit() {
-        this.model = [
+            this.model = [
             {
                 label: 'Home',
-                items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] },
-                        { label: 'Admin Page', icon: 'pi pi-fw pi-globe',  routerLink: ['/adminPage'] },
-                        { label: 'Menu de Productos', icon: 'pi pi-fw pi-bars',  routerLink: ['/adminMenu'] },
-                        { label: 'Campañas', icon: 'pi pi-fw pi-id-card', routerLink: ['/uikit/formlayout']},
-                        { label: 'Reportes', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/uikit/charts'] },
-                        { label: 'Usuarios', icon: 'pi pi-fw pi-id-card', routerLink: ['/uikit/formlayout'] },
-                        { label: 'Utils', icon: 'pi pi-fw pi-table', routerLink: ['/uikit/table'] }
+                items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/dashboard/kpis'] },
+                        { label: 'Admin Page', icon: 'pi pi-fw pi-globe',  routerLink: ['/dashboard/adminPage'] },
+                        { label: 'Menu de Productos', icon: 'pi pi-fw pi-bars',  routerLink: ['/dashboard/adminMenu'] },
+                        { label: 'Campañas', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/uikit/formlayout']},
+                        { label: 'Reportes', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/dashboard/uikit/charts'] },
+                        { label: 'Usuarios', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/uikit/formlayout'] },
+                        { label: 'Utils', icon: 'pi pi-fw pi-table', routerLink: ['/dashboard/uikit/table'] }
                     ]
             }
         ];

@@ -7,7 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { RippleModule } from 'primeng/ripple';
 import { AppFloatingConfigurator } from "@/layout/component/app.floatingconfigurator";
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs/operators';
@@ -29,7 +29,11 @@ export class LoginComponent {
 
     errorMessage: string | null = null;
 
-    constructor(private authService: AuthService, private router: Router) {}
+    private returnUrl: string | null = null;
+
+    constructor(private authService: AuthService, private router: Router, private route: ActivatedRoute) {
+        this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    }
 
     submit() {
         this.errorMessage = null;
@@ -59,7 +63,12 @@ export class LoginComponent {
 
                     if (res.code === 200) {
                         this.saveLoginObject(res.object);
-                        this.router.navigate(['/adminPage']);
+                        // Redirect to returnUrl if present, otherwise to dashboard/kpis
+                        if (this.returnUrl) {
+                            this.router.navigateByUrl(this.returnUrl);
+                        } else {
+                            this.router.navigate(['/dashboard/kpis']);
+                        }
                         return;
                     } else if (res.code === 401) {
                         this.errorMessage = res.message || 'Credenciales inválidas';
@@ -89,12 +98,12 @@ export class LoginComponent {
             }
         } catch (e) {
             console.warn('No se pudo guardar el objeto de login', e);
-            this.router.navigate(['/auth/error']);
+            this.router.navigate(['/dashboard/auth/error']);
         }
     }
 
     private handleErrorResponse(message: string): void {
         this.errorMessage = message;
-        this.router.navigate(['/auth/error']);
+        this.router.navigate(['/dashboard/auth/error']);
     }
 }

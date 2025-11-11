@@ -21,7 +21,7 @@ import { AppFloatingConfigurator } from '../../layout/component/app.floatingconf
                             <span class="text-muted-color mb-8">El recurso solicitado no está disponible.</span>
                             <img src="https://primefaces.org/cdn/templates/sakai/auth/asset-error.svg" alt="Error" class="mb-8" width="80%" />
                             <div class="col-span-12 mt-8 text-center">
-                                <p-button label="Ir a Login" routerLink="/auth/login" severity="danger" />
+                                <p-button label="Ir a Login" routerLink="/dashboard/auth/login" severity="danger" />
                             </div>
                         </div>
                     </div>

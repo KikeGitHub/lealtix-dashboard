@@ -31,6 +31,29 @@ export class AuthService {
 	constructor(private http: HttpClient) {}
 
 	/**
+	 * Comprueba si existe un token de acceso en localStorage.
+	 */
+	isAuthenticated(): boolean {
+		try {
+			const token = localStorage.getItem('accessToken');
+			return !!token;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Elimina las credenciales locales (logout local).
+	 */
+	logout(): void {
+		try {
+			localStorage.removeItem('accessToken');
+		} catch (e) {
+			// ignore
+		}
+	}
+
+	/**
 	 * Realiza login al backend usando POST /api/auth/login
 	 * @param credentials { email, password }
 	 * @returns Observable<LoginResponse>

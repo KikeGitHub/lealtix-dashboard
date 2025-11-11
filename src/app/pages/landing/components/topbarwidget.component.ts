@@ -56,9 +56,9 @@ import {AppFloatingConfigurator} from "@/layout/component/app.floatingconfigurat
                     </a>
                 </li>
             </ul>
-            <div class="flex border-t lg:border-t-0 border-surface py-4 lg:py-0 mt-4 lg:mt-0 gap-2">
-                <button pButton pRipple label="Login" routerLink="/auth/login" [rounded]="true" [text]="true"></button>
-                <button pButton pRipple label="Register" routerLink="/auth/login" [rounded]="true"></button>
+                <div class="flex border-t lg:border-t-0 border-surface py-4 lg:py-0 mt-4 lg:mt-0 gap-2">
+                    <button pButton pRipple label="Login" routerLink="/dashboard/auth/login" [rounded]="true" [text]="true"></button>
+                    <button pButton pRipple label="Register" routerLink="/dashboard/auth/login" [rounded]="true"></button>
                 <app-floating-configurator [float]="false"/>
             </div>
         </div> `

@@ -15,8 +15,10 @@ import { LayoutService } from '../service/layout.service';
             <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
                 <i class="pi pi-bars"></i>
             </button>
-            <a class="layout-topbar-logo" routerLink="/">
-                <img src="https://res.cloudinary.com/dnaqqulme/image/upload/c_scale,w_50,h_40/v1759897289/lealtix_logo_transp_qcp5h9.png" alt="Lealtix Logo"/>
+            <a class="layout-topbar-logo" routerLink="/dashboard/kpis">
+                <img src="https://res.cloudinary.com/lealtix-media/image/upload/q_auto/f_auto/v1759897289/lealtix_logo_transp_qcp5h9.png"
+                     alt="Lealtix Logo"
+                     class="h-[50px] w-auto"/>
                 <span>Dashboard</span>
             </a>
         </div>

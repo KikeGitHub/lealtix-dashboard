@@ -1,0 +1,56 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { environment } from '@/pages/commons/environment';
+
+interface InventoryStatus {
+    label: string;
+    value: string;
+}
+
+export interface Product {
+    id?: string;
+    code?: string;
+    name?: string;
+    description?: string;
+    price?: number;
+    quantity?: number;
+    inventoryStatus?: string;
+    category?: string;
+    image?: string;
+    rating?: number;
+}
+
+@Injectable({providedIn: 'root'})
+export class ProductService {
+
+     constructor(private http: HttpClient) {}
+
+      private apiUrlCategoriesByTenant = `${environment.apiUrl}/tenant-menu-categories/categories`;
+      private apiUrlCreateCategory = `${environment.apiUrl}/tenant-menu-categories`;
+      private apiUrlCreateProduct = `${environment.apiUrl}/tenant-menu-products`;
+      private apiUrlProductsByTenant = `${environment.apiUrl}/tenant-menu-products/tenant`;
+      private apiURLDeleteProduct = `${environment.apiUrl}/tenant-menu-products`;
+
+
+    getCategoriesByTenantId(tenantId: number) {
+        return this.http.get<any>(`${this.apiUrlCategoriesByTenant}/${tenantId}`);
+    }
+
+    createCategory(payload: any) {
+        return this.http.post<any>(`${this.apiUrlCreateCategory}`, payload);
+    }
+
+    createProduct(payload: any) {
+        return this.http.post<any>(`${this.apiUrlCreateProduct}`, payload);
+    }
+
+    getProductsByTenantId(tenantId: number) {
+        return this.http.get<any>(`${this.apiUrlProductsByTenant}/${tenantId}`);
+    }
+
+    deleteProductById(productId: number) {
+        return this.http.delete<any>(`${this.apiURLDeleteProduct}/${productId}`);
+    }
+
+    status: string[] = ['ACTIVO', 'INACTIVO'];
+}

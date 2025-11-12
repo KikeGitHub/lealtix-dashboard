@@ -49,6 +49,23 @@
               "extractLicenses": false,
               "sourceMap": true
             }
+            ,
+            "dev": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/pages/commons/environment.ts",
+                  "with": "src/app/pages/commons/environment.dev.ts"
+                }
+              ]
+            },
+            "local": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
           },
           "defaultConfiguration": "production"
         },
@@ -63,6 +80,13 @@
             },
             "development": {
               "buildTarget": "lealtix_dashboard:build:development"
+            }
+            ,
+            "dev": {
+              "buildTarget": "lealtix_dashboard:build:dev"
+            },
+            "local": {
+              "buildTarget": "lealtix_dashboard:build:local"
             }
           },
           "defaultConfiguration": "development"

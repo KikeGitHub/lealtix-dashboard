@@ -1,5 +1,5 @@
 {
-  "root": "dist/llealtix_dashboard/browser",
+  "root": "dist/lealtix_dashboard/browser",
   "clean_urls": true,
   "routes": {
     "/**": "index.html"

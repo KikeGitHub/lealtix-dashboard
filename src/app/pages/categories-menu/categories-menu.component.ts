@@ -170,7 +170,7 @@ export class CategoriesMenuComponent implements OnInit {
     }
 
     openNew() {
-        this.category = { tenantId: this.tenantId, isActive: true };
+        this.category = { tenantId: this.tenantId, active: true };
         this.submitted = false;
         // Calcular el siguiente displayOrder
         const maxOrder = this.categories().reduce((max, cat) =>
@@ -187,13 +187,14 @@ export class CategoriesMenuComponent implements OnInit {
     }
 
     editCategory(category: Category) {
+        debugger;
         this.category = { ...category };
         this.categoryForm.patchValue({
             id: category.id ?? null,
             name: category.name ?? '',
             description: category.description ?? '',
             tenantId: category.tenantId ?? this.tenantId,
-            active: category.isActive ?? true,
+            active: category.active ?? true,
             displayOrder: category.displayOrder ?? 0
         });
         this.categoryDialog = true;

@@ -1,0 +1,102 @@
+<p-toolbar styleClass="mb-6">
+    <ng-template #start>
+        <p-button label="Nueva Categoría" icon="pi pi-plus" severity="secondary" class="mr-2" styleClass="text-sm p-button-sm" (onClick)="openNew()" />
+        <p-button severity="secondary" label="Borrar" icon="pi pi-trash" outlined (onClick)="deleteSelectedCategories()"
+            [disabled]="!selectedCategories || !selectedCategories.length" />
+    </ng-template>
+
+    <ng-template #end>
+        <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+    </ng-template>
+</p-toolbar>
+
+<!-- Global loading overlay -->
+<div class="global-loading-overlay" *ngIf="loading">
+    <div class="global-loading-backdrop"></div>
+    <div class="global-loading-spinner">
+        <p-progressSpinner strokeWidth="6" styleClass="custom-spinner"></p-progressSpinner>
+    </div>
+</div>
+
+<p-table #dt [value]="categories()" [rows]="10" [columns]="cols" [paginator]="true" [globalFilterFields]="['name', 'description']"
+    [tableStyle]="{ 'min-width': '75rem' }" [(selection)]="selectedCategories" [rowHover]="true" dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} categories" [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[10, 30, 50]">
+    <ng-template #caption>
+        <div class="flex items-center justify-between">
+            <h5 class="m-0">Categorías del Menú</h5>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #header>
+        <tr>
+            <th style="width: 3rem">
+                <p-tableHeaderCheckbox />
+            </th>
+            <th style="width: 4rem">
+                <i class="pi pi-arrows-v" title="Arrastre para reordenar"></i>
+            </th>
+            <th pSortableColumn="displayOrder" style="width: 8rem">
+                Orden
+                <p-sortIcon field="displayOrder" />
+            </th>
+            <th pSortableColumn="name" style="min-width:15rem">
+                Nombre
+                <p-sortIcon field="name" />
+            </th>
+            <th pSortableColumn="description" style="min-width:25rem">
+                Descripción
+                <p-sortIcon field="description" />
+            </th>
+            <th pSortableColumn="active" style="min-width: 10rem">
+                Status
+                <p-sortIcon field="active" />
+            </th>
+            <th style="min-width: 10rem"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-category>
+        <tr class="fixed-row"
+            pDraggable="categories"
+            (onDragStart)="dragStart(category)"
+            (onDragEnd)="dragEnd()"
+            pDroppable="categories"
+            (onDrop)="drop(category)"
+            [ngClass]="{'drag-over': draggedCategory && draggedCategory.id === category.id}">
+            <td style="width: 3rem">
+                <p-tableCheckbox [value]="category" />
+            </td>
+            <td style="width: 4rem; text-align: center; cursor: move;">
+                <i class="pi pi-bars text-gray-500"></i>
+            </td>
+            <td style="width: 8rem; text-align: center;">
+                <span class="font-semibold">{{ category.displayOrder }}</span>
+            </td>
+            <td style="min-width: 15rem">{{ category.name }}</td>
+            <td style="min-width: 25rem">{{ category.description }}</td>
+            <td>
+                <p-tag [value]="getStatusTitle(category.active)" [severity]="getSeverity(category.active)" />
+            </td>
+            <td>
+                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                    (click)="editCategory(category)" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                    (click)="deleteCategory(category)" />
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<app-category-dialog
+    [(visible)]="categoryDialog"
+    [category]="category"
+    [categoryForm]="categoryForm"
+    [submitted]="submitted"
+    (save)="saveCategory()"
+    (hide)="hideDialog()"
+></app-category-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }" />

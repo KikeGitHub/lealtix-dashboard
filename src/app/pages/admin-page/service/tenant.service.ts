@@ -18,6 +18,7 @@ export class TenantService {
   }
 
   getTenantByEmail(email: string) {
-      return this.http.get<any>(`${this.apiUrlGetByEmail}/${email}`);
+      const encodedEmail = encodeURIComponent(email);
+      return this.http.get<any>(`${this.apiUrlGetByEmail}/${encodedEmail}`);
   }
 }

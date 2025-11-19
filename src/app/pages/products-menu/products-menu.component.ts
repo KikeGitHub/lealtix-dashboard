@@ -127,7 +127,8 @@ export class ProductMenuComponent implements OnInit {
             description: ['', Validators.required],
             price: [null, Validators.required],
             img_url: [''],
-            productImage: [null] // store actual File/Blob for upload
+            productImage: [null], // store actual File/Blob for upload
+            isActive: [true]
         });
     }
 
@@ -531,6 +532,7 @@ export class ProductMenuComponent implements OnInit {
                 name: prod.name,
                 description: prod.description,
                 price: prod.price,
+                isActive: prod.isActive,
                 imageUrl: imageUrl ?? prod.img_url
             } as any;
             this.startLoading();

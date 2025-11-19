@@ -7,6 +7,7 @@ import { ProductMenuComponent } from '@/pages/products-menu/products-menu.compon
 import { LoginComponent } from '@/auth/login/login.component';
 import { Error } from '@/auth/error/error';
 import { AuthGuard } from './app/auth/auth.guard';
+import { CategoriesMenuComponent } from '@/pages/categories-menu/categories-menu.component';
 
 export const appRoutes: Routes = [
     // Everything under /dashboard/**
@@ -27,6 +28,7 @@ export const appRoutes: Routes = [
                     { path: '', redirectTo: 'kpis', pathMatch: 'full' },
                     { path: 'kpis', component: Dashboard },
                     { path: 'adminPage', component: LandingEditorComponent },
+                    { path: 'categoriesMenu', component: CategoriesMenuComponent },
                     { path: 'adminMenu', component: ProductMenuComponent },
                     { path: 'documentation', component: Documentation }
                 ]

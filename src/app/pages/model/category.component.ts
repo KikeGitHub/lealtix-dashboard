@@ -1,7 +1,8 @@
 export interface Category {
     id?: string;
-    isActive?: boolean;
+    active?: boolean;
     name?: string;
     description?: string;
     tenantId: number;
+    displayOrder?: number;
 }

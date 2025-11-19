@@ -28,45 +28,13 @@ import { SelectModule } from 'primeng/select';
                                 [options]="categoriesArrayValue" optionLabel="label" optionValue="value"
                                 placeholder="Seleccione..." styleClass="w-full"></p-select>
                         </div>
-                        <div class="flex-none">
-                            <p-button *ngIf="!product.categoryId" label="Nueva" icon="pi pi-plus"
-                                (onClick)="onNewCategoryClick($event)" styleClass="p-button-sm" />
-                            <p-button *ngIf="product.categoryId" label="Editar" icon="pi pi-pencil"
-                                (onClick)="onEditCategoryClick($event)" styleClass="p-button-sm ml-2" />
-                        </div>
+
                     </div>
                     <div class="mt-2">
                         <p-message *ngIf="(!product || product.categoryId === null || product.categoryId === undefined) && submitted"
                             severity="error" variant="text" size="small">Categoria es requerida</p-message>
                     </div>
                 </div>
-
-                <!-- Category modal (unchanged functionality) -->
-                <p-dialog [(visible)]="localCategoryVisible" header="Crear nueva categoría" [modal]="true" [style]="{ width: '520px' }" (onHide)="closeCategoryDialog()">
-                    <div class="p-4" [formGroup]="categoryForm">
-                        <div class="mb-3">
-                            <label class="block font-medium mb-2">Nombre</label>
-                            <input pInputText type="text" formControlName="name" class="w-full" />
-                            <p-message *ngIf="categoryForm.get('name')?.invalid && (categoryForm.get('name')?.touched || submitted)"
-                                severity="error" variant="text" size="small">Nombre es requerido.</p-message>
-                        </div>
-                        <div class="mb-3">
-                            <label class="block font-medium mb-2">Descripción</label>
-                            <textarea pTextarea rows="3" formControlName="description" class="w-full"></textarea>
-                            <p-message *ngIf="categoryForm.get('description')?.invalid && (categoryForm.get('description')?.touched || submitted)"
-                                severity="error" variant="text" size="small">Descripción es requerida.</p-message>
-                        </div>
-                        <input type="hidden" formControlName="tenantId" />
-                        <div class="flex items-center gap-3">
-                            <p-checkbox formControlName="active" binary="true"></p-checkbox>
-                            <label class="mb-0">Active</label>
-                        </div>
-                    </div>
-                    <ng-template pTemplate="footer">
-                        <p-button label="Cancelar" icon="pi pi-times" text (click)="closeCategoryDialog()" />
-                        <p-button label="Guardar" icon="pi pi-check" (onClick)="onCreateCategory()" styleClass="text-sm p-button-sm" />
-                    </ng-template>
-                </p-dialog>
 
                 <!-- Product form -->
                 <form [formGroup]="productForm" class="space-y-4">
@@ -97,14 +65,8 @@ import { SelectModule } from 'primeng/select';
                             </div>
 
                             <div class="flex-none flex items-center mt-6 gap-2">
-                                <!-- If parent form has an 'isActive' control, use formControlName, otherwise use ngModel on product.isActive -->
                                 <label for="isActive" class="block font-medium mb-2">Activo</label>
-                                    <ng-container *ngIf="productForm?.get('isActive'); else ngModelActive">
-                                        <p-checkbox formControlName="isActive" binary="true"></p-checkbox>
-                                    </ng-container>
-                                    <ng-template #ngModelActive>
-                                        <p-checkbox [(ngModel)]="product.isActive" binary="true" (ngModelChange)="onActiveChange($event)"></p-checkbox>
-                                    </ng-template>
+                                <p-checkbox formControlName="isActive" binary="true" inputId="isActive" (onChange)="onActiveChange($event.checked)"></p-checkbox>
                             </div>
                         </div>
 

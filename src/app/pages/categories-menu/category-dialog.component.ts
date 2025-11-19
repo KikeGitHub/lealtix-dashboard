@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { CheckboxModule } from 'primeng/checkbox';
+import { InputNumberModule } from 'primeng/inputnumber';
 
 @Component({
     selector: 'app-category-dialog',
@@ -20,7 +21,8 @@ import { CheckboxModule } from 'primeng/checkbox';
         InputTextModule,
         TextareaModule,
         MessageModule,
-        CheckboxModule
+        CheckboxModule,
+        InputNumberModule
     ],
     template: `
     <p-dialog [(visible)]="visible" [style]="{ width: '450px' }" header="Detalle de Categoría" [modal]="true" (onHide)="onHide()">
@@ -39,6 +41,16 @@ import { CheckboxModule } from 'primeng/checkbox';
                         <textarea id="description" pTextarea formControlName="description" rows="4" class="w-full"></textarea>
                         <p-message *ngIf="categoryForm.get('description')?.invalid && (categoryForm.get('description')?.touched || submitted)"
                             severity="error" variant="text" size="small">Descripción es requerida.</p-message>
+                    </div>
+
+                    <div>
+                        <label for="displayOrder" class="block font-medium mb-2">Orden de Visualización</label>
+                        <p-inputNumber id="displayOrder" formControlName="displayOrder" [min]="0" class="w-full"
+                            [showButtons]="true" buttonLayout="horizontal" inputStyleClass="w-full"
+                            decrementButtonClass="p-button-secondary" incrementButtonClass="p-button-secondary"
+                            incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus">
+                        </p-inputNumber>
+                        <small class="text-gray-500">Número que determina la posición de la categoría en el listado</small>
                     </div>
 
                     <div class="flex items-center gap-3">

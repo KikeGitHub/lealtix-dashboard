@@ -4,4 +4,5 @@ export interface Category {
     name?: string;
     description?: string;
     tenantId: number;
+    displayOrder?: number;
 }

@@ -36,6 +36,13 @@
             <th style="width: 3rem">
                 <p-tableHeaderCheckbox />
             </th>
+            <th style="width: 4rem">
+                <i class="pi pi-arrows-v" title="Arrastre para reordenar"></i>
+            </th>
+            <th pSortableColumn="displayOrder" style="width: 8rem">
+                Orden
+                <p-sortIcon field="displayOrder" />
+            </th>
             <th pSortableColumn="name" style="min-width:15rem">
                 Nombre
                 <p-sortIcon field="name" />
@@ -52,9 +59,21 @@
         </tr>
     </ng-template>
     <ng-template #body let-category>
-        <tr class="fixed-row">
+        <tr class="fixed-row"
+            pDraggable="categories"
+            (onDragStart)="dragStart(category)"
+            (onDragEnd)="dragEnd()"
+            pDroppable="categories"
+            (onDrop)="drop(category)"
+            [ngClass]="{'drag-over': draggedCategory && draggedCategory.id === category.id}">
             <td style="width: 3rem">
                 <p-tableCheckbox [value]="category" />
+            </td>
+            <td style="width: 4rem; text-align: center; cursor: move;">
+                <i class="pi pi-bars text-gray-500"></i>
+            </td>
+            <td style="width: 8rem; text-align: center;">
+                <span class="font-semibold">{{ category.displayOrder }}</span>
             </td>
             <td style="min-width: 15rem">{{ category.name }}</td>
             <td style="min-width: 25rem">{{ category.description }}</td>

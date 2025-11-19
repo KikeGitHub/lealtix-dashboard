@@ -1,5 +1,6 @@
 .fixed-row {
   height: 80px; /* fixed row height for consistent table layout */
+  transition: all 0.3s ease;
 }
 
 .fixed-row > td {
@@ -9,6 +10,34 @@
 /* Ensure table rows keep constant height even when content wraps */
 .p-datatable-tbody > tr.fixed-row {
   height: 80px !important;
+}
+
+/* Drag and Drop styles */
+.fixed-row {
+  cursor: grab;
+}
+
+.fixed-row:active {
+  cursor: grabbing;
+}
+
+.drag-over {
+  background-color: rgba(var(--primary-color-rgb, 59, 130, 246), 0.1) !important;
+  border-top: 2px solid var(--primary-color, #3b82f6);
+}
+
+.fixed-row.p-highlight {
+  background-color: rgba(var(--primary-color-rgb, 59, 130, 246), 0.05);
+}
+
+/* Draggable handle indicator */
+.pi-bars {
+  font-size: 1.2rem;
+  transition: color 0.2s ease;
+}
+
+.fixed-row:hover .pi-bars {
+  color: var(--primary-color, #3b82f6) !important;
 }
 
 /* Global loading overlay styles */

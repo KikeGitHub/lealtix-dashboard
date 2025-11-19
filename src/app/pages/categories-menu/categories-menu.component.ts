@@ -18,6 +18,8 @@ import { TagModule } from 'primeng/tag';
 import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DragDropModule } from 'primeng/dragdrop';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { Category } from '../model/category.component';
 import { CategoryService } from './service/category.service';
 import { forkJoin } from 'rxjs';
@@ -57,6 +59,8 @@ interface ExportColumn {
         InputIconModule,
         IconFieldModule,
         ConfirmDialogModule,
+        DragDropModule,
+        InputNumberModule,
         CategoryDialogComponent
     ],
     templateUrl: './categories-menu.component.html',
@@ -67,6 +71,7 @@ export class CategoriesMenuComponent implements OnInit {
     loading: boolean = false;
     categoryDialog: boolean = false;
     tenantId: number = 0;
+    draggedCategory: Category | null = null;
 
     categories = signal<Category[]>([]);
     category!: Category;
@@ -91,7 +96,8 @@ export class CategoriesMenuComponent implements OnInit {
             name: ['', Validators.required],
             description: ['', Validators.required],
             tenantId: [this.tenantId],
-            active: [true]
+            active: [true],
+            displayOrder: [null]
         });
     }
 
@@ -137,8 +143,11 @@ export class CategoriesMenuComponent implements OnInit {
                     name: item.categoryName,
                     description: item.categoryDescription || '',
                     active: typeof item.active === 'boolean' ? item.active : true,
-                    tenantId: item.tenantId
+                    tenantId: item.tenantId,
+                    displayOrder: item.displayOrder ?? 0
                 }));
+                // Ordenar por displayOrder
+                mapped.sort((a: Category, b: Category) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
                 this.categories.set(mapped);
                 console.log('Loaded categories:', mapped);
             },
@@ -163,12 +172,16 @@ export class CategoriesMenuComponent implements OnInit {
     openNew() {
         this.category = { tenantId: this.tenantId, isActive: true };
         this.submitted = false;
+        // Calcular el siguiente displayOrder
+        const maxOrder = this.categories().reduce((max, cat) =>
+            Math.max(max, cat.displayOrder ?? 0), 0);
         this.categoryForm.reset({
             id: null,
             name: '',
             description: '',
             tenantId: this.tenantId,
-            active: true
+            active: true,
+            displayOrder: maxOrder + 1
         });
         this.categoryDialog = true;
     }
@@ -180,7 +193,8 @@ export class CategoriesMenuComponent implements OnInit {
             name: category.name ?? '',
             description: category.description ?? '',
             tenantId: category.tenantId ?? this.tenantId,
-            active: category.isActive ?? true
+            active: category.isActive ?? true,
+            displayOrder: category.displayOrder ?? 0
         });
         this.categoryDialog = true;
     }
@@ -324,6 +338,7 @@ export class CategoriesMenuComponent implements OnInit {
             description: formValue.description.trim(),
             tenantId: this.tenantId,
             active: formValue.active,
+            displayOrder: formValue.displayOrder ?? 0,
             productsDTO: []
         };
 
@@ -354,6 +369,71 @@ export class CategoriesMenuComponent implements OnInit {
             },
             complete: () => {
                 this.stopLoading();
+            }
+        });
+    }
+
+    // Métodos para drag and drop
+    dragStart(category: Category) {
+        this.draggedCategory = category;
+    }
+
+    dragEnd() {
+        this.draggedCategory = null;
+    }
+
+    drop(targetCategory: Category) {
+        if (this.draggedCategory && this.draggedCategory.id !== targetCategory.id) {
+            const currentCategories = [...this.categories()];
+            const draggedIndex = currentCategories.findIndex(c => c.id === this.draggedCategory?.id);
+            const targetIndex = currentCategories.findIndex(c => c.id === targetCategory.id);
+
+            if (draggedIndex !== -1 && targetIndex !== -1) {
+                // Remover el elemento arrastrado
+                const [draggedItem] = currentCategories.splice(draggedIndex, 1);
+                // Insertar en la nueva posición
+                currentCategories.splice(targetIndex, 0, draggedItem);
+
+                // Actualizar displayOrder
+                currentCategories.forEach((cat, index) => {
+                    cat.displayOrder = index + 1;
+                });
+
+                // Actualizar el signal
+                this.categories.set(currentCategories);
+
+                // Enviar al backend
+                this.updateCategoriesOrder(currentCategories);
+            }
+        }
+        this.draggedCategory = null;
+    }
+
+    updateCategoriesOrder(categories: Category[]) {
+        const orderPayload = categories.map((cat, index) => ({
+            id: Number(cat.id),
+            displayOrder: index + 1
+        }));
+
+        this.categoryService.reorderCategories(orderPayload, this.tenantId).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Exitoso',
+                    detail: 'Orden de categorías actualizado',
+                    life: 2000
+                });
+            },
+            error: (err) => {
+                console.error('Error updating order', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'No se pudo actualizar el orden',
+                    life: 3000
+                });
+                // Recargar para restaurar el orden original
+                this.loadCategories();
             }
         });
     }

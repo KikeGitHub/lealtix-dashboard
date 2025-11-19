@@ -1,0 +1,52 @@
+.fixed-row {
+  height: 80px; /* fixed row height for consistent table layout */
+}
+
+.fixed-row > td {
+  vertical-align: middle; /* center content vertically */
+}
+
+/* Ensure table rows keep constant height even when content wraps */
+.p-datatable-tbody > tr.fixed-row {
+  height: 80px !important;
+}
+
+/* Global loading overlay styles */
+.global-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999; /* on top of everything */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.global-loading-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.35);
+}
+
+.global-loading-spinner {
+  position: relative;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.custom-spinner {
+  width: 64px;
+  height: 64px;
+}

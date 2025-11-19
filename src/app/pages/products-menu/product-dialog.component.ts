@@ -28,12 +28,7 @@ import { SelectModule } from 'primeng/select';
                                 [options]="categoriesArrayValue" optionLabel="label" optionValue="value"
                                 placeholder="Seleccione..." styleClass="w-full"></p-select>
                         </div>
-                        <div class="flex-none">
-                            <p-button *ngIf="!product.categoryId" label="Nueva" icon="pi pi-plus"
-                                (onClick)="onNewCategoryClick($event)" styleClass="p-button-sm" />
-                            <p-button *ngIf="product.categoryId" label="Editar" icon="pi pi-pencil"
-                                (onClick)="onEditCategoryClick($event)" styleClass="p-button-sm ml-2" />
-                        </div>
+
                     </div>
                     <div class="mt-2">
                         <p-message *ngIf="(!product || product.categoryId === null || product.categoryId === undefined) && submitted"

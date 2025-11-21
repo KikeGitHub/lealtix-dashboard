@@ -26,7 +26,8 @@ export class AppMenu {
                         { label: 'Admin Page', icon: 'pi pi-fw pi-globe',  routerLink: ['/dashboard/adminPage'] },
                         { label: 'Categorías', icon: 'pi pi-fw pi-tags', routerLink: ['/dashboard/categoriesMenu'] },
                         { label: 'Productos', icon: 'pi pi-fw pi-bars',  routerLink: ['/dashboard/adminMenu'] },
-                        { label: 'Campañas', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/uikit/formlayout']},
+                        { label: 'Campañas', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/campaigns'] },
+                        { label: 'Plantillas', icon: 'pi pi-fw pi-file', routerLink: ['/dashboard/campaign-templates'] },
                         { label: 'Reportes', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/dashboard/uikit/charts'] },
                         { label: 'Usuarios', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/uikit/formlayout'] },
                         { label: 'Utils', icon: 'pi pi-fw pi-table', routerLink: ['/dashboard/uikit/table'] }

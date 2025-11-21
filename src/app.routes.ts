@@ -9,6 +9,12 @@ import { Error } from '@/auth/error/error';
 import { AuthGuard } from './app/auth/auth.guard';
 import { CategoriesMenuComponent } from '@/pages/categories-menu/categories-menu.component';
 
+// Campaign components
+import { CampaignListComponent } from '@/pages/campaigns/components/campaign-list/campaign-list.component';
+import { CampaignFormComponent } from '@/pages/campaigns/components/campaign-form/campaign-form.component';
+import { CampaignDetailsComponent } from '@/pages/campaigns/components/campaign-details/campaign-details.component';
+import { CampaignTemplatesListComponent } from '@/pages/campaigns/components/campaign-templates-list/campaign-templates-list.component';
+
 export const appRoutes: Routes = [
     // Everything under /dashboard/**
     // Public auth routes under /dashboard/auth/
@@ -30,7 +36,12 @@ export const appRoutes: Routes = [
                     { path: 'adminPage', component: LandingEditorComponent },
                     { path: 'categoriesMenu', component: CategoriesMenuComponent },
                     { path: 'adminMenu', component: ProductMenuComponent },
-                    { path: 'documentation', component: Documentation }
+                    { path: 'documentation', component: Documentation },
+                    // Campaign routes
+                    { path: 'campaigns', component: CampaignListComponent, title: 'Gestión de Campañas' },
+                    { path: 'campaigns/new', component: CampaignFormComponent, title: 'Nueva Campaña' },
+                    { path: 'campaigns/:id', component: CampaignDetailsComponent, title: 'Detalles de Campaña' },
+                    { path: 'campaign-templates', component: CampaignTemplatesListComponent, title: 'Plantillas de Campañas' }
                 ]
             }
         ]

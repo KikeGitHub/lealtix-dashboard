@@ -84,10 +84,8 @@ export class LandingEditorComponent implements OnInit {
                 console.warn('Failed to parse stored usuario:', e);
             }
         }
-        debugger;
         this.tenantService.getTenantByEmail(this.email).subscribe({
             next: (tenant: any) => {
-                debugger;
                 if (tenant) {
                     this.tenantId = tenant.object.id ?? 0;
                     this.landingForm.patchValue({

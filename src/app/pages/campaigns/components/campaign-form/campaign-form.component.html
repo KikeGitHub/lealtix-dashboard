@@ -1,0 +1,262 @@
+<div class="card">
+  <div class="flex align-items-center mb-4">
+    <p-button
+      icon="pi pi-arrow-left"
+      severity="secondary"
+      text
+      (onClick)="goBack()"
+      aria-label="Volver">
+    </p-button>
+    <h2 class="ml-3 mb-0">{{ isEditMode() ? 'Editar Campaña' : 'Nueva Campaña' }}</h2>
+  </div>
+
+  <!-- Template selector (only for new campaigns) -->
+  <div class="mb-4" *ngIf="!isEditMode() && templates().length > 0">
+      <h3 class="text-lg font-semibold mb-3">Seleccionar Plantilla (Opcional)</h3>
+    <div class="grid">
+      <div class="col-12 md:col-6 lg:col-4" *ngFor="let template of templates()">
+        <p-card
+          class="cursor-pointer h-full"
+          [class.border-primary]="selectedTemplateId() === template.id"
+          (click)="selectTemplate(template)">
+          <h4 class="mt-0">{{ template.name }}</h4>
+          <p class="text-sm text-500">{{ template.defaultTitle }}</p>
+          <div class="flex justify-content-between align-items-center">
+            <p-chip
+              [label]="template.defaultPromoType || 'Custom'"
+              size="small"
+              styleClass="p-chip-outlined">
+            </p-chip>
+            <i class="pi pi-check text-primary"
+               *ngIf="selectedTemplateId() === template.id">
+            </i>
+          </div>
+        </p-card>
+      </div>
+    </div>
+    <p-divider></p-divider>
+  </div>
+
+  <!-- Campaign form -->
+  <form class="p-fluid" [formGroup]="campaignForm" (ngSubmit)="onSubmit()">
+    <div class="grid">
+      <!-- Información básica -->
+      <div class="col-12">
+        <h3 class="text-lg font-semibold mb-3">Información Básica</h3>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="title" class="font-semibold text-gray-800 mb-2">Título <span class="text-red-500">*</span></label>
+          <input
+            id="title"
+            pInputText
+            formControlName="title"
+            placeholder="Escribe el título"
+            class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900 w-full"
+            [class.p-invalid]="isFieldInvalid('title')"
+          />
+            <small *ngIf="campaignForm.get('title')?.errors?.['required'] && campaignForm.get('title')?.touched" class="text-red-600 text-sm block">El título es requerido</small>
+            <small *ngIf="campaignForm.get('title')?.errors?.['minlength'] && campaignForm.get('title')?.touched" class="text-red-600 text-sm block">El título debe tener al menos 3 caracteres</small>
+        </div>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="subtitle" class="font-semibold text-gray-800 mb-2">Subtítulo</label>
+          <input
+            id="subtitle"
+            pInputText
+            formControlName="subtitle"
+            placeholder="Subtítulo (opcional)"
+            class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900 w-full"
+          />
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="field">
+          <label for="description" class="font-semibold text-gray-800 mb-2">Descripción</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="3"
+            placeholder="Describe la campaña"
+            class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900 w-full"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Promoción -->
+      <div class="col-12">
+        <h3 class="text-lg font-semibold mb-3">Configuración de Promoción</h3>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="promoType" class="font-semibold text-gray-800 mb-2">Tipo de Promoción</label>
+          <select id="promoType" formControlName="promoType" (change)="onPromoTypeChange()" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900 w-full">
+            <option value="">Seleccionar tipo</option>
+            <option *ngFor="let option of promoTypeOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-12 md:col-6" *ngIf="shouldShowPromoValue()">
+        <div class="field">
+          <label for="promoValue" class="block font-medium mb-2">
+            {{ getPromoValueLabel() }}
+          </label>
+          <div class="p-inputgroup">
+            <span class="p-inputgroup-addon" *ngIf="getPromoValuePrefix()">
+              {{ getPromoValuePrefix() }}
+            </span>
+            <input
+              id="promoValue"
+              pInputText
+              formControlName="promoValue"
+              class="w-full"
+              [placeholder]="getPromoValuePlaceholder()" />
+            <span class="p-inputgroup-addon" *ngIf="getPromoValueSuffix()">
+              {{ getPromoValueSuffix() }}
+            </span>
+          </div>
+            <small *ngIf="campaignForm.get('promoValue')?.errors?.['promoValue']" class="text-red-600 text-sm block">{{ campaignForm.get('promoValue')?.errors?.['promoValue']?.message }}</small>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="field">
+          <label for="callToAction" class="font-semibold text-gray-800 mb-2">Call to Action</label>
+          <input id="callToAction" pInputText formControlName="callToAction" placeholder="Ej: ¡Aprovecha ahora!" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900 w-full" />
+        </div>
+      </div>
+
+      <!-- Fechas -->
+      <div class="col-12">
+        <h3 class="text-lg font-semibold mb-3">Programación</h3>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="startDate" class="block font-medium mb-2">
+            Fecha de inicio <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="startDate"
+            pInputText
+            type="date"
+            formControlName="startDate"
+            class="w-full"
+            [class.p-invalid]="isFieldInvalid('startDate')"
+          />
+          <small *ngIf="isFieldInvalid('startDate')" class="p-error block">
+            <i class="pi pi-exclamation-circle"></i>
+            {{ campaignForm.get('startDate')?.errors?.['futureDate']?.message || 'La fecha de inicio es inválida' }}
+          </small>
+        </div>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="endDate" class="block font-medium mb-2">Fecha de fin</label>
+          <input
+            id="endDate"
+            pInputText
+            type="date"
+            formControlName="endDate"
+            class="w-full"
+            [class.p-invalid]="isFieldInvalid('endDate') || (campaignForm.errors && campaignForm.errors['dateRange'])"
+          />
+          <small *ngIf="isFieldInvalid('endDate')" class="p-error block">
+            <i class="pi pi-exclamation-circle"></i> La fecha de fin es inválida
+          </small>
+          <small *ngIf="campaignForm.errors?.['dateRange']" class="p-error block">
+            <i class="pi pi-exclamation-circle"></i> {{ campaignForm.errors?.['dateRange']?.message }}
+          </small>
+        </div>
+      </div>
+      <!-- Canales y segmentación -->
+      <div class="col-12">
+        <h3 class="text-lg font-semibold mb-3">Distribución</h3>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="channels" class="font-semibold text-gray-800 mb-2">Canales</label>
+            <input id="channels" pInputText placeholder="Email, SMS, App" (blur)="onChannelsChange($event)" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900 w-full" />
+            <small *ngIf="campaignForm.get('channels')?.invalid && campaignForm.get('channels')?.touched" class="text-red-600 text-sm block">Agrega al menos un canal</small>
+            <small class="text-500">Escribe los canales separados por coma (ej: Email, SMS, App)</small>
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="segmentation" class="font-semibold text-gray-800 mb-2">Segmentación</label>
+          <input id="segmentation" pInputText formControlName="segmentation" placeholder="Ej: Clientes premium" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900 w-full" />
+        </div>
+      </div>
+
+      <!-- Imagen -->
+      <div class="col-12">
+        <h3 class="text-lg font-semibold mb-3">Imagen</h3>
+      </div>
+
+      <div class="col-12">
+        <div class="field">
+          <label for="imageUrl" class="font-semibold text-gray-800 mb-2">URL de Imagen</label>
+          <input id="imageUrl" pInputText formControlName="imageUrl" placeholder="https://ejemplo.com/imagen.jpg" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900 w-full" />
+          <!-- Preview de imagen -->
+          <div class="mt-2" *ngIf="imagePreview()">
+            <img [src]="imagePreview()" alt="Preview" class="max-w-200 max-h-150 border-round" (error)="onImageError()" style="max-width:200px; max-height:150px;" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Estados y configuración avanzada -->
+      <div class="col-12" *ngIf="isEditMode()">
+        <h3 class="text-lg font-semibold mb-3">Estado</h3>
+      </div>
+
+      <div class="col-12 md:col-6" *ngIf="isEditMode()">
+        <div class="field">
+          <label for="status" class="font-semibold text-gray-800 mb-2">Estado de la Campaña</label>
+          <select id="status" formControlName="status" class="rounded border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900 w-full">
+            <option value="">Seleccionar estado</option>
+            <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field-checkbox">
+          <p-checkbox
+            formControlName="isAutomatic"
+            binary="true"
+            inputId="isAutomatic">
+          </p-checkbox>
+          <label for="isAutomatic" class="ml-2">Campaña automática</label>
+          <small class="block text-500 mt-1">
+            La campaña se ejecutará automáticamente según las reglas definidas
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form actions -->
+    <div class="flex justify-content-end gap-3 mt-4">
+      <p-button
+        type="button"
+        label="Cancelar"
+        icon="pi pi-times"
+        severity="secondary"
+        (onClick)="goBack()">
+      </p-button>
+      <p-button
+        type="submit"
+        label="{{ isEditMode() ? 'Actualizar' : 'Crear' }} Campaña"
+        icon="pi pi-save"
+        class="p-button-primary"
+        [loading]="saving()"
+        [disabled]="campaignForm.invalid">
+      </p-button>
+    </div>
+  </form>
+</div>

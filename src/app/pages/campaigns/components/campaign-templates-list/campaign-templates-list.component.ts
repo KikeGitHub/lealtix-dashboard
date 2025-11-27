@@ -25,7 +25,6 @@ import { CampaignTemplateService } from '../../services/campaign-template.servic
 export class CampaignTemplatesListComponent implements OnInit {
   templates = signal<CampaignTemplate[]>([]);
   loading = signal<boolean>(true);
-  // DestroyRef for takeUntilDestroyed
   private destroyRef = inject(DestroyRef);
 
   constructor(
@@ -82,10 +81,12 @@ export class CampaignTemplatesListComponent implements OnInit {
   }
 
   useTemplate(template: CampaignTemplate): void {
-    // Navegar al formulario de campaña con el ID de la plantilla
-    this.router.navigate(['/dashboard/campaigns/new'], {
-      queryParams: { templateId: template.id }
-    });
+    // Navigate to create campaign screen with template pre-selected
+    if (template.id) {
+      this.router.navigate(['/dashboard/campaigns/create'], {
+        queryParams: { templateId: template.id }
+      });
+    }
   }
 
   editTemplate(template: CampaignTemplate): void {

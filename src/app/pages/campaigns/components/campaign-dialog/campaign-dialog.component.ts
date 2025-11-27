@@ -59,7 +59,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
   <div class="p-4">
 
           <!-- Template selector (only for new campaigns) -->
-          <div class="mb-4" *ngIf="!isEditMode && templates().length > 0">
+          <div class="mb-4" *ngIf="!isEditMode && showTemplateSelector && templates().length > 0">
             <h4 class="text-lg font-semibold mb-3">Seleccionar Plantilla (Opcional)</h4>
             <div class="grid gap-3">
               <div class="col-12" *ngFor="let template of templates()">
@@ -418,6 +418,8 @@ export class CampaignDialogComponent implements OnInit, OnChanges {
   @Input() campaign: CampaignResponse | null = null;
   @Input() submitted: boolean = false;
   @Input() isEditMode: boolean = false;
+  @Input() initialTemplateId?: number;
+  @Input() showTemplateSelector = true;
 
   @Output() save = new EventEmitter<void>();
   @Output() hide = new EventEmitter<void>();
@@ -460,6 +462,22 @@ export class CampaignDialogComponent implements OnInit, OnChanges {
     if (changes['campaign'] && this.campaign) {
       this.populateFormWithCampaign(this.campaign);
     }
+
+    // Auto-apply template if initialTemplateId is provided
+    if (changes['initialTemplateId'] && this.initialTemplateId && this.templates().length > 0) {
+      const template = this.templates().find(t => t.id === this.initialTemplateId);
+      if (template) {
+        this.selectTemplate(template);
+      }
+    }
+
+    // If templates loaded after initialTemplateId was set, apply it
+    if (changes['templates'] && this.initialTemplateId && this.templates().length > 0) {
+      const template = this.templates().find(t => t.id === this.initialTemplateId);
+      if (template) {
+        this.selectTemplate(template);
+      }
+    }
   }
 
   onHide(): void {
@@ -499,6 +517,14 @@ export class CampaignDialogComponent implements OnInit, OnChanges {
       .subscribe({
         next: (templates) => {
           this.templates.set(templates.filter(t => t.active !== false));
+
+          // Apply initial template if provided
+          if (this.initialTemplateId) {
+            const template = templates.find(t => t.id === this.initialTemplateId);
+            if (template) {
+              this.selectTemplate(template);
+            }
+          }
         },
         error: (error) => {
           console.error('Error loading templates:', error);

@@ -179,10 +179,8 @@ export class CampaignListComponent implements OnInit {
     }
 
     createNewCampaign(): void {
-        this.selectedCampaign.set(null);
-        this.isEditMode.set(false);
-        this.submitted.set(false);
-        this.campaignDialog.set(true);
+        // Navegar a la pantalla completa de creación de campaña
+        this.router.navigate(['/dashboard/campaigns/create']);
     }
 
     viewCampaign(campaign: CampaignResponse): void {

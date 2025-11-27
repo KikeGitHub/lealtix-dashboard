@@ -1,0 +1,423 @@
+// Create Campaign Component Styles
+// Professional, modern styling using PrimeNG utilities
+
+.create-campaign-container {
+  padding: 1.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.campaign-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  h1 {
+    color: var(--text-color);
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .flex.gap-2 {
+      width: 100%;
+      flex-wrap: wrap;
+
+      ::ng-deep .p-button {
+        flex: 1;
+        min-width: 150px;
+      }
+    }
+  }
+}
+
+.campaign-content {
+  margin-top: 1.5rem;
+
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    align-items: flex-start;
+  }
+
+  .form-column,
+  .preview-column {
+    display: flex;
+    flex-direction: column;
+
+    // Ensure full width on mobile
+    @media (max-width: 991px) {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+
+    // Side by side on desktop
+    @media (min-width: 992px) {
+      &.form-column {
+        flex: 0 0 58.333%;
+        max-width: 58.333%;
+        padding-right: 1rem;
+      }
+
+      &.preview-column {
+        flex: 0 0 41.667%;
+        max-width: 41.667%;
+        padding-left: 1rem;
+      }
+    }
+  }
+}
+
+// Form Styles
+.campaign-form {
+    .form-section {
+      margin-bottom: 1.5rem;
+
+      .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--surface-border);
+      }
+
+      // Default field spacing for stacked layout
+      .field {
+        margin-bottom: 1rem;
+
+        label {
+          display: block;
+          margin-bottom: 0.5rem;
+          color: var(--text-color);
+          font-size: 0.95rem;
+        }
+
+        small {
+          display: block;
+          margin-top: 0.25rem;
+          font-size: 0.875rem;
+
+          &.p-error {
+            color: var(--red-500);
+          }
+
+          &.text-500 {
+            color: var(--text-color-secondary);
+          }
+        }
+      }
+
+      // Improve spacing specifically for two-column groups like "Detalles de la Promoción" and "Período de Vigencia"
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        gap: 0; // reset gap since we're using padding on columns
+
+        // Override PrimeFlex columns to add proper spacing
+        > div[class*="col-"] {
+          padding-left: 0.75rem;
+          padding-right: 0.75rem;
+          margin-bottom: 1rem;
+
+          // On desktop, ensure 50% width with proper spacing
+          @media (min-width: 768px) {
+            flex: 0 0 50%;
+            max-width: 50%;
+          }
+
+          // On mobile, full width
+          @media (max-width: 767px) {
+            flex: 0 0 100%;
+            max-width: 100%;
+          }
+        }
+
+        // Style fields inside the grid columns
+        .field {
+          margin-bottom: 0;
+          width: 100%;
+
+          label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-size: 0.95rem;
+          }
+
+          // Ensure all PrimeNG components take full width
+          ::ng-deep .p-inputtext,
+          ::ng-deep .p-select,
+          ::ng-deep .p-datepicker,
+          ::ng-deep .p-dropdown {
+            width: 100% !important;
+          }
+
+          ::ng-deep .p-select .p-select-label,
+          ::ng-deep input {
+            text-align: left;
+          }
+        }
+      }
+    }
+
+  // Image preview in form
+  .preview-image {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--surface-border);
+    padding: 0.5rem;
+    background: var(--surface-50);
+  }
+}
+
+// Preview Sticky Panel
+.preview-sticky {
+  position: sticky;
+  top: 1.5rem;
+  height: fit-content;
+
+  @media (max-width: 991px) {
+    position: static;
+    margin-top: 2rem;
+  }
+}
+
+// Campaign Preview Styles
+.campaign-preview {
+  background: linear-gradient(135deg, var(--surface-50) 0%, var(--surface-100) 100%);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  min-height: 400px;
+
+  .preview-image-container {
+    width: 100%;
+    height: 250px;
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .preview-main-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #f5f5f5;
+    }
+  }
+
+  .preview-content {
+    .preview-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0 0 0.75rem 0;
+      line-height: 1.3;
+    }
+
+    .preview-subtitle {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-color-secondary);
+      margin: 0 0 1rem 0;
+    }
+
+    .preview-description {
+      font-size: 1rem;
+      color: var(--text-color);
+      line-height: 1.6;
+      margin: 0 0 1.5rem 0;
+      white-space: pre-wrap;
+    }
+
+    .preview-promo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+
+      ::ng-deep .promo-chip {
+        background: var(--primary-color);
+        color: white;
+        font-weight: 600;
+      }
+
+      .promo-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary-color);
+      }
+    }
+
+    .preview-dates {
+      margin-bottom: 1.5rem;
+      padding: 0.75rem;
+      background: var(--surface-0);
+      border-radius: var(--border-radius);
+      border-left: 3px solid var(--primary-color);
+    }
+
+    .preview-cta {
+      margin-top: 1.5rem;
+
+      ::ng-deep .p-button {
+        font-size: 1.1rem;
+        padding: 0.75rem 1.5rem;
+      }
+    }
+  }
+
+  // Large preview (in dialog)
+  &.campaign-preview-large {
+    .preview-image-container {
+      height: 350px;
+    }
+
+    .preview-content {
+      .preview-title {
+        font-size: 2rem;
+      }
+
+      .preview-subtitle {
+        font-size: 1.25rem;
+      }
+
+      .preview-description {
+        font-size: 1.1rem;
+      }
+    }
+  }
+}
+
+// PrimeNG Component Overrides
+::ng-deep {
+  // Card styling
+  .p-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: var(--border-radius);
+
+    .p-card-body {
+      padding: 1.5rem;
+    }
+  }
+
+  // Input fields
+  .p-inputtext,
+  .p-textarea,
+  .p-select,
+  .p-datepicker {
+    width: 100%;
+  }
+
+  // Toggle button styling
+  .p-togglebutton {
+    min-width: 180px;
+
+    &.p-button-checked {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+  }
+
+  // File upload
+  .p-fileupload-choose {
+    width: 100%;
+  }
+
+  // Divider
+  .p-divider {
+    margin: 1.5rem 0;
+  }
+
+  // Checkbox
+  .p-checkbox {
+    margin-right: 0.5rem;
+  }
+
+  // Buttons in header
+  .p-button {
+    font-weight: 500;
+  }
+
+  // Dialog
+  .p-dialog {
+    .p-dialog-header {
+      padding: 1.5rem;
+    }
+
+    .p-dialog-content {
+      padding: 1.5rem;
+    }
+  }
+}// Responsive adjustments
+@media (max-width: 991px) {
+  .create-campaign-container {
+    padding: 1rem;
+  }
+
+  .campaign-header {
+    h1 {
+      font-size: 1.75rem;
+    }
+  }
+
+  .campaign-preview {
+    .preview-image-container {
+      height: 200px;
+    }
+
+    .preview-content {
+      .preview-title {
+        font-size: 1.5rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .campaign-header {
+    h1 {
+      font-size: 1.5rem;
+    }
+
+    .flex.gap-2 {
+      ::ng-deep .p-button {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+
+        .p-button-label {
+          display: none;
+        }
+
+        .p-button-icon {
+          margin: 0;
+        }
+      }
+
+      ::ng-deep .p-button:first-child .p-button-label {
+        display: inline;
+      }
+    }
+  }
+
+  .campaign-form {
+    .form-section {
+      .section-title {
+        font-size: 1.1rem;
+      }
+    }
+  }
+}

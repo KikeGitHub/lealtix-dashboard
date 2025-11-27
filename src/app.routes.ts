@@ -14,6 +14,7 @@ import { CampaignListComponent } from '@/pages/campaigns/components/campaign-lis
 import { CampaignFormComponent } from '@/pages/campaigns/components/campaign-form/campaign-form.component';
 import { CampaignDetailsComponent } from '@/pages/campaigns/components/campaign-details/campaign-details.component';
 import { CampaignTemplatesListComponent } from '@/pages/campaigns/components/campaign-templates-list/campaign-templates-list.component';
+import { CreateCampaignComponent } from '@/pages/campaigns/components/create-campaign/create-campaign.component';
 
 export const appRoutes: Routes = [
     // Everything under /dashboard/**
@@ -39,6 +40,7 @@ export const appRoutes: Routes = [
                     { path: 'documentation', component: Documentation },
                     // Campaign routes
                     { path: 'campaigns', component: CampaignListComponent, title: 'Gestión de Campañas' },
+                    { path: 'campaigns/create', component: CreateCampaignComponent, title: 'Crear Campaña' },
                     { path: 'campaigns/new', component: CampaignFormComponent, title: 'Nueva Campaña' },
                     { path: 'campaigns/:id', component: CampaignDetailsComponent, title: 'Detalles de Campaña' },
                     { path: 'campaign-templates', component: CampaignTemplatesListComponent, title: 'Plantillas de Campañas' }

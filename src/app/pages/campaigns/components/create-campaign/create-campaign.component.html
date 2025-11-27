@@ -1,0 +1,551 @@
+<div class="create-campaign-container">
+  <!-- Header with actions -->
+  <div class="campaign-header">
+    <div class="flex align-items-center gap-3">
+      <p-button
+        icon="pi pi-arrow-left"
+        [text]="true"
+        [rounded]="true"
+        (onClick)="goBack()"
+        aria-label="Volver al listado"
+      ></p-button>
+      <h1 class="text-3xl font-bold m-0">
+        {{ template()?.name ? 'Crear Campaña desde ' + template()?.name : 'Crear Nueva Campaña' }}
+      </h1>
+    </div>
+
+    <div class="flex gap-2">
+      <p-button
+        label="Vista Previa"
+        icon="pi pi-eye"
+        [outlined]="true"
+        (onClick)="openPreview()"
+        aria-label="Vista previa ampliada"
+      ></p-button>
+      <p-button
+        label="Guardar como Borrador"
+        icon="pi pi-save"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="saving()"
+        (onClick)="saveDraft()"
+        aria-label="Guardar borrador"
+      ></p-button>
+      <p-button
+        label="Guardar"
+        icon="pi pi-check"
+        [loading]="saving()"
+        (onClick)="save()"
+        aria-label="Guardar campaña"
+      ></p-button>
+    </div>
+  </div>
+
+  <!-- Main content: Two columns -->
+  <div class="campaign-content">
+    <div class="grid">
+      <!-- Left column: Form (60%) -->
+      <div class="col-12 lg:col-7 form-column">
+        <p-card>
+          <form [formGroup]="campaignForm" class="campaign-form">
+            <!-- Información Básica -->
+            <div class="form-section">
+              <h3 class="section-title">Información Básica</h3>
+
+              <div class="field">
+                <label for="title" class="font-semibold">
+                  Título de la Campaña *
+                  <i class="pi pi-info-circle ml-2 text-500"
+                     pTooltip="Este es el título principal que verán tus clientes. Debe ser llamativo y claro."
+                     tooltipPosition="right"></i>
+                </label>
+                <input
+                  pInputText
+                  id="title"
+                  formControlName="title"
+                  placeholder="Ej: Super Descuento de Verano"
+                  class="w-full"
+                />
+                <small class="p-error" *ngIf="campaignForm.get('title')?.touched && campaignForm.get('title')?.hasError('required')">
+                  El título es requerido
+                </small>
+                <small class="text-500" *ngIf="!campaignForm.get('title')?.hasError('required')">
+                  Usa un título corto y atractivo (máximo 60 caracteres recomendado)
+                </small>
+              </div>
+
+              <div class="field">
+                <label for="subtitle" class="font-semibold">
+                  Subtítulo
+                  <i class="pi pi-info-circle ml-2 text-500"
+                     pTooltip="Complementa el título con información adicional. Es opcional pero recomendado."
+                     tooltipPosition="right"></i>
+                </label>
+                <input
+                  pInputText
+                  id="subtitle"
+                  formControlName="subtitle"
+                  placeholder="Ej: Aprovecha las mejores ofertas"
+                  class="w-full"
+                />
+                <small class="text-500">Agrega contexto o urgencia a tu campaña (opcional)</small>
+              </div>
+
+              <div class="field">
+                <label for="description" class="font-semibold">
+                  Descripción *
+                  <i class="pi pi-info-circle ml-2 text-500"
+                     pTooltip="Explica los detalles de tu promoción. Sé claro sobre qué recibirán tus clientes."
+                     tooltipPosition="right"></i>
+                </label>
+                <textarea
+                  pTextarea
+                  id="description"
+                  formControlName="description"
+                  rows="4"
+                  placeholder="Describe tu campaña..."
+                  class="w-full"
+                ></textarea>
+                <small class="p-error" *ngIf="campaignForm.get('description')?.touched && campaignForm.get('description')?.hasError('required')">
+                  La descripción es requerida
+                </small>
+                <small class="text-500" *ngIf="!campaignForm.get('description')?.hasError('required')">
+                  Incluye términos y condiciones, restricciones o pasos para obtener la promoción
+                </small>
+              </div>
+            </div>
+
+            <p-divider></p-divider>
+
+            <!-- Imagen -->
+            <div class="form-section">
+              <h3 class="section-title">
+                Imagen de la Campaña
+                <i class="pi pi-info-circle ml-2 text-500"
+                   pTooltip="Una imagen atractiva aumenta la efectividad de tu campaña hasta un 80%"
+                   tooltipPosition="right"></i>
+              </h3>
+
+              <div class="field">
+                <p-fileUpload
+                  mode="basic"
+                  chooseLabel="Seleccionar imagen"
+                  chooseIcon="pi pi-upload"
+                  accept="image/*"
+                  [maxFileSize]="5000000"
+                  (onSelect)="onImageUpload($event)"
+                  [auto]="true"
+                  class="w-full"
+                ></p-fileUpload>
+                <small class="text-500">
+                  <strong>Recomendación:</strong> Usa imágenes de alta calidad en formato JPG o PNG.
+                  Tamaño ideal: 1200x630 píxeles. Máximo: 5MB
+                </small>
+
+                <div class="mt-3" *ngIf="uploadedImageUrl() || campaignForm.get('imageUrl')?.value">
+                  <img
+                    [src]="uploadedImageUrl() || campaignForm.get('imageUrl')?.value"
+                    alt="Vista previa"
+                    class="preview-image"
+                  />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="imageUrl" class="font-semibold">
+                  O ingresa una URL de imagen
+                  <i class="pi pi-info-circle ml-2 text-500"
+                     pTooltip="Si tu imagen ya está en línea, pega aquí la URL directa"
+                     tooltipPosition="right"></i>
+                </label>
+                <input
+                  pInputText
+                  id="imageUrl"
+                  formControlName="imageUrl"
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  class="w-full"
+                />
+                <small class="text-500">Alternativamente, pega la URL directa de tu imagen</small>
+              </div>
+            </div>
+
+            <p-divider></p-divider>
+
+            <!-- Promoción -->
+            <div class="form-section">
+              <h3 class="section-title">
+                Detalles de la Promoción
+                <i class="pi pi-info-circle ml-2 text-500"
+                   pTooltip="Define el tipo y valor de tu oferta. Esto ayuda a categorizar y medir resultados"
+                   tooltipPosition="right"></i>
+              </h3>
+
+              <div class="grid">
+                <div class="col-12 md:col-6">
+                  <div class="field">
+                    <label for="promoType" class="font-semibold">Tipo de Promoción</label>
+                    <p-select
+                      id="promoType"
+                      formControlName="promoType"
+                      [options]="promoTypeOptions"
+                      placeholder="Selecciona un tipo"
+                      class="w-full"
+                      optionLabel="label"
+                      optionValue="value"
+                    ></p-select>
+                    <small class="text-500">Ayuda a clasificar tu campaña internamente</small>
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-6">
+                  <div class="field">
+                    <label for="promoValue" class="font-semibold">
+                      Valor de la Promoción
+                      <i class="pi pi-info-circle ml-2 text-500"
+                         pTooltip="Ejemplo: 20% de descuento, $500 pesos, 2x1, etc."
+                         tooltipPosition="right"></i>
+                    </label>
+                    <input
+                      pInputText
+                      id="promoValue"
+                      formControlName="promoValue"
+                      placeholder="Ej: 20%, $500, 2x1"
+                      class="w-full"
+                    />
+                    <small class="text-500">El beneficio específico que ofreces</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p-divider></p-divider>
+
+            <!-- Fechas -->
+            <div class="form-section">
+              <h3 class="section-title">
+                Período de Vigencia
+                <i class="pi pi-info-circle ml-2 text-500"
+                   pTooltip="Define cuándo estará activa tu campaña. Puedes programarla con anticipación"
+                   tooltipPosition="right"></i>
+              </h3>
+
+              <div class="grid">
+                <div class="col-12 md:col-6">
+                  <div class="field">
+                    <label for="startDate" class="font-semibold">Fecha de Inicio *</label>
+                    <p-datepicker
+                      id="startDate"
+                      formControlName="startDate"
+                      placeholder="Selecciona fecha"
+                      [showIcon]="true"
+                      dateFormat="dd/mm/yy"
+                      class="w-full"
+                    ></p-datepicker>
+                    <small class="p-error" *ngIf="campaignForm.get('startDate')?.touched && campaignForm.get('startDate')?.hasError('required')">
+                      La fecha de inicio es requerida
+                    </small>
+                    <small class="text-500" *ngIf="!campaignForm.get('startDate')?.hasError('required')">
+                      Día en que la campaña se activará
+                    </small>
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-6">
+                  <div class="field">
+                    <label for="endDate" class="font-semibold">Fecha de Fin *</label>
+                    <p-datepicker
+                      id="endDate"
+                      formControlName="endDate"
+                      placeholder="Selecciona fecha"
+                      [showIcon]="true"
+                      dateFormat="dd/mm/yy"
+                      class="w-full"
+                    ></p-datepicker>
+                    <small class="p-error" *ngIf="campaignForm.get('endDate')?.touched && campaignForm.get('endDate')?.hasError('required')">
+                      La fecha de fin es requerida
+                    </small>
+                    <small class="text-500" *ngIf="!campaignForm.get('endDate')?.hasError('required')">
+                      Último día de vigencia de la campaña
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p-divider></p-divider>
+
+            <!-- Call to Action -->
+            <div class="form-section">
+              <h3 class="section-title">
+                Botón de Acción
+                <i class="pi pi-info-circle ml-2 text-500"
+                   pTooltip="Agrega un botón que dirija a tus clientes a una página específica o acción"
+                   tooltipPosition="right"></i>
+              </h3>
+
+              <div class="field mb-4">
+                <div class="flex align-items-center gap-2">
+                  <p-togglebutton
+                    formControlName="showButton"
+                    [onLabel]="'Botón Activado'"
+                    [offLabel]="'Botón Desactivado'"
+                    [onIcon]="'pi pi-check'"
+                    [offIcon]="'pi pi-times'"
+                  ></p-togglebutton>
+                  <small class="text-500">
+                    Activa esta opción si quieres incluir un botón en tu campaña (ej: "Comprar ahora", "Conocer más")
+                  </small>
+                </div>
+              </div>
+
+              <div *ngIf="campaignForm.get('showButton')?.value">
+                <div class="field">
+                  <label for="buttonText" class="font-semibold">Texto del Botón</label>
+                  <input
+                    pInputText
+                    id="buttonText"
+                    formControlName="buttonText"
+                    placeholder="Ej: Obtener promoción"
+                    class="w-full"
+                  />
+                  <small class="text-500">Usa verbos de acción: "Comprar", "Descargar", "Registrarse", "Conocer más"</small>
+                </div>
+
+                <div class="field">
+                  <label for="callToAction" class="font-semibold">
+                    URL de Destino (opcional)
+                    <i class="pi pi-info-circle ml-2 text-500"
+                       pTooltip="Página a donde llevará el botón. Si lo dejas vacío, se enviará a tu página principal"
+                       tooltipPosition="right"></i>
+                  </label>
+                  <input
+                    pInputText
+                    id="callToAction"
+                    formControlName="callToAction"
+                    placeholder="https://..."
+                    class="w-full"
+                  />
+                  <small class="text-500">Ejemplo: https://mitienda.com/promociones o https://mitienda.com/producto/123</small>
+                </div>
+              </div>
+            </div>
+
+            <p-divider></p-divider>
+
+            <!-- Configuración Adicional -->
+            <div class="form-section">
+              <h3 class="section-title">
+                Configuración Adicional
+                <i class="pi pi-info-circle ml-2 text-500"
+                   pTooltip="Define cómo y a quién llegará tu campaña"
+                   tooltipPosition="right"></i>
+              </h3>
+
+              <div class="field">
+                <label for="channels" class="font-semibold">
+                  Canales de Distribución
+                  <i class="pi pi-info-circle ml-2 text-500"
+                     pTooltip="Medios por los que se enviará tu campaña. Por ahora solo Email está disponible"
+                     tooltipPosition="right"></i>
+                </label>
+                <p-multiSelect
+                  id="channels"
+                  formControlName="channels"
+                  [options]="channelOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  optionDisabled="disabled"
+                  placeholder="Selecciona canales"
+                  class="w-full"
+                ></p-multiSelect>
+                <small class="text-500">
+                  <strong>Email</strong> está activo. Próximamente: Facebook, Instagram, TikTok y X
+                </small>
+              </div>
+
+              <div class="field">
+                <label for="segmentation" class="font-semibold">
+                  Segmentación de Audiencia
+                  <i class="pi pi-info-circle ml-2 text-500"
+                     pTooltip="Selecciona a qué grupo de clientes quieres llegar con esta campaña"
+                     tooltipPosition="right"></i>
+                </label>
+                <p-multiSelect
+                  id="segmentation"
+                  formControlName="segmentation"
+                  [options]="segmentationOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Selecciona segmentos"
+                  class="w-full"
+                  [pTooltip]="'Selecciona los segmentos de audiencia para tu campaña'"
+                  tooltipPosition="top"
+                ></p-multiSelect>
+                <small class="text-500">
+                  <strong>Ejemplos:</strong> Todos los clientes, Próximo cumpleaños (7 días), Activos últimos 30 días, VIP, etc.
+                </small>
+              </div>
+
+              <div class="field">
+                <div class="flex align-items-center">
+                  <p-checkbox
+                    formControlName="isAutomatic"
+                    [binary]="true"
+                    inputId="isAutomatic"
+                  ></p-checkbox>
+                  <label for="isAutomatic" class="ml-2 font-semibold">
+                    Activación Automática
+                    <i class="pi pi-info-circle ml-2 text-500"
+                       pTooltip="Si lo activas, la campaña se enviará automáticamente en la fecha de inicio sin necesidad de intervención manual"
+                       tooltipPosition="right"></i>
+                  </label>
+                </div>
+                <small class="text-500">
+                  Recomendado: Si activas esta opción, la campaña se enviará automáticamente en la fecha de inicio programada
+                </small>
+              </div>
+            </div>
+          </form>
+        </p-card>
+      </div>
+
+      <!-- Right column: Live Preview (40%) -->
+      <div class="col-12 lg:col-5 preview-column">
+        <div class="preview-sticky">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="p-3">
+                <h3 class="text-xl font-semibold m-0 flex align-items-center gap-2">
+                  <i class="pi pi-eye"></i>
+                  Vista Previa
+                </h3>
+              </div>
+            </ng-template>
+
+            <div class="campaign-preview">
+              <!-- Preview Image -->
+              <div class="preview-image-container" *ngIf="previewData().imageUrl">
+                <img
+                  [src]="previewData().imageUrl"
+                  [alt]="previewData().title"
+                  class="preview-main-image"
+                />
+              </div>
+
+              <!-- Preview Content -->
+              <div class="preview-content">
+                <h2 class="preview-title">{{ previewData().title }}</h2>
+
+                <p class="preview-subtitle" *ngIf="previewData().subtitle">
+                  {{ previewData().subtitle }}
+                </p>
+
+                <p class="preview-description">
+                  {{ previewData().description }}
+                </p>
+
+                <!-- Promo Badge -->
+                <div class="preview-promo" *ngIf="previewData().promoType">
+                  <p-chip
+                    [label]="getPromoTypeLabel(previewData().promoType)"
+                    styleClass="promo-chip"
+                  ></p-chip>
+                  <span class="promo-value" *ngIf="previewData().promoValue">
+                    {{ previewData().promoValue }}
+                  </span>
+                </div>
+
+                <!-- Dates -->
+                <div class="preview-dates" *ngIf="previewData().startDate || previewData().endDate">
+                  <div class="flex align-items-center gap-2 text-sm text-500">
+                    <i class="pi pi-calendar"></i>
+                    <span *ngIf="previewData().startDate">
+                      Desde {{ formatDate(previewData().startDate) }}
+                    </span>
+                    <span *ngIf="previewData().endDate">
+                      hasta {{ formatDate(previewData().endDate) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- CTA Button - Only show if enabled -->
+                <div class="preview-cta" *ngIf="campaignForm.get('showButton')?.value">
+                  <p-button
+                    [label]="previewData().buttonText"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    styleClass="w-full"
+                  ></p-button>
+                </div>
+              </div>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Full Preview Dialog -->
+<p-dialog
+  [(visible)]="previewDialogVisible"
+  [style]="{ width: '90vw', maxWidth: '800px' }"
+  header="Vista Previa Completa"
+  [modal]="true"
+  [dismissableMask]="true"
+>
+  <div class="campaign-preview campaign-preview-large">
+    <div class="preview-image-container" *ngIf="previewData().imageUrl">
+      <img
+        [src]="previewData().imageUrl"
+        [alt]="previewData().title"
+        class="preview-main-image"
+      />
+    </div>
+
+    <div class="preview-content">
+      <h2 class="preview-title">{{ previewData().title }}</h2>
+
+      <p class="preview-subtitle" *ngIf="previewData().subtitle">
+        {{ previewData().subtitle }}
+      </p>
+
+      <p class="preview-description">
+        {{ previewData().description }}
+      </p>
+
+      <div class="preview-promo" *ngIf="previewData().promoType">
+        <p-chip
+          [label]="getPromoTypeLabel(previewData().promoType)"
+          styleClass="promo-chip"
+        ></p-chip>
+        <span class="promo-value" *ngIf="previewData().promoValue">
+          {{ previewData().promoValue }}
+        </span>
+      </div>
+
+      <div class="preview-dates" *ngIf="previewData().startDate || previewData().endDate">
+        <div class="flex align-items-center gap-2 text-sm text-500">
+          <i class="pi pi-calendar"></i>
+          <span *ngIf="previewData().startDate">
+            Desde {{ formatDate(previewData().startDate) }}
+          </span>
+          <span *ngIf="previewData().endDate">
+            hasta {{ formatDate(previewData().endDate) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="preview-cta" *ngIf="campaignForm.get('showButton')?.value">
+        <p-button
+          [label]="previewData().buttonText"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          styleClass="w-full"
+        ></p-button>
+      </div>
+    </div>
+  </div>
+</p-dialog>
+
+<p-toast></p-toast>

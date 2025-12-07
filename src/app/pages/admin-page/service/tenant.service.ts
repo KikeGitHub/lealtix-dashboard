@@ -21,4 +21,8 @@ export class TenantService {
       const encodedEmail = encodeURIComponent(email);
       return this.http.get<any>(`${this.apiUrlGetByEmail}/${encodedEmail}`);
   }
+
+  getTenantById(tenantId: number): Observable<Tenant> {
+    return this.http.get<Tenant>(`${this.apiUrl}/${tenantId}`);
+  }
 }

@@ -486,66 +486,15 @@
   </div>
 </div>
 
-<!-- Full Preview Dialog -->
-<p-dialog
+<!-- Full Preview Dialog Component -->
+<app-campaign-preview-dialog
   [(visible)]="previewDialogVisible"
-  [style]="{ width: '90vw', maxWidth: '800px' }"
-  header="Vista Previa Completa"
-  [modal]="true"
-  [dismissableMask]="true"
->
-  <div class="campaign-preview campaign-preview-large">
-    <div class="preview-image-container" *ngIf="previewData().imageUrl">
-      <img
-        [src]="previewData().imageUrl"
-        [alt]="previewData().title"
-        class="preview-main-image"
-      />
-    </div>
-
-    <div class="preview-content">
-      <h2 class="preview-title">{{ previewData().title }}</h2>
-
-      <p class="preview-subtitle" *ngIf="previewData().subtitle">
-        {{ previewData().subtitle }}
-      </p>
-
-      <p class="preview-description">
-        {{ previewData().description }}
-      </p>
-
-      <div class="preview-promo" *ngIf="previewData().promoType">
-        <p-chip
-          [label]="getPromoTypeLabel(previewData().promoType)"
-          styleClass="promo-chip"
-        ></p-chip>
-        <span class="promo-value" *ngIf="previewData().promoValue">
-          {{ previewData().promoValue }}
-        </span>
-      </div>
-
-      <div class="preview-dates" *ngIf="previewData().startDate || previewData().endDate">
-        <div class="flex align-items-center gap-2 text-sm text-500">
-          <i class="pi pi-calendar"></i>
-          <span *ngIf="previewData().startDate">
-            Desde {{ formatDate(previewData().startDate) }}
-          </span>
-          <span *ngIf="previewData().endDate">
-            hasta {{ formatDate(previewData().endDate) }}
-          </span>
-        </div>
-      </div>
-
-      <div class="preview-cta" *ngIf="campaignForm.get('showButton')?.value">
-        <p-button
-          [label]="previewData().buttonText"
-          icon="pi pi-arrow-right"
-          iconPos="right"
-          styleClass="w-full"
-        ></p-button>
-      </div>
-    </div>
-  </div>
-</p-dialog>
+  [previewData]="previewData()"
+  [showButton]="campaignForm.get('showButton')?.value || false"
+  [promoTypeOptions]="promoTypeOptions"
+  [clientName]="clientName()"
+  [clientLogo]="clientLogo()"
+  [clientSlug]="clientSlug()"
+></app-campaign-preview-dialog>
 
 <p-toast></p-toast>

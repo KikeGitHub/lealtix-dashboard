@@ -1,0 +1,133 @@
+<p-dialog
+  [(visible)]="visible"
+  [style]="{ width: '90vw', maxWidth: '900px' }"
+  header="Vista Previa Completa de la Promoción"
+  [modal]="true"
+  [dismissableMask]="true"
+  (onHide)="onClose()"
+>
+  <div class="preview-capture" #captureArea>
+    <!-- Header minimalista con marca del cliente -->
+    <div class="preview-header">
+      <a
+        [href]="getLandingUrl()"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="client-branding-link"
+      >
+        <div class="client-branding">
+          <img
+            *ngIf="clientLogo"
+            [src]="clientLogo"
+            [alt]="clientName || 'Logo del cliente'"
+            class="client-logo"
+            decoding="async"
+            crossorigin="anonymous"
+          />
+          <div *ngIf="!clientLogo" class="client-initials">
+            {{ getClientInitials() }}
+          </div>
+          <div class="client-info" *ngIf="clientName">
+            <h3 class="client-name">{{ clientName }}</h3>
+            <p class="client-tagline">Promoción especial</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Body: dos columnas (info + imagen) -->
+    <div class="preview-body">
+      <!-- Columna izquierda: información de la promoción -->
+      <div class="preview-info">
+        <!-- Título principal -->
+        <div class="promo-header">
+          <h2 class="promo-title">{{ previewData.title || 'Título de la promoción' }}</h2>
+          <p class="promo-subtitle" *ngIf="previewData.subtitle">
+            {{ previewData.subtitle }}
+          </p>
+        </div>
+
+        <!-- Descripción -->
+        <div class="promo-description-section">
+          <p class="promo-description">
+            {{ previewData.description || 'Agradece a tus nuevos clientes con una promoción de bienvenida.' }}
+          </p>
+        </div>
+
+        <!-- Oferta destacada -->
+        <div class="promo-offer" *ngIf="previewData.promoType || previewData.promoValue">
+          <div class="offer-badge" *ngIf="previewData.promoType">
+            <i class="pi pi-gift"></i>
+            <span class="offer-type">{{ getPromoTypeLabel(previewData.promoType) }}</span>
+          </div>
+          <div class="offer-value" *ngIf="previewData.promoValue">
+            <span class="value-text">{{ previewData.promoValue }}</span>
+          </div>
+        </div>
+
+        <!-- Fechas de vigencia compactas -->
+        <div class="promo-validity" *ngIf="previewData.startDate || previewData.endDate">
+          <div class="validity-compact">
+            <i class="pi pi-calendar"></i>
+            <span class="validity-text">
+              <span *ngIf="previewData.startDate">{{ formatDate(previewData.startDate) }}</span>
+              <span *ngIf="previewData.startDate && previewData.endDate"> - </span>
+              <span *ngIf="previewData.endDate">{{ formatDate(previewData.endDate) }}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Botón de acción -->
+        <div class="promo-cta" *ngIf="showButton">
+          <p-button
+            [label]="previewData.buttonText || 'Obtener mi promoción'"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            styleClass="cta-button"
+            severity="success"
+          ></p-button>
+        </div>
+      </div>
+
+      <!-- Columna derecha: imagen de la promoción -->
+      <div class="preview-image">
+        <img
+          *ngIf="previewData.imageUrl"
+          [src]="getOptimizedImageUrl(previewData.imageUrl)"
+          [alt]="previewData.title || 'Imagen de promoción'"
+          class="promo-main-image"
+          decoding="async"
+          crossorigin="anonymous"
+          (error)="onImageError($event)"
+        />
+        <div *ngIf="!previewData.imageUrl" class="no-image-placeholder">
+          <i class="pi pi-image" style="font-size: 3rem; color: #9ca3af;"></i>
+          <p>Sin imagen</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer discreto -->
+    <div class="promo-footer">
+      <div class="footer-divider"></div>
+      <p class="footer-text">
+        Promoción creada con
+        <a [href]="lealtixUrl" target="_blank" rel="noopener noreferrer" class="footer-link">
+          <strong>Lealtix</strong>
+        </a>
+      </p>
+      <p class="footer-subtext">Plataforma de fidelización para negocios</p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-2 justify-content-end">
+      <p-button
+        label="Cerrar"
+        icon="pi pi-times"
+        severity="secondary"
+        (onClick)="onClose()"
+      ></p-button>
+    </div>
+  </ng-template>
+</p-dialog>

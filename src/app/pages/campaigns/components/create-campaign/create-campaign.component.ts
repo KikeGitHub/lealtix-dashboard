@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, DestroyRef, model } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -29,6 +29,8 @@ import { PromoType } from '@/models/enums';
 import { CampaignFormModel, TemplateField, CampaignPreviewData } from '../../models/create-campaign.models';
 import { CampaignService } from '../../services/campaign.service';
 import { CampaignTemplateService } from '../../services/campaign-template.service';
+import { CampaignPreviewDialogComponent } from './campaign-dialog/campaign-preview-dialog.component';
+import { TenantService } from '@/pages/admin-page/service/tenant.service';
 
 @Component({
   selector: 'app-create-campaign',
@@ -51,7 +53,8 @@ import { CampaignTemplateService } from '../../services/campaign-template.servic
     ChipModule,
     DialogModule,
     TooltipModule,
-    ToastModule
+    ToastModule,
+    CampaignPreviewDialogComponent
   ],
   providers: [MessageService],
   templateUrl: './create-campaign.component.html',
@@ -65,15 +68,24 @@ export class CreateCampaignComponent implements OnInit {
   private campaignService = inject(CampaignService);
   private templateService = inject(CampaignTemplateService);
   private messageService = inject(MessageService);
+  private tenantService = inject(TenantService);
 
   // Signals
   loading = signal<boolean>(false);
   saving = signal<boolean>(false);
   template = signal<CampaignTemplate | null>(null);
-  previewDialogVisible = signal<boolean>(false);
+  previewDialogVisible = model<boolean>(false);
+  campaignSaved = model<boolean>(false);
   uploadedImageUrl = signal<string>('');
+  clientName = signal<string | null>(null);
+  clientLogo = signal<string | null>(null);
+  clientSlug = signal<string | null>(null);
   // Trigger to make preview computed reactive to form changes
   private formTrigger = signal<number>(0);
+
+  email: string | null = null;
+  userId: string | null = null;
+  tenantId: number | null = null;
 
   // Form
   campaignForm!: FormGroup;
@@ -136,6 +148,7 @@ export class CreateCampaignComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadTemplateIfProvided();
+    this.loadTenantData();
   }
 
   private initForm(): void {
@@ -206,6 +219,33 @@ export class CreateCampaignComponent implements OnInit {
     if (channels && channels.length > 0) {
       this.campaignForm.patchValue({ channelsText: channels.join(', ') });
     }
+  }
+
+  private loadTenantData(): void {
+    const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
+        if (userStr) {
+            try {
+                const userObj = JSON.parse(userStr);
+                if (userObj && userObj.userEmail) {
+                    this.tenantService.getTenantByEmail(String(userObj.userEmail || '').trim()).subscribe({
+                        next: (resp) => {
+                            const tenant = resp?.object;
+                            this.tenantId = tenant?.id ?? 0;
+                            this.clientName.set(tenant.nombreNegocio || 'Negocio');
+                            this.clientLogo.set(tenant.logoUrl || null);
+                            this.clientSlug.set(tenant.slug || null);
+                        },
+                        error: (err) => {
+                            console.error('Error fetching tenant:', err);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Failed to parse stored usuario:', e);
+            }
+        }
+    const businessId = this.tenantId || 1;
+
   }
 
   onImageUpload(event: any): void {
@@ -279,6 +319,7 @@ export class CreateCampaignComponent implements OnInit {
             detail: isDraft ? 'Borrador guardado correctamente' : 'Campaña creada correctamente'
           });
           this.saving.set(false);
+          this.campaignSaved.set(true); // Marcar campaña como guardada
           this.router.navigate(['/dashboard/campaigns']);
         },
         error: (error) => {

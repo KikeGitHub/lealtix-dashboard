@@ -1,0 +1,113 @@
+<div class="card">
+  <!-- Header: stacked on small screens, inline on md+ -->
+  <div class="flex flex-column md:flex-row justify-content-between align-items-center mb-4 gap-2">
+    <div class="flex-1">
+      <h2 class="m-0">Plantillas de Campañas</h2>
+    </div>
+    <div>
+      <p-button
+        label="Nueva Plantilla"
+        icon="pi pi-plus"
+        styleClass="p-button-outlined"
+        (onClick)="createNewTemplate()"
+        aria-label="Crear nueva plantilla de campaña">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Loading skeleton -->
+  <div class="grid w-full justify-content-start align-items-stretch" style="padding-left:0; margin-left:0;" *ngIf="loading()">
+    <div class="col-12 md:col-6 lg:col-4" *ngFor="let item of [1,2,3,4,5,6]">
+      <p-card class="h-full w-full">
+        <div class="p-3">
+          <p-skeleton height="2rem" class="mb-2"></p-skeleton>
+          <p-skeleton height="4rem" class="mb-3"></p-skeleton>
+          <p-skeleton height="1.5rem" width="50%" class="mb-2"></p-skeleton>
+          <p-skeleton height="3rem" width="80%"></p-skeleton>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Templates grid -->
+  <div class="grid w-full justify-content-start align-items-stretch" style="padding-left:0; margin-left:0;" *ngIf="!loading()">
+    <div class="col-12 md:col-6 lg:col-4" *ngFor="let template of templates()">
+      <p-card class="h-full w-full template-card">
+        <!-- Horizontal layout: Image on left, content on right -->
+        <div class="flex flex-row gap-3 h-full">
+          <!-- Image preview -->
+          <div class="card-image-wrapper-horizontal" [style.--bg-image]="'url(' + getOptimizedImageUrl(template.defaultImageUrl) + ')'">
+            <img
+              [src]="getOptimizedImageUrl(template.defaultImageUrl)"
+              alt="{{ template.name }}"
+              (error)="onImageError($event)"
+            />
+          </div>
+
+          <!-- Content section -->
+          <div class="flex flex-column flex-1 justify-content-between">
+            <!-- Header: Name and Category -->
+            <div class="template-header">
+              <h3 class="template-title">{{ template.name }}</h3>
+              <span class="template-category" *ngIf="template.category">{{ template.category }}</span>
+            </div>
+
+            <!-- Content: Title and Description with Chip -->
+            <div class="flex justify-content-between align-items-start gap-2 flex-1">
+              <div class="template-content">
+                <div class="content-item" *ngIf="template.defaultTitle">
+                  <span class="content-label">Título</span>
+                  <p class="content-text">{{ template.defaultTitle }}</p>
+                </div>
+
+                <div class="content-item" *ngIf="template.defaultDescription">
+                  <span class="content-label">Descripción</span>
+                  <p class="content-text line-clamp-2">{{ template.defaultDescription }}</p>
+                </div>
+              </div>
+
+              <!-- Chip aligned to the right and centered -->
+              <div class="chip-right-container">
+                <p-chip
+                  *ngIf="template.defaultPromoType"
+                  [label]="getPromoTypeLabel(template.defaultPromoType)"
+                  [style]="{'background-color': getPromoTypeColor(template.defaultPromoType), 'color': '#ffffff'}">
+                </p-chip>
+              </div>
+            </div>
+
+            <!-- Footer buttons - Always at bottom -->
+            <div class="template-footer">
+              <p-button
+                label="Usar"
+                icon="pi pi-arrow-right"
+                size="small"
+                (onClick)="useTemplate(template)"
+                aria-label="Usar esta plantilla para crear una campaña">
+              </p-button>
+              <p-button
+                icon="pi pi-pencil"
+                severity="secondary"
+                size="small"
+                (onClick)="editTemplate(template)"
+                aria-label="Editar plantilla">
+              </p-button>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="text-center py-6" *ngIf="!loading() && templates().length === 0">
+    <i class="pi pi-inbox text-6xl text-400 mb-3"></i>
+    <h3 class="text-xl font-medium mb-2">No hay plantillas disponibles</h3>
+    <p class="text-500 mb-4">Crea tu primera plantilla de campaña para comenzar.</p>
+    <p-button
+      label="Crear Plantilla"
+      icon="pi pi-plus"
+      (onClick)="createNewTemplate()">
+    </p-button>
+  </div>
+</div>

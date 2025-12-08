@@ -65,6 +65,7 @@ interface TableColumn {
 })
 export class CampaignListComponent implements OnInit {
     campaigns = signal<CampaignResponse[]>([]);
+    selectedCampaigns: CampaignResponse[] = [];
     loading = signal<boolean>(true);
     searchText = '';
     selectedStatus: string | null = null;
@@ -141,12 +142,13 @@ export class CampaignListComponent implements OnInit {
                     this.tenantId = tenant.object.id ?? 0;
                     this.businessId = this.tenantId;
                 }
+                this.loadCampaigns();
             },
             error: (error) => {
                 console.error('No tenant found:');
             }
         });
-        this.loadCampaigns();
+
     }
 
     private loadCampaigns(): void {
@@ -183,15 +185,11 @@ export class CampaignListComponent implements OnInit {
         this.router.navigate(['/dashboard/campaigns/create']);
     }
 
-    viewCampaign(campaign: CampaignResponse): void {
-        this.router.navigate(['/dashboard/campaigns', campaign.id]);
-    }
-
     editCampaign(campaign: CampaignResponse): void {
-        this.selectedCampaign.set(campaign);
-        this.isEditMode.set(true);
-        this.submitted.set(false);
-        this.campaignDialog.set(true);
+        // Navegar al componente de creación con el ID de la campaña para editarla
+        this.router.navigate(['/dashboard/campaigns/create'], {
+            queryParams: { id: campaign.id }
+        });
     }
 
     hideCampaignDialog(): void {
@@ -324,10 +322,60 @@ export class CampaignListComponent implements OnInit {
                             // Remover de la lista
                             const currentCampaigns = this.campaigns();
                             this.campaigns.set(currentCampaigns.filter((c) => c.id !== campaign.id));
+                            this.messageService.add({
+                                severity: 'success',
+                                summary: 'Éxito',
+                                detail: 'Campaña eliminada exitosamente'
+                            });
                         },
                         error: (error) => {
                             console.error('Error deleting campaign:', error);
+                            this.messageService.add({
+                                severity: 'error',
+                                summary: 'Error',
+                                detail: 'No se pudo eliminar la campaña'
+                            });
                         }
+                    });
+            }
+        });
+    }
+
+    deleteSelectedCampaigns(): void {
+        if (!this.selectedCampaigns || !this.selectedCampaigns.length) {
+            return;
+        }
+
+        const count = this.selectedCampaigns.length;
+        this.confirmationService.confirm({
+            message: `¿Estás seguro de que quieres eliminar ${count} campaña${count > 1 ? 's' : ''}?`,
+            header: 'Confirmar eliminación múltiple',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                const deletePromises = this.selectedCampaigns.map(campaign =>
+                    this.campaignService.delete(campaign.id).toPromise()
+                );
+
+                Promise.all(deletePromises)
+                    .then(() => {
+                        // Remover campañas eliminadas de la lista
+                        const currentCampaigns = this.campaigns();
+                        const selectedIds = this.selectedCampaigns.map(c => c.id);
+                        this.campaigns.set(currentCampaigns.filter(c => !selectedIds.includes(c.id)));
+                        this.selectedCampaigns = [];
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Éxito',
+                            detail: `${count} campaña${count > 1 ? 's eliminadas' : ' eliminada'} exitosamente`
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('Error deleting campaigns:', error);
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'No se pudieron eliminar todas las campañas'
+                        });
                     });
             }
         });

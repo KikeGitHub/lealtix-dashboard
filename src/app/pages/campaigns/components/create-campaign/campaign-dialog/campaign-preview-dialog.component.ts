@@ -89,15 +89,15 @@ export class CampaignPreviewDialogComponent {
    * Para usar la imagen tal como viene de la BD
    */
   getOptimizedImageUrl(imageUrl: string | undefined): string {
-    console.log('getOptimizedImageUrl - Input:', imageUrl);
+    //console.log('getOptimizedImageUrl - Input:', imageUrl);
 
     if (!imageUrl) {
-      console.warn('getOptimizedImageUrl - No imageUrl provided');
+      //console.warn('getOptimizedImageUrl - No imageUrl provided');
       return '';
     }
 
     // Retornar la URL original sin modificaciones
-    console.log('getOptimizedImageUrl - Returning original URL:', imageUrl);
+    //console.log('getOptimizedImageUrl - Returning original URL:', imageUrl);
     return imageUrl;
   }
 

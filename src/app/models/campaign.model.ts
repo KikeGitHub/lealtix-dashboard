@@ -9,12 +9,13 @@ export interface CreateCampaignRequest {
   imageUrl?: string;
   promoType?: string;
   promoValue?: string;
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: Date | string | null;
+  endDate?: Date | string | null;
   callToAction?: string;
   channels?: string[];
   segmentation?: string;
   isAutomatic?: boolean;
+  isDraft?: boolean;
 }
 
 export interface UpdateCampaignRequest {
@@ -24,13 +25,14 @@ export interface UpdateCampaignRequest {
   imageUrl?: string;
   promoType?: string;
   promoValue?: string;
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: Date | string | null;
+  endDate?: Date | string | null;
   status?: string;
   callToAction?: string;
   channels?: string[];
   segmentation?: string;
   isAutomatic?: boolean;
+  isDraft?: boolean;
 }
 
 export interface CampaignResponse {
@@ -50,6 +52,7 @@ export interface CampaignResponse {
   channels?: string[];
   segmentation?: string;
   isAutomatic?: boolean;
+  isDraft?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -71,7 +71,6 @@ export class ApiResponseMapper {
    * Mapea específicamente una respuesta de campaña
    */
   mapCampaignResponse(campaign: any): CampaignResponse {
-    debugger;
     const mapped = this.mapDateFields(campaign) as CampaignResponse;
 
     // Mapear template anidado si existe

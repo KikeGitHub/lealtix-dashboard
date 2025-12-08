@@ -7,10 +7,15 @@
         [text]="true"
         [rounded]="true"
         (onClick)="goBack()"
-        aria-label="Volver al listado"
+        ariaLabel="Volver al listado"
       ></p-button>
       <h1 class="text-3xl font-bold m-0">
-        {{ template()?.name ? 'Crear Campaña desde ' + template()?.name : 'Crear Nueva Campaña' }}
+        <ng-container *ngIf="isEditMode(); else createMode">
+          Editar Campaña: {{ campaignToEdit()?.title || 'Sin título' }}
+        </ng-container>
+        <ng-template #createMode>
+          {{ template()?.name ? 'Crear Campaña desde ' + template()?.name : 'Crear Nueva Campaña' }}
+        </ng-template>
       </h1>
     </div>
 
@@ -20,23 +25,24 @@
         icon="pi pi-eye"
         [outlined]="true"
         (onClick)="openPreview()"
-        aria-label="Vista previa ampliada"
+        ariaLabel="Vista previa ampliada"
       ></p-button>
       <p-button
+        *ngIf="!isEditMode()"
         label="Guardar como Borrador"
         icon="pi pi-save"
         severity="secondary"
         [outlined]="true"
         [loading]="saving()"
         (onClick)="saveDraft()"
-        aria-label="Guardar borrador"
+        ariaLabel="Guardar borrador"
       ></p-button>
       <p-button
-        label="Guardar"
+        [label]="isEditMode() ? 'Actualizar Campaña' : 'Guardar'"
         icon="pi pi-check"
         [loading]="saving()"
         (onClick)="save()"
-        aria-label="Guardar campaña"
+        [ariaLabel]="isEditMode() ? 'Actualizar campaña' : 'Guardar campaña'"
       ></p-button>
     </div>
   </div>
@@ -274,64 +280,6 @@
 
             <p-divider></p-divider>
 
-            <!-- Call to Action -->
-            <div class="form-section">
-              <h3 class="section-title">
-                Botón de Acción
-                <i class="pi pi-info-circle ml-2 text-500"
-                   pTooltip="Agrega un botón que dirija a tus clientes a una página específica o acción"
-                   tooltipPosition="right"></i>
-              </h3>
-
-              <div class="field mb-4">
-                <div class="flex align-items-center gap-2">
-                  <p-togglebutton
-                    formControlName="showButton"
-                    [onLabel]="'Botón Activado'"
-                    [offLabel]="'Botón Desactivado'"
-                    [onIcon]="'pi pi-check'"
-                    [offIcon]="'pi pi-times'"
-                  ></p-togglebutton>
-                  <small class="text-500">
-                    Activa esta opción si quieres incluir un botón en tu campaña (ej: "Comprar ahora", "Conocer más")
-                  </small>
-                </div>
-              </div>
-
-              <div *ngIf="campaignForm.get('showButton')?.value">
-                <div class="field">
-                  <label for="buttonText" class="font-semibold">Texto del Botón</label>
-                  <input
-                    pInputText
-                    id="buttonText"
-                    formControlName="buttonText"
-                    placeholder="Ej: Obtener promoción"
-                    class="w-full"
-                  />
-                  <small class="text-500">Usa verbos de acción: "Comprar", "Descargar", "Registrarse", "Conocer más"</small>
-                </div>
-
-                <div class="field">
-                  <label for="callToAction" class="font-semibold">
-                    URL de Destino (opcional)
-                    <i class="pi pi-info-circle ml-2 text-500"
-                       pTooltip="Página a donde llevará el botón. Si lo dejas vacío, se enviará a tu página principal"
-                       tooltipPosition="right"></i>
-                  </label>
-                  <input
-                    pInputText
-                    id="callToAction"
-                    formControlName="callToAction"
-                    placeholder="https://..."
-                    class="w-full"
-                  />
-                  <small class="text-500">Ejemplo: https://mitienda.com/promociones o https://mitienda.com/producto/123</small>
-                </div>
-              </div>
-            </div>
-
-            <p-divider></p-divider>
-
             <!-- Configuración Adicional -->
             <div class="form-section">
               <h3 class="section-title">
@@ -340,6 +288,31 @@
                    pTooltip="Define cómo y a quién llegará tu campaña"
                    tooltipPosition="right"></i>
               </h3>
+
+              <!-- Status field - prominent position -->
+              <div class="field">
+                <label for="status" class="font-semibold">
+                  Estado de la Campaña
+                  <i class="pi pi-info-circle ml-2 text-500"
+                     pTooltip="Cambia el estado de tu campaña: Borrador (en edición), Activa (visible para clientes), Inactiva (pausada), Programada (activación futura)"
+                     tooltipPosition="right"></i>
+                </label>
+                <p-select
+                  id="status"
+                  formControlName="status"
+                  [options]="statusOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Selecciona el estado"
+                  class="w-full"
+                ></p-select>
+                <small class="text-500">
+                  <span class="font-medium text-orange-600">Borrador:</span> En edición |
+                  <span class="font-medium text-green-600">Activa:</span> Visible para clientes |
+                  <span class="font-medium text-red-600">Inactiva:</span> Pausada |
+                  <span class="font-medium text-blue-600">Programada:</span> Activación programada
+                </small>
+              </div>
 
               <div class="field">
                 <label for="channels" class="font-semibold">
@@ -362,6 +335,7 @@
                   <strong>Email</strong> está activo. Próximamente: Facebook, Instagram, TikTok y X
                 </small>
               </div>
+
 
               <div class="field">
                 <label for="segmentation" class="font-semibold">
@@ -468,8 +442,8 @@
                   </div>
                 </div>
 
-                <!-- CTA Button - Only show if enabled -->
-                <div class="preview-cta" *ngIf="campaignForm.get('showButton')?.value">
+                <!-- CTA Button - Always show -->
+                <div class="preview-cta">
                   <p-button
                     [label]="previewData().buttonText"
                     icon="pi pi-arrow-right"
@@ -490,7 +464,7 @@
 <app-campaign-preview-dialog
   [(visible)]="previewDialogVisible"
   [previewData]="previewData()"
-  [showButton]="campaignForm.get('showButton')?.value || false"
+  [showButton]="true"
   [promoTypeOptions]="promoTypeOptions"
   [clientName]="clientName()"
   [clientLogo]="clientLogo()"

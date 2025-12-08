@@ -26,7 +26,6 @@ export class CampaignTemplateService {
    */
   getAll(): Observable<CampaignTemplate[]> {
     if (!this.templatesCache$) {
-        debugger;
       this.templatesCache$ = this.http.get<GenericResponse<CampaignTemplate[]>>(this.baseUrl)
         .pipe(
           map(response => {

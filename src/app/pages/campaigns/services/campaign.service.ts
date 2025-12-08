@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { CreateCampaignRequest, UpdateCampaignRequest, CampaignResponse } from '@/models/campaign.model';
 import { GenericResponse } from '@/models/generic-response.model';
 import { ApiResponseMapper } from './api-response.mapper';
@@ -22,11 +22,20 @@ export class CampaignService {
    * Crea una nueva campaña
    */
   create(req: CreateCampaignRequest): Observable<CampaignResponse> {
+    debugger;
     return this.http.post<GenericResponse<CampaignResponse>>(this.baseUrl, req)
       .pipe(
         map(response => {
           const mappedResponse = this.mapper.mapGenericResponse(response);
           return this.mapper.mapCampaignResponse(mappedResponse.object);
+        }),
+        tap({
+          next: (response: CampaignResponse) => {
+            console.log('Campaña creada exitosamente:', response);
+          },
+          error: (error: any) => {
+            console.error('Error al crear campaña:', error);
+          }
         })
       );
   }
@@ -64,7 +73,6 @@ export class CampaignService {
     return this.http.get<GenericResponse<CampaignResponse[]>>(`${this.baseUrl}/business/${businessId}`)
       .pipe(
         map(response => {
-            debugger;
           const mappedResponse = this.mapper.mapGenericResponse(response);
           return (mappedResponse.object || []).map(campaign =>
             this.mapper.mapCampaignResponse(campaign)
@@ -80,6 +88,57 @@ export class CampaignService {
     return this.http.delete<GenericResponse<void>>(`${this.baseUrl}/${id}`)
       .pipe(
         map(() => undefined)
+      );
+  }
+
+  /**
+   * Guarda una campaña como borrador
+   * Los borradores tienen validaciones más flexibles y pueden ser completados más tarde
+   */
+  saveDraft(req: CreateCampaignRequest): Observable<CampaignResponse> {
+    debugger;
+    const draftRequest = { ...req, isDraft: true };
+    return this.http.post<GenericResponse<CampaignResponse>>(`${this.baseUrl}/draft`, draftRequest)
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return this.mapper.mapCampaignResponse(mappedResponse.object);
+        }),
+        tap({
+          next: (response: CampaignResponse) => {
+            console.log('Borrador guardado exitosamente:', response);
+          },
+          error: (error: any) => {
+            console.error('Error al guardar borrador:', error);
+          }
+        })
+      );
+  }
+
+  /**
+   * Actualiza un borrador existente
+   */
+  updateDraft(id: number, req: UpdateCampaignRequest): Observable<CampaignResponse> {
+    const draftRequest = { ...req, isDraft: true };
+    return this.http.put<GenericResponse<CampaignResponse>>(`${this.baseUrl}/draft/${id}`, draftRequest)
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return this.mapper.mapCampaignResponse(mappedResponse.object);
+        })
+      );
+  }
+
+  /**
+   * Publica un borrador (lo convierte en campaña activa)
+   */
+  publishDraft(id: number): Observable<CampaignResponse> {
+    return this.http.post<GenericResponse<CampaignResponse>>(`${this.baseUrl}/draft/${id}/publish`, {})
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return this.mapper.mapCampaignResponse(mappedResponse.object);
+        })
       );
   }
 }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, signal, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, signal, OnChanges, SimpleChanges, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -430,6 +430,8 @@ export class CampaignDialogComponent implements OnInit, OnChanges {
   saving = signal<boolean>(false);
   imagePreview = signal<string>('');
 
+  private destroyRef = inject(DestroyRef);
+
   promoTypeOptions = [
     { label: 'Descuento porcentual', value: PromoType.DISCOUNT },
     { label: 'Descuento por monto', value: PromoType.AMOUNT },
@@ -513,7 +515,7 @@ export class CampaignDialogComponent implements OnInit, OnChanges {
 
   private loadTemplates(): void {
     this.campaignTemplateService.getAll()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (templates) => {
           this.templates.set(templates.filter(t => t.active !== false));
@@ -552,7 +554,7 @@ export class CampaignDialogComponent implements OnInit, OnChanges {
 
   private setupImagePreview(): void {
     this.campaignForm.get('imageUrl')?.valueChanges
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(url => {
         this.imagePreview.set(url || '');
       });

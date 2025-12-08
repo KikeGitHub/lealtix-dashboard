@@ -75,4 +75,40 @@ export class ImageService {
             reader.readAsDataURL(file);
         });
     }
+
+    /**
+     * Sube una imagen de promoción a la carpeta lealtix/promos
+     * @param file Archivo seleccionado por el usuario
+     * @param type Tipo de imagen
+     * @param tenantId ID del tenant
+     * @param promoName Nombre de la promoción
+     */
+    uploadImagePromotion(file: File, type: string, tenantId: number, promoName: string): Observable<any> {
+        return new Observable((observer) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const base64File = (reader.result as string).split(',')[1];
+                const body = {
+                    tenantId,
+                    promoName,
+                    type,
+                    base64File
+                };
+                this.http
+                    .post(`${this.baseUrl}/uploadImgPromo`, body, {
+                        headers: { 'Content-Type': 'application/json' },
+                        responseType: 'text'
+                    })
+                    .subscribe({
+                        next: (res) => {
+                            observer.next(res);
+                            observer.complete();
+                        },
+                        error: (err) => observer.error(err)
+                    });
+            };
+            reader.onerror = (err) => observer.error(err);
+            reader.readAsDataURL(file);
+        });
+    }
 }

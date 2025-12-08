@@ -4,10 +4,10 @@
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
-    "build": "ng build",
-    "build:dev": "ng build lealtix_dashboard --configuration=dev",
-    "build:local": "ng build lealtix_dashboard --configuration=local",
-    "watch": "ng build --watch --configuration development",
+        "build": "ng build",
+        "build:dev": "ng build lealtix_dashboard --configuration=dev",
+        "build:local": "ng build lealtix_dashboard --configuration=local",
+        "watch": "ng build --watch --configuration development",
         "format": "prettier --write \"**/*.{js,mjs,ts,mts,d.ts,html}\" --cache",
         "test": "ng test"
     },
@@ -25,6 +25,7 @@
         "@tailwindcss/postcss": "^4.1.11",
         "canvas-confetti": "^1.9.3",
         "chart.js": "4.4.2",
+        "html2canvas": "^1.4.1",
         "primeclt": "^0.1.5",
         "primeicons": "^7.0.0",
         "primeng": "^20",

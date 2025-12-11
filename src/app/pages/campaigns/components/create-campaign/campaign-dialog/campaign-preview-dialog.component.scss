@@ -121,11 +121,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  background: white;
   padding: 20px;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   height: 100%;
+  border-radius: 12px;
 }
 
 .no-image-placeholder {
@@ -160,8 +161,9 @@
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
+  background: white;
 }
 
 .promo-header {

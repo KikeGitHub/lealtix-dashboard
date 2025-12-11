@@ -131,9 +131,7 @@ export class CreateCampaignComponent implements OnInit {
   // Status options for campaign management
   statusOptions = [
     { label: 'Borrador', value: 'DRAFT' },
-    { label: 'Activa', value: 'ACTIVE' },
-    { label: 'Inactiva', value: 'INACTIVE' },
-    { label: 'Programada', value: 'SCHEDULED' }
+    { label: 'Activa', value: 'ACTIVE' }
   ];
 
   // Distribution channels: Email enabled by default, others shown but disabled

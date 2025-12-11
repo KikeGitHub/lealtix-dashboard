@@ -7,116 +7,137 @@
   (onHide)="onClose()"
 >
   <div class="preview-capture" #captureArea>
-    <!-- Header minimalista con marca del cliente -->
-    <div class="preview-header">
-      <a
-        [href]="getLandingUrl()"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="client-branding-link"
-      >
-        <div class="client-branding">
-          <img
-            *ngIf="clientLogo"
-            [src]="clientLogo"
-            [alt]="clientName || 'Logo del cliente'"
-            class="client-logo"
-            decoding="async"
-            crossorigin="anonymous"
-          />
-          <div *ngIf="!clientLogo" class="client-initials">
-            {{ getClientInitials() }}
-          </div>
-          <div class="client-info" *ngIf="clientName">
-            <h3 class="client-name">{{ clientName }}</h3>
-            <p class="client-tagline">Promoción especial</p>
-          </div>
-        </div>
-      </a>
-    </div>
-
-    <!-- Body: dos columnas (info + imagen) -->
-    <div class="preview-body">
-      <!-- Columna izquierda: información de la promoción -->
-      <div class="preview-info">
-        <!-- Título principal -->
-        <div class="promo-header">
-          <h2 class="promo-title">{{ previewData.title || 'Título de la promoción' }}</h2>
-          <p class="promo-subtitle" *ngIf="previewData.subtitle">
-            {{ previewData.subtitle }}
-          </p>
-        </div>
-
-        <!-- Descripción -->
-        <div class="promo-description-section">
-          <p class="promo-description">
-            {{ previewData.description || 'Agradece a tus nuevos clientes con una promoción de bienvenida.' }}
-          </p>
-        </div>
-
-        <!-- Oferta destacada -->
-        <div class="promo-offer" *ngIf="previewData.promoType || previewData.promoValue">
-          <div class="offer-badge" *ngIf="previewData.promoType">
-            <i class="pi pi-gift"></i>
-            <span class="offer-type">{{ getPromoTypeLabel(previewData.promoType) }}</span>
-          </div>
-          <div class="offer-value" *ngIf="previewData.promoValue">
-            <span class="value-text">{{ previewData.promoValue }}</span>
-          </div>
-        </div>
-
-        <!-- Fechas de vigencia compactas -->
-        <div class="promo-validity" *ngIf="previewData.startDate || previewData.endDate">
-          <div class="validity-compact">
-            <i class="pi pi-calendar"></i>
-            <span class="validity-text">
-              <span *ngIf="previewData.startDate">{{ formatDate(previewData.startDate) }}</span>
-              <span *ngIf="previewData.startDate && previewData.endDate"> - </span>
-              <span *ngIf="previewData.endDate">{{ formatDate(previewData.endDate) }}</span>
-            </span>
-          </div>
-        </div>
-
-        <!-- Botón de acción -->
-        <div class="promo-cta" *ngIf="showButton">
-          <p-button
-            [label]="previewData.buttonText || 'Obtener mi promoción'"
-            icon="pi pi-arrow-right"
-            iconPos="right"
-            styleClass="cta-button"
-            severity="success"
-          ></p-button>
+    <!-- Diseño moderno tipo imagen promocional -->
+    <div class="promo-card">
+      <!-- Fondo decorativo con gradientes -->
+      <div class="promo-background">
+        <div class="gradient-overlay"></div>
+        <div class="geometric-patterns">
+          <div class="pattern-circle pattern-1"></div>
+          <div class="pattern-circle pattern-2"></div>
+          <div class="pattern-circle pattern-3"></div>
         </div>
       </div>
 
-      <!-- Columna derecha: imagen de la promoción -->
-      <div class="preview-image">
-        <img
-          *ngIf="previewData.imageUrl"
-          [src]="getOptimizedImageUrl(previewData.imageUrl)"
-          [alt]="previewData.title || 'Imagen de promoción'"
-          class="promo-main-image"
-          decoding="async"
-          crossorigin="anonymous"
-          (error)="onImageError($event)"
-        />
-        <div *ngIf="!previewData.imageUrl" class="no-image-placeholder">
-          <i class="pi pi-image" style="font-size: 3rem; color: #9ca3af;"></i>
-          <p>Sin imagen</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer discreto -->
-    <div class="promo-footer">
-      <div class="footer-divider"></div>
-      <p class="footer-text">
-        Promoción creada con
-        <a [href]="lealtixUrl" target="_blank" rel="noopener noreferrer" class="footer-link">
-          <strong>Lealtix</strong>
+      <!-- Header con branding del cliente -->
+      <header class="promo-header-modern">
+        <a
+          [href]="getLandingUrl()"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="client-branding-link-modern"
+        >
+          <div class="client-branding-compact">
+            <div class="client-avatar">
+              <img
+                *ngIf="clientLogo"
+                [src]="clientLogo"
+                [alt]="clientName || 'Logo del cliente'"
+                class="client-logo-modern"
+                decoding="async"
+                crossorigin="anonymous"
+              />
+              <div *ngIf="!clientLogo" class="client-initials-modern">
+                {{ getClientInitials() }}
+              </div>
+            </div>
+            <div class="client-info-compact" *ngIf="clientName">
+              <h4 class="client-name-modern">{{ clientName }}</h4>
+              <span class="promo-badge">PROMOCIÓN ESPECIAL</span>
+            </div>
+          </div>
         </a>
-      </p>
-      <p class="footer-subtext">Plataforma de fidelización para negocios</p>
+      </header>
+
+      <!-- Contenido principal -->
+      <main class="promo-content-main">
+        <!-- Sección de imagen destacada -->
+        <section class="promo-visual-section" *ngIf="previewData.imageUrl">
+          <div class="image-container-modern">
+            <img
+              [src]="getOptimizedImageUrl(previewData.imageUrl)"
+              [alt]="previewData.title || 'Imagen de promoción'"
+              class="promo-hero-image"
+              decoding="async"
+              crossorigin="anonymous"
+              (error)="onImageError($event)"
+            />
+            <div class="image-overlay"></div>
+          </div>
+        </section>
+
+        <!-- Sección de contenido de texto -->
+        <section class="promo-content-section">
+          <!-- Título y subtítulo -->
+          <div class="title-section">
+            <h1 class="promo-title-modern">
+              {{ previewData.title || 'Oferta Especial' }}
+            </h1>
+            <p class="promo-subtitle-modern" *ngIf="previewData.subtitle">
+              {{ previewData.subtitle }}
+            </p>
+          </div>
+
+          <!-- Valor de la oferta destacado -->
+          <div class="offer-highlight" *ngIf="previewData.promoValue">
+            <div class="offer-value-modern">
+              <span class="discount-text">{{ previewData.promoValue }}</span>
+              <span class="offer-type-text" *ngIf="previewData.promoType">
+                {{ getPromoTypeLabel(previewData.promoType) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="description-section">
+            <p class="promo-description-modern">
+              {{ previewData.description || 'No te pierdas esta increíble oportunidad. Oferta por tiempo limitado.' }}
+            </p>
+          </div>
+
+          <!-- Información temporal -->
+          <div class="time-info" *ngIf="previewData.startDate || previewData.endDate">
+            <div class="validity-modern">
+              <i class="pi pi-clock time-icon"></i>
+              <span class="validity-text-modern">
+                <span *ngIf="previewData.startDate">Desde {{ formatDate(previewData.startDate) }}</span>
+                <span *ngIf="previewData.startDate && previewData.endDate"> • </span>
+                <span *ngIf="previewData.endDate">Hasta {{ formatDate(previewData.endDate) }}</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Call to Action -->
+          <div class="cta-section" *ngIf="showButton">
+            <p-button
+              [label]="previewData.buttonText || 'OBTENER AHORA'"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              styleClass="cta-button-modern"
+            ></p-button>
+          </div>
+        </section>
+
+        <!-- Placeholder cuando no hay imagen -->
+        <section class="no-image-section" *ngIf="!previewData.imageUrl">
+          <div class="no-image-placeholder-modern">
+            <div class="placeholder-icon">
+              <i class="pi pi-image"></i>
+            </div>
+            <p class="placeholder-text">Vista previa de tu promoción</p>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer con branding Lealtix -->
+      <footer class="promo-footer-modern">
+        <div class="footer-content">
+          <span class="powered-text">Creado con</span>
+          <a [href]="lealtixUrl" target="_blank" rel="noopener noreferrer" class="lealtix-brand">
+            <strong>Lealtix</strong>
+          </a>
+        </div>
+      </footer>
     </div>
   </div>
 

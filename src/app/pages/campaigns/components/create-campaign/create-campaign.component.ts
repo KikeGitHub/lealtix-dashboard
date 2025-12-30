@@ -27,9 +27,11 @@ import { CampaignTemplate } from '@/models/campaign-template.model';
 import { CreateCampaignRequest } from '@/models/campaign.model';
 import { PromoType } from '@/models/enums';
 import { CampaignFormModel, TemplateField, CampaignPreviewData } from '../../models/create-campaign.models';
+import { RewardResponse } from '../../models/reward.model';
 import { CampaignService } from '../../services/campaign.service';
 import { CampaignTemplateService } from '../../services/campaign-template.service';
 import { CampaignPreviewDialogComponent } from './campaign-dialog/campaign-preview-dialog.component';
+import { RewardFormComponent } from '../reward-form/reward-form.component';
 import { TenantService } from '@/pages/admin-page/service/tenant.service';
 import { ImageService } from '@/pages/service/image.service';
 
@@ -55,7 +57,8 @@ import { ImageService } from '@/pages/service/image.service';
     DialogModule,
     TooltipModule,
     ToastModule,
-    CampaignPreviewDialogComponent
+    CampaignPreviewDialogComponent,
+    RewardFormComponent
   ],
   providers: [MessageService],
   templateUrl: './create-campaign.component.html',
@@ -85,6 +88,8 @@ export class CreateCampaignComponent implements OnInit {
   // Edit mode signals
   isEditMode = signal<boolean>(false);
   campaignToEdit = signal<any>(null);
+  currentReward = signal<RewardResponse | null>(null);
+  loadingReward = signal<boolean>(false);
   campaignId = signal<number | null>(null);
   // Trigger to make preview computed reactive to form changes
   private formTrigger = signal<number>(0);
@@ -131,9 +136,7 @@ export class CreateCampaignComponent implements OnInit {
   // Status options for campaign management
   statusOptions = [
     { label: 'Borrador', value: 'DRAFT' },
-    { label: 'Activa', value: 'ACTIVE' },
-    { label: 'Inactiva', value: 'INACTIVE' },
-    { label: 'Programada', value: 'SCHEDULED' }
+    { label: 'Activa', value: 'ACTIVE' }
   ];
 
   // Distribution channels: Email enabled by default, others shown but disabled
@@ -185,8 +188,16 @@ export class CreateCampaignComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (campaign) => {
+          // Guardar la campaña en la señal
           this.campaignToEdit.set(campaign);
+
+          // Poblar el formulario con los datos de la campaña
           this.populateFormWithCampaign(campaign);
+
+          // Cargar el reward de la campaña si existe
+          this.loadCampaignReward(id);
+
+          // Finalizar la carga
           this.loading.set(false);
         },
         error: (error) => {
@@ -199,6 +210,27 @@ export class CreateCampaignComponent implements OnInit {
           this.loading.set(false);
           // Redirect back to campaigns list if campaign not found
           this.router.navigate(['/dashboard/campaigns']);
+        }
+      });
+  }
+
+  private loadCampaignReward(campaignId: number): void {
+    this.loadingReward.set(true);
+
+    this.campaignService.getRewardByCampaign(campaignId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (reward) => {
+          this.currentReward.set(reward);
+          this.loadingReward.set(false);
+        },
+        error: (error) => {
+          // No mostrar error si simplemente no existe el reward
+          if (error.status !== 404) {
+            console.error('Error loading campaign reward:', error);
+          }
+          this.currentReward.set(null);
+          this.loadingReward.set(false);
         }
       });
   }
@@ -223,13 +255,13 @@ export class CreateCampaignComponent implements OnInit {
           segmentationValues = [value];
         }
       }
-    }    this.campaignForm.patchValue({
+    }
+
+    this.campaignForm.patchValue({
       title: campaign.title || '',
       subtitle: campaign.subtitle || '',
       description: campaign.description || '',
       imageUrl: campaign.imageUrl || '',
-      promoType: campaign.promoType || '',
-      promoValue: campaign.promoValue || '',
       startDate: startDate,
       endDate: endDate,
       callToAction: campaign.callToAction || '', // URL opcional
@@ -493,8 +525,6 @@ export class CreateCampaignComponent implements OnInit {
       subtitle: formValue.subtitle,
       description: formValue.description,
       imageUrl: this.uploadedImageUrl() || formValue.imageUrl,
-      promoType: formValue.promoType,
-      promoValue: formValue.promoValue,
       startDate: this.formatDateForBackend(formValue.startDate),
       endDate: this.formatDateForBackend(formValue.endDate),
       callToAction: formValue.callToAction || 'Obtener promoción', // Texto fijo del botón
@@ -577,6 +607,35 @@ export class CreateCampaignComponent implements OnInit {
     if (value) {
       const channels = value.split(',').map((c: string) => c.trim()).filter((c: string) => c);
       this.campaignForm.patchValue({ channels }, { emitEvent: false });
+    }
+  }
+
+  onRewardSaved(reward: RewardResponse): void {
+    this.currentReward.set(reward);
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Beneficio guardado',
+      detail: 'El beneficio se ha guardado correctamente'
+    });
+  }
+
+  getRewardSummary(): string {
+    const reward = this.currentReward();
+    if (!reward) return 'No configurado';
+
+    switch (reward.rewardType) {
+      case 'PERCENT_DISCOUNT':
+        return `Descuento ${reward.numericValue}%`;
+      case 'FIXED_AMOUNT':
+        return `Descuento $${reward.numericValue}`;
+      case 'FREE_PRODUCT':
+        return `Producto Gratis (ID ${reward.productId})`;
+      case 'BUY_X_GET_Y':
+        return `Compra ${reward.buyQuantity} lleva ${reward.freeQuantity} gratis`;
+      case 'CUSTOM':
+        return reward.description || 'Beneficio personalizado';
+      default:
+        return 'Beneficio configurado';
     }
   }
 

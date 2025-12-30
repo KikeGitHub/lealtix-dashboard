@@ -177,51 +177,37 @@
 
             <p-divider></p-divider>
 
-            <!-- Promoción -->
+            <!-- Configuración del Beneficio (Reward) -->
             <div class="form-section">
               <h3 class="section-title">
-                Detalles de la Promoción
+                Configuración del Beneficio
                 <i class="pi pi-info-circle ml-2 text-500"
-                   pTooltip="Define el tipo y valor de tu oferta. Esto ayuda a categorizar y medir resultados"
+                   pTooltip="Define el tipo y valor exacto del beneficio que recibirán tus clientes"
                    tooltipPosition="right"></i>
               </h3>
 
-              <div class="grid">
-                <div class="col-12 md:col-6">
-                  <div class="field">
-                    <label for="promoType" class="font-semibold">Tipo de Promoción</label>
-                    <p-select
-                      id="promoType"
-                      formControlName="promoType"
-                      [options]="promoTypeOptions"
-                      placeholder="Selecciona un tipo"
-                      class="w-full"
-                      optionLabel="label"
-                      optionValue="value"
-                    ></p-select>
-                    <small class="text-500">Ayuda a clasificar tu campaña internamente</small>
-                  </div>
-                </div>
-
-                <div class="col-12 md:col-6">
-                  <div class="field">
-                    <label for="promoValue" class="font-semibold">
-                      Valor de la Promoción
-                      <i class="pi pi-info-circle ml-2 text-500"
-                         pTooltip="Ejemplo: 20% de descuento, $500 pesos, 2x1, etc."
-                         tooltipPosition="right"></i>
-                    </label>
-                    <input
-                      pInputText
-                      id="promoValue"
-                      formControlName="promoValue"
-                      placeholder="Ej: 20%, $500, 2x1"
-                      class="w-full"
-                    />
-                    <small class="text-500">El beneficio específico que ofreces</small>
+              <!-- Resumen del beneficio actual -->
+              <div class="field mb-4" *ngIf="isEditMode()">
+                <div class="flex align-items-center justify-content-between p-3 border-round surface-border" style="border: 1px solid var(--surface-border)">
+                  <div class="flex align-items-center gap-3">
+                    <i class="pi pi-gift text-3xl text-primary"></i>
+                    <div>
+                      <p class="font-semibold m-0 mb-1">Beneficio Actual</p>
+                      <p class="text-500 m-0" *ngIf="!loadingReward()">{{ getRewardSummary() }}</p>
+                      <p class="text-500 m-0" *ngIf="loadingReward()">
+                        <i class="pi pi-spin pi-spinner"></i> Cargando...
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <!-- Componente de formulario de reward -->
+              <app-reward-form
+                [campaignId]="campaignId() ?? undefined"
+                [existingReward]="currentReward() ?? undefined"
+                (saved)="onRewardSaved($event)"
+              ></app-reward-form>
             </div>
 
             <p-divider></p-divider>
@@ -294,7 +280,7 @@
                 <label for="status" class="font-semibold">
                   Estado de la Campaña
                   <i class="pi pi-info-circle ml-2 text-500"
-                     pTooltip="Cambia el estado de tu campaña: Borrador (en edición), Activa (visible para clientes), Inactiva (pausada), Programada (activación futura)"
+                     pTooltip="Cambia el estado de tu campaña: Borrador (en edición), Activa (visible para clientes)"
                      tooltipPosition="right"></i>
                 </label>
                 <p-select
@@ -308,9 +294,7 @@
                 ></p-select>
                 <small class="text-500">
                   <span class="font-medium text-orange-600">Borrador:</span> En edición |
-                  <span class="font-medium text-green-600">Activa:</span> Visible para clientes |
-                  <span class="font-medium text-red-600">Inactiva:</span> Pausada |
-                  <span class="font-medium text-blue-600">Programada:</span> Activación programada
+                  <span class="font-medium text-green-600">Activa:</span> Visible para clientes
                 </small>
               </div>
 

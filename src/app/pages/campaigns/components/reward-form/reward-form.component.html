@@ -1,0 +1,165 @@
+<div class="reward-form-container">
+  <form [formGroup]="rewardForm" (ngSubmit)="onSubmit()">
+    <div class="form-section">
+      <!-- Tipo de Reward -->
+      <div class="field">
+        <label for="rewardType" class="font-semibold">
+          Tipo de beneficio <span class="text-red-500">*</span>
+        </label>
+        <p-select
+          id="rewardType"
+          formControlName="rewardType"
+          [options]="rewardTypes"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione el tipo de beneficio"
+          class="w-full"
+          [styleClass]="rewardForm.get('rewardType')?.invalid && rewardForm.get('rewardType')?.touched ? 'ng-invalid ng-dirty' : ''"
+        ></p-select>
+        <small class="p-error" *ngIf="rewardForm.get('rewardType')?.invalid && rewardForm.get('rewardType')?.touched">
+          Este campo es requerido
+        </small>
+      </div>
+
+      <!-- Valor Numérico (para PERCENT_DISCOUNT y FIXED_AMOUNT) -->
+      <div class="field" *ngIf="showNumericValue">
+        <label for="numericValue" class="font-semibold">
+          {{ numericValueLabel }} <span class="text-red-500">*</span>
+        </label>
+        <p-inputnumber
+          id="numericValue"
+          formControlName="numericValue"
+          class="w-full"
+          [min]="0"
+          [max]="selectedRewardType === 'PERCENT_DISCOUNT' ? 100 : 999999"
+          [suffix]="selectedRewardType === 'PERCENT_DISCOUNT' ? '%' : ''"
+          [prefix]="selectedRewardType === 'FIXED_AMOUNT' ? '$' : ''"
+          [styleClass]="rewardForm.get('numericValue')?.invalid && rewardForm.get('numericValue')?.touched ? 'ng-invalid ng-dirty' : ''"
+        ></p-inputnumber>
+        <small class="p-error" *ngIf="rewardForm.get('numericValue')?.invalid && rewardForm.get('numericValue')?.touched">
+          Este campo es requerido
+        </small>
+      </div>
+
+      <!-- ID de Producto (para FREE_PRODUCT) -->
+      <div class="field" *ngIf="showProductId">
+        <label for="productId" class="font-semibold">
+          ID del producto <span class="text-red-500">*</span>
+        </label>
+        <p-inputnumber
+          id="productId"
+          formControlName="productId"
+          class="w-full"
+          [min]="1"
+          [useGrouping]="false"
+          [styleClass]="rewardForm.get('productId')?.invalid && rewardForm.get('productId')?.touched ? 'ng-invalid ng-dirty' : ''"
+        ></p-inputnumber>
+        <small class="p-error" *ngIf="rewardForm.get('productId')?.invalid && rewardForm.get('productId')?.touched">
+          Este campo es requerido
+        </small>
+      </div>
+
+      <!-- Cantidades para BUY_X_GET_Y -->
+      <div class="field" *ngIf="showBuyGetQuantities">
+        <label for="buyQuantity" class="font-semibold">
+          Cantidad a comprar <span class="text-red-500">*</span>
+        </label>
+        <p-inputnumber
+          id="buyQuantity"
+          formControlName="buyQuantity"
+          class="w-full"
+          [min]="1"
+          [useGrouping]="false"
+          [styleClass]="rewardForm.get('buyQuantity')?.invalid && rewardForm.get('buyQuantity')?.touched ? 'ng-invalid ng-dirty' : ''"
+        ></p-inputnumber>
+        <small class="p-error" *ngIf="rewardForm.get('buyQuantity')?.invalid && rewardForm.get('buyQuantity')?.touched">
+          Este campo es requerido
+        </small>
+      </div>
+
+      <div class="field" *ngIf="showBuyGetQuantities">
+        <label for="freeQuantity" class="font-semibold">
+          Cantidad gratis <span class="text-red-500">*</span>
+        </label>
+        <p-inputnumber
+          id="freeQuantity"
+          formControlName="freeQuantity"
+          class="w-full"
+          [min]="1"
+          [useGrouping]="false"
+          [styleClass]="rewardForm.get('freeQuantity')?.invalid && rewardForm.get('freeQuantity')?.touched ? 'ng-invalid ng-dirty' : ''"
+        ></p-inputnumber>
+        <small class="p-error" *ngIf="rewardForm.get('freeQuantity')?.invalid && rewardForm.get('freeQuantity')?.touched">
+          Este campo es requerido
+        </small>
+      </div>
+
+      <!-- Descripción (para CUSTOM y opcional para otros) -->
+      <div class="field" *ngIf="showDescription || selectedRewardType">
+        <label for="description" class="font-semibold">
+          Descripción {{ showDescription ? '' : '(opcional)' }}
+          <span class="text-red-500" *ngIf="showDescription">*</span>
+        </label>
+        <textarea
+          pTextarea
+          id="description"
+          formControlName="description"
+          rows="3"
+          class="w-full"
+          placeholder="Descripción del beneficio"
+          [class.ng-invalid]="rewardForm.get('description')?.invalid && rewardForm.get('description')?.touched"
+          [class.ng-dirty]="rewardForm.get('description')?.invalid && rewardForm.get('description')?.touched"
+        ></textarea>
+        <small class="p-error" *ngIf="rewardForm.get('description')?.invalid && rewardForm.get('description')?.touched">
+          Este campo es requerido
+        </small>
+      </div>
+
+      <!-- Campos opcionales -->
+      <div class="field" *ngIf="selectedRewardType">
+        <label for="minPurchaseAmount" class="font-semibold">
+          Monto mínimo de compra (opcional)
+        </label>
+        <p-inputnumber
+          id="minPurchaseAmount"
+          formControlName="minPurchaseAmount"
+          class="w-full"
+          [min]="0"
+          prefix="$"
+          placeholder="0.00"
+        ></p-inputnumber>
+      </div>
+
+      <div class="field" *ngIf="selectedRewardType">
+        <label for="usageLimit" class="font-semibold">
+          Límite de uso (opcional)
+        </label>
+        <p-inputnumber
+          id="usageLimit"
+          formControlName="usageLimit"
+          class="w-full"
+          [min]="1"
+          [useGrouping]="false"
+          placeholder="Sin límite"
+        ></p-inputnumber>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex gap-2 justify-content-end mt-4">
+        <p-button
+          label="Cancelar"
+          severity="secondary"
+          [text]="true"
+          (onClick)="onCancel()"
+          [disabled]="isSubmitting"
+        ></p-button>
+        <p-button
+          [label]="isEditMode ? 'Actualizar Beneficio' : 'Guardar Beneficio'"
+          type="submit"
+          [loading]="isSubmitting"
+          [disabled]="rewardForm.invalid"
+        ></p-button>
+      </div>
+    </div>
+  </form>
+</div>

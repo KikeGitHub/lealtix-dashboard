@@ -56,3 +56,15 @@ export interface CampaignResponse {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface CampaignValidationResult {
+  campaignId: number;
+  configComplete: boolean;
+  missingItems: string[];
+  severity: 'OK' | 'ACTION_REQUIRED';
+}
+
+export interface CampaignWithValidation {
+  campaign: CampaignResponse;
+  validation: CampaignValidationResult;
+}

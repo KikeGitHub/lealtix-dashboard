@@ -6,6 +6,15 @@
             [disabled]="!selectedCampaigns || !selectedCampaigns.length" />
     </ng-template>
     <ng-template #end>
+        <p-button
+            [label]="showOnlyIncomplete ? 'Ver Todas' : 'Solo Incompletas'"
+            [icon]="showOnlyIncomplete ? 'pi pi-eye' : 'pi pi-filter'"
+            [badge]="getIncompleteCount().toString()"
+            [outlined]="!showOnlyIncomplete"
+            severity="contrast"
+            class="mr-2"
+            (onClick)="toggleIncompleteFilter()"
+            aria-label="Filtrar campañas incompletas" />
         <p-button icon="pi pi-refresh" severity="secondary" (onClick)="refreshData()" aria-label="Refrescar datos" />
     </ng-template>
 </p-toolbar>
@@ -32,46 +41,62 @@
             <th style="min-width: 10rem">Acciones</th>
         </tr>
     </ng-template>
-    <ng-template pTemplate="body" let-campaign>
+    <ng-template pTemplate="body" let-item>
         <tr>
             <td style="width: 3rem">
-                <p-tableCheckbox [value]="campaign" />
+                <p-tableCheckbox [value]="item.campaign" />
             </td>
             <td style="min-width: 14rem">
-                <div class="flex flex-column gap-1">
-                    <span class="font-semibold text-900 line-height-3 text-base">{{ campaign.title }}</span>
-                    <small class="text-600 line-height-2 font-normal" *ngIf="campaign.subtitle">{{ campaign.subtitle }}</small>
+                <div class="flex flex-column gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="font-semibold text-900 line-height-3 text-base">{{ item.campaign.title }}</span>
+                        <!-- Badge de validación -->
+                        <span
+                            class="validation-badge"
+                            [ngClass]="{
+                                'badge-complete': item.validation.configComplete,
+                                'badge-incomplete': !item.validation.configComplete
+                            }"
+                            [pTooltip]="getTooltipMessage(item.validation)"
+                            tooltipPosition="top">
+                            <i [class]="item.validation.configComplete ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'"></i>
+                            <span class="badge-text">
+                                {{ item.validation.configComplete ? 'Completa' : item.validation.missingItems.length + ' pendiente(s)' }}
+                            </span>
+                        </span>
+                    </div>
+                    <small class="text-600 line-height-2 font-normal" *ngIf="item.campaign.subtitle">{{ item.campaign.subtitle }}</small>
                 </div>
             </td>
             <td style="min-width: 8rem">
-                <p-chip [label]="campaign.promoType || 'N/A'" styleClass="p-chip-outlined" size="small"> </p-chip>
+                <p-chip [label]="item.campaign.template?.defaultPromoType || 'N/A'" styleClass="p-chip-outlined" size="small"> </p-chip>
             </td>
             <td style="min-width: 6rem">
-                <p-chip [label]="getStatusLabel(campaign.status)" [style]="getStatusStyle(campaign.status)" size="small"> </p-chip>
+                <p-chip [label]="getStatusLabel(item.campaign.status)" [style]="getStatusStyle(item.campaign.status)" size="small"> </p-chip>
             </td>
             <td style="min-width: 10rem">
-                <div class="flex flex-column text-sm" *ngIf="campaign.startDate || campaign.endDate">
-                    <span *ngIf="campaign.startDate" class="text-700">
+                <div class="flex flex-column text-sm" *ngIf="item.campaign.startDate || item.campaign.endDate">
+                    <span *ngIf="item.campaign.startDate" class="text-700">
                         <i class="pi pi-calendar mr-1 text-xs"></i>
-                        {{ campaign.startDate | date: 'dd/MM/yy' }}
+                        {{ item.campaign.startDate | date: 'dd/MM/yy' }}
                     </span>
-                    <span *ngIf="campaign.endDate" class="text-500 text-xs">
-                        hasta {{ campaign.endDate | date: 'dd/MM/yy' }}
+                    <span *ngIf="item.campaign.endDate" class="text-500 text-xs">
+                        hasta {{ item.campaign.endDate | date: 'dd/MM/yy' }}
                     </span>
                 </div>
-                <span *ngIf="!campaign.startDate && !campaign.endDate" class="text-500">-</span>
+                <span *ngIf="!item.campaign.startDate && !item.campaign.endDate" class="text-500">-</span>
             </td>
             <td style="min-width: 10rem">
-                <div class="flex flex-wrap gap-1" *ngIf="campaign.channels?.length">
-                    <p-chip *ngFor="let channel of campaign.channels.slice(0, 2)" [label]="channel" size="small" styleClass="p-chip-outlined text-xs"> </p-chip>
-                    <span *ngIf="campaign.channels.length > 2" class="text-xs text-500"> +{{ campaign.channels.length - 2 }} </span>
+                <div class="flex flex-wrap gap-1" *ngIf="item.campaign.channels?.length">
+                    <p-chip *ngFor="let channel of item.campaign.channels.slice(0, 2)" [label]="channel" size="small" styleClass="p-chip-outlined text-xs"> </p-chip>
+                    <span *ngIf="item.campaign.channels.length > 2" class="text-xs text-500"> +{{ item.campaign.channels.length - 2 }} </span>
                 </div>
-                <span *ngIf="!campaign.channels?.length" class="text-500">-</span>
+                <span *ngIf="!item.campaign.channels?.length" class="text-500">-</span>
             </td>
             <td>
                 <div class="flex gap-1">
-                    <p-button icon="pi pi-pencil" size="small" [rounded]="true" [outlined]="true" severity="secondary" (onClick)="editCampaign(campaign)" aria-label="Editar campaña" />
-                    <p-button icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="deleteCampaign(campaign)" aria-label="Eliminar campaña" />
+                    <p-button icon="pi pi-pencil" size="small" [rounded]="true" [outlined]="true" severity="secondary" (onClick)="editCampaign(item.campaign)" aria-label="Editar campaña" />
+                    <p-button icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="deleteCampaign(item.campaign)" aria-label="Eliminar campaña" />
                 </div>
             </td>
         </tr>

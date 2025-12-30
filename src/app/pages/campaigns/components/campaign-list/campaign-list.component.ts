@@ -14,8 +14,9 @@ import { SelectModule } from 'primeng/select';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { CampaignResponse, CreateCampaignRequest, UpdateCampaignRequest } from '@/models/campaign.model';
+import { CampaignResponse, CreateCampaignRequest, UpdateCampaignRequest, CampaignWithValidation, CampaignValidationResult } from '@/models/campaign.model';
 import { CampaignStatus } from '@/models/enums';
 import { CampaignService } from '../../services/campaign.service';
 import { TenantService } from '@/pages/admin-page/service/tenant.service';
@@ -43,6 +44,7 @@ interface TableColumn {
         InputIconModule,
         SelectModule,
         ToastModule,
+        TooltipModule,
         CampaignDialogComponent
     ],
     providers: [ConfirmationService, MessageService],
@@ -60,15 +62,73 @@ interface TableColumn {
             .w-200 {
                 width: 200px;
             }
+
+            /* Estilos para badges de validación */
+            .validation-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.375rem;
+                padding: 0.25rem 0.625rem;
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                white-space: nowrap;
+                transition: all 0.2s ease;
+            }
+
+            .validation-badge i {
+                font-size: 0.875rem;
+            }
+
+            .badge-text {
+                line-height: 1;
+            }
+
+            /* Badge completa - Verde */
+            .badge-complete {
+                background-color: #10b981;
+                color: white;
+            }
+
+            .badge-complete:hover {
+                background-color: #059669;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+            }
+
+            /* Badge incompleta - Naranja/Advertencia */
+            .badge-incomplete {
+                background-color: #f59e0b;
+                color: white;
+            }
+
+            .badge-incomplete:hover {
+                background-color: #d97706;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+            }
+
+            /* Estilos para tooltip personalizado */
+            ::ng-deep .p-tooltip {
+                max-width: 300px;
+            }
+
+            ::ng-deep .p-tooltip .p-tooltip-text {
+                white-space: pre-line;
+                line-height: 1.5;
+                font-size: 0.875rem;
+            }
         `
     ]
 })
 export class CampaignListComponent implements OnInit {
     campaigns = signal<CampaignResponse[]>([]);
+    campaignsWithValidation = signal<CampaignWithValidation[]>([]);
     selectedCampaigns: CampaignResponse[] = [];
     loading = signal<boolean>(true);
     searchText = '';
     selectedStatus: string | null = null;
+    showOnlyIncomplete = false;
     email: string = '';
     userId: number = 0;
     tenantId: number = 0;
@@ -99,18 +159,35 @@ export class CampaignListComponent implements OnInit {
     ];
 
     filteredCampaigns = computed(() => {
-        let filtered = this.campaigns();
+        let filtered = this.campaignsWithValidation();
 
         // Filter by search text
         if (this.searchText) {
             const search = this.searchText.toLowerCase();
-            filtered = filtered.filter((campaign) => campaign.title.toLowerCase().includes(search) || campaign.subtitle?.toLowerCase().includes(search) || campaign.description?.toLowerCase().includes(search));
+            filtered = filtered.filter((item) =>
+                item.campaign.title.toLowerCase().includes(search) ||
+                item.campaign.subtitle?.toLowerCase().includes(search) ||
+                item.campaign.description?.toLowerCase().includes(search)
+            );
         }
 
         // Filter by status
         if (this.selectedStatus) {
-            filtered = filtered.filter((campaign) => campaign.status === this.selectedStatus);
+            filtered = filtered.filter((item) => item.campaign.status === this.selectedStatus);
         }
+
+        // Filter by incomplete campaigns
+        if (this.showOnlyIncomplete) {
+            filtered = filtered.filter((item) => !item.validation.configComplete);
+        }
+
+        // Sort: incomplete campaigns first
+        filtered = filtered.sort((a, b) => {
+            if (a.validation.configComplete === b.validation.configComplete) {
+                return 0;
+            }
+            return a.validation.configComplete ? 1 : -1;
+        });
 
         return filtered;
     });
@@ -154,15 +231,22 @@ export class CampaignListComponent implements OnInit {
     private loadCampaigns(): void {
         this.loading.set(true);
         this.campaignService
-            .getByBusiness(this.businessId)
+            .getCampaignsWithValidation(this.businessId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (campaigns) => {
-                    this.campaigns.set(campaigns);
+                next: (campaignsWithValidation) => {
+                    this.campaignsWithValidation.set(campaignsWithValidation);
+                    // También actualizar la lista de campañas sin validación para compatibilidad
+                    this.campaigns.set(campaignsWithValidation.map(item => item.campaign));
                     this.loading.set(false);
                 },
                 error: (error) => {
                     console.error('Error loading campaigns:', error);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'No se pudieron cargar las campañas con validación'
+                    });
                     this.loading.set(false);
                 }
             });
@@ -398,5 +482,34 @@ export class CampaignListComponent implements OnInit {
             default:
                 return { 'background-color': '#6b7280', color: 'white' };
         }
+    }
+
+    /**
+     * Retorna un mensaje tooltip apropiado según el estado de validación
+     */
+    getTooltipMessage(validation: CampaignValidationResult): string {
+        if (validation.configComplete) {
+            return '✓ Campaña lista para activar';
+        }
+
+        if (validation.missingItems.length === 0) {
+            return 'Pendiente de validación';
+        }
+
+        return 'Elementos faltantes:\n• ' + validation.missingItems.join('\n• ');
+    }
+
+    /**
+     * Toggle para mostrar solo campañas incompletas
+     */
+    toggleIncompleteFilter(): void {
+        this.showOnlyIncomplete = !this.showOnlyIncomplete;
+    }
+
+    /**
+     * Obtiene el conteo de campañas incompletas
+     */
+    getIncompleteCount(): number {
+        return this.campaignsWithValidation().filter(item => !item.validation.configComplete).length;
     }
 }

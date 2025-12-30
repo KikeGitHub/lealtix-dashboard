@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { CreateCampaignRequest, UpdateCampaignRequest, CampaignResponse } from '@/models/campaign.model';
+import { CreateCampaignRequest, UpdateCampaignRequest, CampaignResponse, CampaignValidationResult, CampaignWithValidation } from '@/models/campaign.model';
 import { GenericResponse } from '@/models/generic-response.model';
+import { CreateRewardRequest, RewardResponse } from '../models/reward.model';
 import { ApiResponseMapper } from './api-response.mapper';
 import { environment } from '@/pages/commons/environment';
 
@@ -139,6 +140,134 @@ export class CampaignService {
           const mappedResponse = this.mapper.mapGenericResponse(response);
           return this.mapper.mapCampaignResponse(mappedResponse.object);
         })
+      );
+  }
+
+  /**
+   * Valida las campañas de un negocio
+   * Retorna el estado de validación de cada campaña
+   */
+  validateCampaigns(businessId: number): Observable<CampaignValidationResult[]> {
+    return this.http.get<GenericResponse<CampaignValidationResult[]>>(`${this.baseUrl}/business/${businessId}/validate`)
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return mappedResponse.object || [];
+        })
+      );
+  }
+
+  /**
+   * Obtiene las campañas de un negocio con su estado de validación integrado
+   * Combina los resultados de getByBusiness y validateCampaigns
+   */
+  getCampaignsWithValidation(businessId: number): Observable<CampaignWithValidation[]> {
+    return forkJoin({
+      campaigns: this.getByBusiness(businessId),
+      validations: this.validateCampaigns(businessId)
+    }).pipe(
+      map(({ campaigns, validations }) => {
+        // Mapear cada campaña con su validación correspondiente
+        return campaigns.map(campaign => {
+          const validation = validations.find(v => v.campaignId === campaign.id);
+
+          // Si no hay validación, crear una por defecto
+          const defaultValidation: CampaignValidationResult = {
+            campaignId: campaign.id,
+            configComplete: false,
+            missingItems: ['Validación no disponible'],
+            severity: 'ACTION_REQUIRED'
+          };
+
+          return {
+            campaign,
+            validation: validation || defaultValidation
+          };
+        });
+      })
+    );
+  }
+
+  /**
+   * Crea un reward (beneficio) para una campaña
+   * POST /campaigns/{id}/reward
+   */
+  createReward(campaignId: number, req: CreateRewardRequest): Observable<RewardResponse> {
+    return this.http.post<GenericResponse<RewardResponse>>(`${this.baseUrl}/${campaignId}/reward`, req)
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return mappedResponse.object;
+        }),
+        tap({
+          next: (response: RewardResponse) => {
+            console.log('Reward creado exitosamente:', response);
+          },
+          error: (error: any) => {
+            console.error('Error al crear reward:', error);
+          }
+        })
+      );
+  }
+
+  /**
+   * Obtiene un reward por su ID
+   * GET /promotion-rewards/{id}
+   */
+  getReward(rewardId: number): Observable<RewardResponse> {
+    return this.http.get<GenericResponse<RewardResponse>>(`${environment.apiUrl}/promotion-rewards/${rewardId}`)
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return mappedResponse.object;
+        })
+      );
+  }
+
+  /**
+   * Obtiene el reward de una campaña
+   * GET /promotion-rewards/campaign/{id}
+   */
+  getRewardByCampaign(campaignId: number): Observable<RewardResponse> {
+    return this.http.get<GenericResponse<RewardResponse>>(`${environment.apiUrl}/promotion-rewards/campaign/${campaignId}`)
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return mappedResponse.object;
+        })
+      );
+  }
+
+  /**
+   * Actualiza un reward existente
+   * PUT /promotion-rewards/{id}
+   */
+  updateReward(rewardId: number, req: CreateRewardRequest): Observable<RewardResponse> {
+    return this.http.put<GenericResponse<RewardResponse>>(`${environment.apiUrl}/promotion-rewards/${rewardId}`, req)
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return mappedResponse.object;
+        }),
+        tap({
+          next: (response: RewardResponse) => {
+            console.log('Reward actualizado exitosamente:', response);
+          },
+          error: (error: any) => {
+            console.error('Error al actualizar reward:', error);
+          }
+        })
+      );
+  }
+
+  /**
+   * Elimina un reward
+   * DELETE /promotion-rewards/{id}
+   */
+  deleteReward(rewardId: number): Observable<void> {
+    return this.http.delete<GenericResponse<void>>(`${environment.apiUrl}/promotion-rewards/${rewardId}`)
+      .pipe(
+        map(() => undefined)
       );
   }
 }

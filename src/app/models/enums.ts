@@ -12,3 +12,11 @@ export enum CampaignStatus {
   INACTIVE = 'INACTIVE',
   SCHEDULED = 'SCHEDULED'
 }
+
+export enum RewardType {
+  PERCENT_DISCOUNT = 'PERCENT_DISCOUNT',
+  FIXED_AMOUNT = 'FIXED_AMOUNT',
+  FREE_PRODUCT = 'FREE_PRODUCT',
+  BUY_X_GET_Y = 'BUY_X_GET_Y',
+  CUSTOM = 'CUSTOM'
+}

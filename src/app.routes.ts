@@ -49,6 +49,12 @@ export const appRoutes: Routes = [
         ]
     },
 
+    // Redeem module - public access for coupon redemption
+    {
+        path: 'redeem',
+        loadChildren: () => import('./app/redeem/redeem.module').then(m => m.RedeemModule)
+    },
+
     // Default: always go to login page
     { path: '', redirectTo: '/dashboard/auth/login', pathMatch: 'full' },
     { path: '**', redirectTo: '/dashboard/auth/login' }

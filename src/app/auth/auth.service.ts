@@ -82,4 +82,43 @@ export class AuthService {
 			})
 		);
 	}
+
+	/**
+	 * Obtiene el usuario actual desde sessionStorage o localStorage
+	 * @returns Objeto con email y userId del usuario, o null si no existe
+	 */
+	getCurrentUser(): { email: string; userEmail: string; userId: number; tenantId?: number } | null {
+		try {
+			const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
+
+			if (!userStr) {
+				return null;
+			}
+
+			const userObj = JSON.parse(userStr);
+
+			if (userObj && userObj.userEmail) {
+				return {
+					email: String(userObj.userEmail || '').trim(),
+					userEmail: String(userObj.userEmail || '').trim(),
+					userId: userObj.userId || 0,
+					tenantId: userObj.tenantId || userObj.tenant?.id || undefined
+				};
+			}
+
+			return null;
+		} catch (e) {
+			console.warn('Error parsing user from storage:', e);
+			return null;
+		}
+	}
+
+	/**
+	 * Obtiene el ID del tenant del usuario actual
+	 * @returns ID del tenant o 1 por defecto si no existe
+	 */
+	getTenantId(): number {
+		const user = this.getCurrentUser();
+		return user?.tenantId || 1;
+	}
 }

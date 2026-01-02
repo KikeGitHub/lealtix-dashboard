@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, of, map, catchError } from 'rxjs';
 import { environment } from '@/pages/commons/environment';
+import { TenantService } from '@/pages/admin-page/service/tenant.service';
 
 interface LoginCredentials {
 	email: string;
@@ -28,7 +29,10 @@ type LoginResponse = BackendWrapper<LoginObject>;
 export class AuthService {
 
     private baseUrl = `${environment.apiUrl}/auth`;
-	constructor(private http: HttpClient) {}
+	constructor(
+		private http: HttpClient,
+		private tenantService: TenantService
+	) {}
 
 	/**
 	 * Comprueba si existe un token de acceso en localStorage.
@@ -110,6 +114,55 @@ export class AuthService {
 		} catch (e) {
 			console.warn('Error parsing user from storage:', e);
 			return null;
+		}
+	}
+
+	/**
+	 * Obtiene el usuario actual con tenantId actualizado desde el backend
+	 * @returns Observable con el usuario actualizado o null
+	 */
+	getCurrentUserWithTenant(): Observable<{ email: string; userEmail: string; userId: number; tenantId?: number } | null> {
+		try {
+			const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
+
+			if (!userStr) {
+				return of(null);
+			}
+
+			const userObj = JSON.parse(userStr);
+
+			if (userObj && userObj.userEmail) {
+				const userEmail = String(userObj.userEmail || '').trim();
+
+				return this.tenantService.getTenantByEmail(userEmail).pipe(
+					map((resp) => {
+						const tenant = resp?.object;
+						const tenantId = tenant?.id || userObj.tenantId || userObj.tenant?.id || undefined;
+
+						return {
+							email: userEmail,
+							userEmail: userEmail,
+							userId: userObj.userId || 0,
+							tenantId: tenantId
+						};
+					}),
+					catchError((error) => {
+						console.warn('Error fetching tenant:', error);
+						// Retornar el usuario con datos del storage si falla la llamada
+						return of({
+							email: userEmail,
+							userEmail: userEmail,
+							userId: userObj.userId || 0,
+							tenantId: userObj.tenantId || userObj.tenant?.id || undefined
+						});
+					})
+				);
+			}
+
+			return of(null);
+		} catch (e) {
+			console.warn('Error parsing user from storage:', e);
+			return of(null);
 		}
 	}
 

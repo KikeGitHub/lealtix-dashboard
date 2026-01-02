@@ -15,6 +15,7 @@ import { CampaignFormComponent } from '@/pages/campaigns/components/campaign-for
 import { CampaignDetailsComponent } from '@/pages/campaigns/components/campaign-details/campaign-details.component';
 import { CampaignTemplatesListComponent } from '@/pages/campaigns/components/campaign-templates-list/campaign-templates-list.component';
 import { CreateCampaignComponent } from '@/pages/campaigns/components/create-campaign/create-campaign.component';
+import { ManualRedemptionComponent } from '@/pages/manual-redemption/manual-redemption.component';
 
 export const appRoutes: Routes = [
     // Everything under /dashboard/**
@@ -43,7 +44,8 @@ export const appRoutes: Routes = [
                     { path: 'campaigns/create', component: CreateCampaignComponent, title: 'Crear Campaña' },
                     { path: 'campaigns/new', component: CampaignFormComponent, title: 'Nueva Campaña' },
                     { path: 'campaigns/:id', component: CampaignDetailsComponent, title: 'Detalles de Campaña' },
-                    { path: 'campaign-templates', component: CampaignTemplatesListComponent, title: 'Plantillas de Campañas' }
+                    { path: 'campaign-templates', component: CampaignTemplatesListComponent, title: 'Plantillas de Campañas' },
+                    { path: 'manual-redemption', component: ManualRedemptionComponent, title: 'Redención Manual' }
                 ]
             }
         ]

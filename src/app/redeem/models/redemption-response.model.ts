@@ -5,25 +5,25 @@ export interface RedemptionResponse {
   message: string;
 
   // Información de la redención
-  redemptionId?: number;
-  redeemedAt?: string;
-  redeemedBy?: string;
-  channel?: RedemptionChannel;
+  redemptionId?: number | null;
+  redeemedAt?: string | null;
+  redeemedBy?: string | null;
+  channel?: RedemptionChannel | null;
 
   // Información del cupón
-  couponCode?: string;
-  couponId?: number;
+  couponCode?: string | null;
+  couponId?: number | null;
 
   // Información de la campaña
-  campaignId?: number;
-  campaignTitle?: string;
-  benefit?: string;
+  campaignId?: number | null;
+  campaignTitle?: string | null;
+  benefit?: string | null;
 
   // Información del cliente
-  customerName?: string;
-  customerEmail?: string;
+  customerName?: string | null;
+  customerEmail?: string | null;
 
   // Información del tenant
-  tenantId?: number;
-  tenantName?: string;
+  tenantId?: number | null;
+  tenantName?: string | null;
 }

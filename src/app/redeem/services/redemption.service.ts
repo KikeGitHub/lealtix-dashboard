@@ -46,8 +46,9 @@ export class RedemptionService {
   /**
    * Valida un cupón por código
    */
-  validateCouponByCode(code: string): Observable<CouponValidationResponse> {
-    const tenantId = this.authService.getTenantId();
+  validateCouponByCode(code: string, tenantId: number): Observable<CouponValidationResponse> {
+    debugger;
+
     return this.http.get<CouponValidationResponse>(
       `${this.apiUrl}/validate/code/${code}`,
       { params: { tenantId: tenantId.toString() } }
@@ -84,9 +85,9 @@ export class RedemptionService {
    */
   redeemCouponByCode(
     code: string,
-    request: RedemptionRequest
+    request: RedemptionRequest,
+    tenantId: number
   ): Observable<RedemptionResponse> {
-    const tenantId = this.authService.getTenantId();
 
     const enrichedRequest = {
       ...request,

@@ -289,7 +289,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
   /**
    * Formatea fecha para mostrar
    */
-  formatDate(dateString?: string): string {
+  formatDate(dateString?: string | null): string {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleString('es-ES', {
@@ -304,7 +304,8 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
   /**
    * Obtiene la severidad del tag según el estado
    */
-  getStatusSeverity(status?: string): 'success' | 'danger' | 'warning' | 'info' {
+  getStatusSeverity(status?: string | null): 'success' | 'danger' | 'warning' | 'info' {
+    if (!status) return 'info';
     switch (status) {
       case CouponStatus.ACTIVE:
         return 'success';
@@ -322,7 +323,8 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
   /**
    * Obtiene el texto del estado
    */
-  getStatusText(status?: string): string {
+  getStatusText(status?: string | null): string {
+    if (!status) return 'DESCONOCIDO';
     switch (status) {
       case CouponStatus.ACTIVE:
         return 'ACTIVO';

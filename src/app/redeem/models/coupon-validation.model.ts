@@ -3,26 +3,28 @@ export interface CouponValidationResponse {
   message: string;
 
   // Información del cupón
-  couponCode?: string;
-  status?: CouponStatus;
-  expiresAt?: string;
-  redeemedAt?: string;
+  couponCode?: string | null;
+  status?: CouponStatus | null;
+  expiresAt?: string | null;
+  redeemedAt?: string | null;
+  redeemedBy?: string | null;
   isExpired?: boolean;
+  expired?: boolean;
   alreadyRedeemed?: boolean;
 
   // Información de la campaña
-  campaignId?: number;
-  campaignTitle?: string;
-  campaignDescription?: string;
-  benefit?: string;
+  campaignId?: number | null;
+  campaignTitle?: string | null;
+  campaignDescription?: string | null;
+  benefit?: string | null;
 
   // Información del cliente
-  customerName?: string;
-  customerEmail?: string;
+  customerName?: string | null;
+  customerEmail?: string | null;
 
   // Información del tenant
-  tenantId?: number;
-  tenantName?: string;
+  tenantId?: number | null;
+  tenantName?: string | null;
 }
 
 export enum CouponStatus {

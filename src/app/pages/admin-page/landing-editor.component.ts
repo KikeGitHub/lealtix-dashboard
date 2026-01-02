@@ -242,7 +242,7 @@ export class LandingEditorComponent implements OnInit {
 
     goToMenuConfig() {
         this.showCongrats = false;
-        this.router.navigate(['/adminMenu']);
+        this.router.navigate(['/dashboard/categoriesMenu']);
     }
 
     edit(){}

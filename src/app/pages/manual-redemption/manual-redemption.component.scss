@@ -1,0 +1,440 @@
+// ==========================================
+// PAGE HEADER
+// ==========================================
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  font-size: 2rem;
+  color: var(--primary-color);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.page-subtitle {
+  margin: 0.25rem 0 0 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+// ==========================================
+// CARDS - BASE STYLES
+// ==========================================
+::ng-deep {
+  .input-card,
+  .loading-card,
+  .coupon-card {
+    border-radius: 0.75rem !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid #e5e7eb !important;
+    overflow: hidden;
+    background: white;
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .p-card-header {
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .p-card-body {
+      padding: 0 !important;
+    }
+
+    .p-card-content {
+      padding: 1.5rem !important;
+    }
+
+    .p-card-footer {
+      padding: 1.25rem 1.5rem !important;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+    }
+  }
+
+  // Card Header Variants
+  .card-header-simple {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    i {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+  }
+
+  .card-header-success {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+
+    .success-icon {
+      font-size: 2rem;
+      color: #10b981;
+
+      &.large {
+        font-size: 2.5rem;
+      }
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .header-subtitle {
+      margin: 0.25rem 0 0 0;
+      color: #64748b;
+      font-size: 0.875rem;
+    }
+  }
+
+  .card-header-error {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+
+    .error-icon {
+      font-size: 2rem;
+      color: #ef4444;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .header-subtitle {
+      margin: 0.25rem 0 0 0;
+      color: #64748b;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// ==========================================
+// INPUT SECTION
+// ==========================================
+.input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+
+  i {
+    color: var(--primary-color);
+  }
+}
+
+::ng-deep {
+  .coupon-input {
+    width: 100%;
+    padding: 0.75rem !important;
+    font-size: 1rem !important;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 2px;
+
+    &::placeholder {
+      color: #9ca3af;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+  }
+}
+
+// ==========================================
+// LOADING STATE
+// ==========================================
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  gap: 1rem;
+}
+
+::ng-deep .spinner-custom {
+  width: 60px;
+  height: 60px;
+
+  .p-progress-spinner-circle {
+    stroke: var(--primary-color) !important;
+  }
+}
+
+.loading-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.loading-subtext {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+// ==========================================
+// COUPON DETAILS
+// ==========================================
+.coupon-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.status-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-label {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+::ng-deep .status-tag {
+  font-weight: 600 !important;
+}
+
+// ==========================================
+// BENEFIT HIGHLIGHT
+// ==========================================
+.benefit-highlight {
+  background: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  &.success {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+
+  .benefit-icon {
+    font-size: 2rem;
+    color: #0284c7;
+  }
+
+  &.success .benefit-icon {
+    color: #10b981;
+  }
+
+  .benefit-content {
+    flex: 1;
+  }
+
+  .benefit-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .benefit-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+}
+
+// ==========================================
+// INFO GRID
+// ==========================================
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+
+  i {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+  }
+
+  .info-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .info-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .info-value {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+    word-wrap: break-word;
+
+    &.coupon-code {
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+      color: var(--primary-color);
+      font-size: 1rem;
+    }
+  }
+}
+
+// ==========================================
+// MESSAGES
+// ==========================================
+.warning-section,
+.error-details {
+  margin-top: 1rem;
+}
+
+::ng-deep {
+  .info-message,
+  .success-message,
+  .warning-message,
+  .error-message {
+    border-radius: 0.5rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+// ==========================================
+// BUTTONS
+// ==========================================
+::ng-deep {
+  .validate-button,
+  .primary-button,
+  .redeem-button {
+    width: 100%;
+  }
+}
+
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+
+  ::ng-deep {
+    .secondary-button {
+      flex: 0 0 auto;
+    }
+
+    .redeem-button {
+      flex: 0 0 auto;
+      min-width: 180px;
+    }
+  }
+}
+
+// ==========================================
+// DIVIDER
+// ==========================================
+::ng-deep .p-divider.p-divider-horizontal {
+  margin: 1.25rem 0 !important;
+}
+
+// ==========================================
+// RESPONSIVE
+// ==========================================
+@media (max-width: 768px) {
+  .header-icon {
+    font-size: 1.5rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .button-group {
+    flex-direction: column;
+
+    ::ng-deep .redeem-button,
+    ::ng-deep .secondary-button {
+      width: 100%;
+      min-width: auto;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.25rem;
+  }
+}

@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -25,6 +26,8 @@ import { CategoryService } from './service/category.service';
 import { forkJoin } from 'rxjs';
 import { TenantService } from '../admin-page/service/tenant.service';
 import { CategoryDialogComponent } from './category-dialog.component';
+import { ConfettiService } from '@/confetti/confetti.service';
+import { ConfettiComponent } from '@/confetti/confetti.component';
 
 interface Column {
     field: string;
@@ -61,7 +64,8 @@ interface ExportColumn {
         ConfirmDialogModule,
         DragDropModule,
         InputNumberModule,
-        CategoryDialogComponent
+        CategoryDialogComponent,
+        ConfettiComponent
     ],
     templateUrl: './categories-menu.component.html',
     styleUrls: ['./categories-menu.component.scss'],
@@ -72,6 +76,8 @@ export class CategoriesMenuComponent implements OnInit {
     categoryDialog: boolean = false;
     tenantId: number = 0;
     draggedCategory: Category | null = null;
+    showFirstCategoryCongrats: boolean = false;
+    firstCategoryId: number | null = null;
 
     categories = signal<Category[]>([]);
     category!: Category;
@@ -89,7 +95,9 @@ export class CategoriesMenuComponent implements OnInit {
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private fb: FormBuilder,
-        private tenantService: TenantService
+        private tenantService: TenantService,
+        private confettiService: ConfettiService,
+        private router: Router
     ) {
         this.categoryForm = this.fb.group({
             id: [null],
@@ -138,18 +146,25 @@ export class CategoriesMenuComponent implements OnInit {
         this.startLoading();
         this.categoryService.getCategoriesByTenantId(this.tenantId).subscribe({
             next: (data) => {
-                const mapped = data.object.map((item: any) => ({
-                    id: item.categoryId,
-                    name: item.categoryName,
-                    description: item.categoryDescription || '',
-                    active: typeof item.active === 'boolean' ? item.active : true,
-                    tenantId: item.tenantId,
-                    displayOrder: item.displayOrder ?? 0
-                }));
-                // Ordenar por displayOrder
-                mapped.sort((a: Category, b: Category) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
-                this.categories.set(mapped);
-                console.log('Loaded categories:', mapped);
+                // Validar si hay objeto y es un array
+                if (data && data.object && Array.isArray(data.object)) {
+                    const mapped = data.object.map((item: any) => ({
+                        id: item.categoryId,
+                        name: item.categoryName,
+                        description: item.categoryDescription || '',
+                        active: typeof item.active === 'boolean' ? item.active : true,
+                        tenantId: item.tenantId,
+                        displayOrder: item.displayOrder ?? 0
+                    }));
+                    // Ordenar por displayOrder
+                    mapped.sort((a: Category, b: Category) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+                    this.categories.set(mapped);
+                    console.log('Loaded categories:', mapped);
+                } else {
+                    // Si no hay categorías o la respuesta es inválida, limpiar la tabla
+                    this.categories.set([]);
+                    console.log('No categories found or invalid response');
+                }
             },
             error: (err) => {
                 console.error('Failed to load categories', err);
@@ -222,13 +237,14 @@ export class CategoriesMenuComponent implements OnInit {
                 if (deletes.length > 0) {
                     forkJoin(deletes).subscribe({
                         next: () => {
-                            this.loadCategories();
                             this.messageService.add({
                                 severity: 'success',
                                 summary: 'Exitoso',
                                 detail: 'Categorías Eliminadas',
                                 life: 3000
                             });
+                            this.selectedCategories = null;
+                            this.loadCategories();
                         },
                         error: (err) => {
                             console.error('Error deleting categories', err);
@@ -238,15 +254,12 @@ export class CategoriesMenuComponent implements OnInit {
                                 detail: 'Error al eliminar algunas categorías',
                                 life: 3000
                             });
-                        },
-                        complete: () => {
                             this.stopLoading();
                         }
                     });
                 } else {
                     this.stopLoading();
                 }
-                this.selectedCategories = null;
             }
         });
     }
@@ -269,13 +282,13 @@ export class CategoriesMenuComponent implements OnInit {
                     this.startLoading();
                     this.categoryService.deleteCategoryById(idNum).subscribe({
                         next: () => {
-                            this.loadCategories();
                             this.messageService.add({
                                 severity: 'success',
                                 summary: 'Exitoso',
                                 detail: 'Categoría Eliminada',
                                 life: 3000
                             });
+                            this.loadCategories();
                         },
                         error: (err) => {
                             console.error('Failed to delete category:', err);
@@ -285,8 +298,6 @@ export class CategoriesMenuComponent implements OnInit {
                                 detail: 'No se pudo eliminar la categoría',
                                 life: 3000
                             });
-                        },
-                        complete: () => {
                             this.stopLoading();
                         }
                     });
@@ -347,10 +358,10 @@ export class CategoriesMenuComponent implements OnInit {
             payload.id = formValue.id;
         }
         debugger;
+        const isNewCategory = !payload.id;
         this.startLoading();
         this.categoryService.createCategory(payload).subscribe({
             next: (resp) => {
-                this.loadCategories();
                 this.categoryDialog = false;
                 this.messageService.add({
                     severity: 'success',
@@ -358,6 +369,39 @@ export class CategoriesMenuComponent implements OnInit {
                     detail: payload.id ? 'Categoría actualizada' : 'Categoría creada',
                     life: 3000
                 });
+
+                // Check if this is the first category created
+                if (isNewCategory) {
+                    this.categoryService.getCategoriesByTenantId(this.tenantId).subscribe({
+                        next: (data) => {
+                            const mapped = data.object.map((item: any) => ({
+                                id: item.categoryId,
+                                name: item.categoryName,
+                                description: item.categoryDescription || '',
+                                active: typeof item.active === 'boolean' ? item.active : true,
+                                tenantId: item.tenantId,
+                                displayOrder: item.displayOrder ?? 0
+                            }));
+                            mapped.sort((a: Category, b: Category) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+                            this.categories.set(mapped);
+
+                            // Show confetti dialog only if this is the first category (count === 1)
+                            if (mapped.length === 1) {
+                                this.firstCategoryId = mapped[0].id ?? null;
+                                this.confettiService.trigger({ action: 'burst' });
+                                this.showFirstCategoryCongrats = true;
+                                // Emit event to refresh menu - categories now exist
+                                window.dispatchEvent(new CustomEvent('categoriesUpdated'));
+                            }
+                        },
+                        error: (err) => {
+                            console.error('Failed to load categories after save', err);
+                            this.loadCategories();
+                        }
+                    });
+                } else {
+                    this.loadCategories();
+                }
             },
             error: (err) => {
                 console.error('Error saving category', err);
@@ -436,6 +480,18 @@ export class CategoriesMenuComponent implements OnInit {
                 // Recargar para restaurar el orden original
                 this.loadCategories();
             }
+        });
+    }
+
+    closeFirstCategoryDialog() {
+        this.showFirstCategoryCongrats = false;
+    }
+
+    goToCreateProduct() {
+        this.showFirstCategoryCongrats = false;
+        // Navigate to products page with the first category ID as query param
+        this.router.navigate(['/dashboard/adminMenu'], {
+            queryParams: { categoryId: this.firstCategoryId }
         });
     }
 }

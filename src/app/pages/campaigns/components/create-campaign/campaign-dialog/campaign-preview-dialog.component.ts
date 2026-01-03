@@ -81,7 +81,7 @@ export class CampaignPreviewDialogComponent {
     const baseUrl = environment.production
       ? 'https://lealtix.com.mx/landing-page'
       : 'http://localhost:4200/landing-page';
-    return `${baseUrl}?token=${this.clientSlug}`;
+    return `${baseUrl}/${this.clientSlug}`;
   }
 
   /**

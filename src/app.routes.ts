@@ -8,6 +8,7 @@ import { LoginComponent } from '@/auth/login/login.component';
 import { Error } from '@/auth/error/error';
 import { AuthGuard } from './app/auth/auth.guard';
 import { CategoriesMenuComponent } from '@/pages/categories-menu/categories-menu.component';
+import { Landing } from '@/pages/landing/landing';
 
 // Campaign components
 import { CampaignListComponent } from '@/pages/campaigns/components/campaign-list/campaign-list.component';
@@ -49,6 +50,12 @@ export const appRoutes: Routes = [
                 ]
             }
         ]
+    },
+
+    // Landing page - public access for tenant landing pages
+    {
+        path: 'landing-page/:slug',
+        component: Landing
     },
 
     // Redeem module - public access for coupon redemption

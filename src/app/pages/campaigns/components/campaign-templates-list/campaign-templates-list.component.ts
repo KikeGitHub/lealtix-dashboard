@@ -8,6 +8,10 @@ import { ChipModule } from 'primeng/chip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { CampaignTemplate } from '@/models/campaign-template.model';
 import { CampaignTemplateService } from '../../services/campaign-template.service';
+import { ProductService } from '@/pages/products-menu/service/product.service';
+import { CampaignService } from '../../services/campaign.service';
+import { TenantService } from '@/pages/admin-page/service/tenant.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-campaign-templates-list',
@@ -25,11 +29,16 @@ import { CampaignTemplateService } from '../../services/campaign-template.servic
 export class CampaignTemplatesListComponent implements OnInit {
   templates = signal<CampaignTemplate[]>([]);
   loading = signal<boolean>(true);
+  showWelcomeBanner = signal<boolean>(false);
+  private tenantId: number = 0;
   private destroyRef = inject(DestroyRef);
 
   constructor(
     private campaignTemplateService: CampaignTemplateService,
-    private router: Router
+    private router: Router,
+    private productService: ProductService,
+    private campaignService: CampaignService,
+    private tenantService: TenantService
   ) {}
 
   // Fallback handler for template images
@@ -60,7 +69,33 @@ export class CampaignTemplatesListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadTenantAndBanner();
     this.loadTemplates();
+  }
+
+  private loadTenantAndBanner(): void {
+    const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
+    if (!userStr) return;
+
+    try {
+      const userObj = JSON.parse(userStr);
+      if (!userObj?.userEmail) return;
+
+      this.tenantService.getTenantByEmail(String(userObj.userEmail).trim()).subscribe({
+        next: (resp) => {
+          const tenant = resp?.object;
+          this.tenantId = tenant?.id ?? 0;
+          if (this.tenantId > 0) {
+            this.checkBannerConditions();
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching tenant:', err);
+        }
+      });
+    } catch (e) {
+      console.warn('Failed to parse stored usuario:', e);
+    }
   }
 
   private loadTemplates(): void {
@@ -129,5 +164,30 @@ export class CampaignTemplatesListComponent implements OnInit {
     };
 
     return colors[promoType] || 'var(--primary-color)';
+  }
+
+  private checkBannerConditions(): void {
+    if (this.tenantId === 0) return;
+
+    forkJoin({
+      products: this.productService.getProductsByTenantId(this.tenantId),
+      welcomeCampaign: this.campaignService.hasActiveWelcomeCampaign(this.tenantId)
+    }).subscribe({
+      next: ({ products, welcomeCampaign }) => {
+        const hasProducts = (products?.object?.length ?? 0) > 0;
+        const hasWelcome = welcomeCampaign?.hasActiveWelcomeCampaign ?? false;
+        this.showWelcomeBanner.set(hasProducts && !hasWelcome);
+      },
+      error: (err) => {
+        console.error('Error checking banner conditions:', err);
+        this.showWelcomeBanner.set(false);
+      }
+    });
+  }
+
+  navigateToWelcomeCampaign(): void {
+    this.router.navigate(['/dashboard/campaigns/create'], {
+      queryParams: { templateId: 1 }
+    });
   }
 }

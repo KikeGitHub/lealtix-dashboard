@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray, FormControl } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -33,6 +33,7 @@ import { TenantService } from '../admin-page/service/tenant.service';
 import { ConfettiService } from '@/confetti/confetti.service';
 import { ConfettiComponent } from '@/confetti/confetti.component';
 import { environment } from '../commons/environment.dev';
+import { CampaignService } from '@/pages/campaigns/services/campaign.service';
 
 interface Column {
     field: string;
@@ -94,6 +95,7 @@ export class ProductMenuComponent implements OnInit {
     tenantId: number = 0;
     showFirstProductCongrats: boolean = false;
     tenantSlug: string | null = null;
+    showWelcomeBanner = signal<boolean>(false);
 
     products = signal<Product[]>([]);
 
@@ -118,7 +120,9 @@ export class ProductMenuComponent implements OnInit {
         private imageService: ImageService,
         private tenantService: TenantService,
         private route: ActivatedRoute,
-        private confettiService: ConfettiService
+        private confettiService: ConfettiService,
+        private campaignService: CampaignService,
+        private router: Router
     ) {
         this.categoryForm = this.fb.group({
             id: [0],
@@ -155,6 +159,7 @@ export class ProductMenuComponent implements OnInit {
                             this.tenantSlug = tenant?.slug ?? null;
                             this.loadCategories();
                             this.loadProducts();
+                            this.checkBannerConditions();
 
                             // Check for categoryId query param to auto-open product dialog
                             this.route.queryParams.subscribe(params => {
@@ -769,5 +774,30 @@ export class ProductMenuComponent implements OnInit {
             : 'http://localhost:4200/landing-page';
         const landingUrl = `${baseUrl}/${this.tenantSlug}`;
         window.open(landingUrl, '_blank');
+    }
+
+    private checkBannerConditions(): void {
+        if (this.tenantId === 0) return;
+
+        forkJoin({
+            products: this.productService.getProductsByTenantId(this.tenantId),
+            welcomeCampaign: this.campaignService.hasActiveWelcomeCampaign(this.tenantId)
+        }).subscribe({
+            next: ({ products, welcomeCampaign }) => {
+                const hasProducts = (products?.object?.length ?? 0) > 0;
+                const hasWelcome = welcomeCampaign?.hasActiveWelcomeCampaign ?? false;
+                this.showWelcomeBanner.set(hasProducts && !hasWelcome);
+            },
+            error: (err) => {
+                console.error('Error checking banner conditions:', err);
+                this.showWelcomeBanner.set(false);
+            }
+        });
+    }
+
+    navigateToWelcomeCampaign(): void {
+        this.router.navigate(['/dashboard/campaigns/create'], {
+            queryParams: { templateId: 1 }
+        });
     }
 }

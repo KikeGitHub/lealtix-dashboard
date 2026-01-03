@@ -1,3 +1,25 @@
+<!-- Banner persistente de bienvenida -->
+<div class="mb-4" *ngIf="showWelcomeBanner()">
+    <div class="border-round p-4 shadow-2" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-left: 4px solid #F59E0B;">
+        <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="flex align-items-start gap-3 flex-1">
+                <span class="text-4xl" style="line-height: 1;">🚀</span>
+                <div>
+                    <div class="font-semibold text-xl mb-2" style="color: #92400E;">Tu negocio ya está listo.</div>
+                    <div class="line-height-3" style="color: #78350F;">Ahora configura tu campaña de bienvenida para empezar a recibir clientes.</div>
+                </div>
+            </div>
+            <p-button
+                label="Configurar campaña de bienvenida"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                severity="warn"
+                (onClick)="navigateToWelcomeCampaign()"
+                styleClass="white-space-nowrap">
+            </p-button>
+        </div>
+    </div>
+</div>
 
 <p-toolbar styleClass="mb-6">
     <ng-template #start>

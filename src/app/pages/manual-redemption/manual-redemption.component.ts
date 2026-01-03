@@ -22,6 +22,12 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { CouponValidationResponse } from '@/redeem/models/coupon-validation.model';
 import { RedemptionRequest, RedemptionChannel } from '@/redeem/models/redemption-request.model';
 import { RedemptionResponse } from '@/redeem/models/redemption-response.model';
+import { ProductService } from '@/pages/products-menu/service/product.service';
+import { CampaignService } from '@/pages/campaigns/services/campaign.service';
+import { TenantService } from '@/pages/admin-page/service/tenant.service';
+import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { signal } from '@angular/core';
 
 type PageState = 'idle' | 'validating' | 'valid' | 'redeeming' | 'success' | 'error' | 'already-redeemed';
 
@@ -55,18 +61,26 @@ export class ManualRedemptionComponent implements OnInit {
   validationData: CouponValidationResponse | null = null;
   redemptionData: RedemptionResponse | null = null;
   errorMessage: string = '';
+  showWelcomeBanner = signal<boolean>(false);
 
   constructor(
     private redemptionService: RedemptionService,
     private authService: AuthService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private productService: ProductService,
+    private campaignService: CampaignService,
+    private tenantService: TenantService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.authService.getCurrentUserWithTenant().subscribe(currentUser => {
         debugger;
       this.tenantId = currentUser?.tenantId || 1;
+      if (this.tenantId > 0) {
+        this.checkBannerConditions(this.tenantId);
+      }
     });
   }
 
@@ -277,5 +291,28 @@ export class ManualRedemptionComponent implements OnInit {
            this.validationData.valid === true &&
            !this.validationData.alreadyRedeemed &&
            !this.validationData.isExpired;
+  }
+
+  private checkBannerConditions(tenantId: number): void {
+    forkJoin({
+      products: this.productService.getProductsByTenantId(tenantId),
+      welcomeCampaign: this.campaignService.hasActiveWelcomeCampaign(tenantId)
+    }).subscribe({
+      next: ({ products, welcomeCampaign }) => {
+        const hasProducts = (products?.object?.length ?? 0) > 0;
+        const hasWelcome = welcomeCampaign?.hasActiveWelcomeCampaign ?? false;
+        this.showWelcomeBanner.set(hasProducts && !hasWelcome);
+      },
+      error: (err) => {
+        console.error('Error checking banner conditions:', err);
+        this.showWelcomeBanner.set(false);
+      }
+    });
+  }
+
+  navigateToWelcomeCampaign(): void {
+    this.router.navigate(['/dashboard/campaigns/create'], {
+      queryParams: { templateId: 1 }
+    });
   }
 }

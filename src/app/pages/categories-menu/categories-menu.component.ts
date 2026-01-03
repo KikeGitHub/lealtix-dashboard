@@ -28,6 +28,8 @@ import { TenantService } from '../admin-page/service/tenant.service';
 import { CategoryDialogComponent } from './category-dialog.component';
 import { ConfettiService } from '@/confetti/confetti.service';
 import { ConfettiComponent } from '@/confetti/confetti.component';
+import { ProductService } from '@/pages/products-menu/service/product.service';
+import { CampaignService } from '@/pages/campaigns/services/campaign.service';
 
 interface Column {
     field: string;
@@ -73,6 +75,7 @@ interface ExportColumn {
 })
 export class CategoriesMenuComponent implements OnInit {
     loading: boolean = false;
+    showWelcomeBanner = signal<boolean>(false);
     categoryDialog: boolean = false;
     tenantId: number = 0;
     draggedCategory: Category | null = null;
@@ -97,7 +100,9 @@ export class CategoriesMenuComponent implements OnInit {
         private fb: FormBuilder,
         private tenantService: TenantService,
         private confettiService: ConfettiService,
-        private router: Router
+        private router: Router,
+        private productService: ProductService,
+        private campaignService: CampaignService
     ) {
         this.categoryForm = this.fb.group({
             id: [null],
@@ -122,6 +127,7 @@ export class CategoriesMenuComponent implements OnInit {
                             this.tenantId = tenant?.id ?? 0;
                             this.categoryForm.patchValue({ tenantId: this.tenantId });
                             this.loadCategories();
+                            this.checkBannerConditions();
                         },
                         error: (err) => {
                             console.error('Error fetching tenant:', err);
@@ -492,6 +498,31 @@ export class CategoriesMenuComponent implements OnInit {
         // Navigate to products page with the first category ID as query param
         this.router.navigate(['/dashboard/adminMenu'], {
             queryParams: { categoryId: this.firstCategoryId }
+        });
+    }
+
+    private checkBannerConditions(): void {
+        if (this.tenantId === 0) return;
+
+        forkJoin({
+            products: this.productService.getProductsByTenantId(this.tenantId),
+            welcomeCampaign: this.campaignService.hasActiveWelcomeCampaign(this.tenantId)
+        }).subscribe({
+            next: ({ products, welcomeCampaign }) => {
+                const hasProducts = (products?.object?.length ?? 0) > 0;
+                const hasWelcome = welcomeCampaign?.hasActiveWelcomeCampaign ?? false;
+                this.showWelcomeBanner.set(hasProducts && !hasWelcome);
+            },
+            error: (err) => {
+                console.error('Error checking banner conditions:', err);
+                this.showWelcomeBanner.set(false);
+            }
+        });
+    }
+
+    navigateToWelcomeCampaign(): void {
+        this.router.navigate(['/dashboard/campaigns/create'], {
+            queryParams: { templateId: 1 }
         });
     }
 }

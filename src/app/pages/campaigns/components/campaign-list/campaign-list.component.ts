@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
@@ -21,6 +22,8 @@ import { CampaignStatus } from '@/models/enums';
 import { CampaignService } from '../../services/campaign.service';
 import { TenantService } from '@/pages/admin-page/service/tenant.service';
 import { CampaignDialogComponent } from '../campaign-dialog/campaign-dialog.component';
+import { ProductService } from '@/pages/products-menu/service/product.service';
+import { CampaignFormatters } from '../../utils/formatters';
 
 interface TableColumn {
     field: string;
@@ -133,6 +136,7 @@ export class CampaignListComponent implements OnInit {
     userId: number = 0;
     tenantId: number = 0;
     businessId: number = 0;
+    showWelcomeBanner = signal<boolean>(false);
 
     // Dialog state
     campaignDialog = signal<boolean>(false);
@@ -197,7 +201,8 @@ export class CampaignListComponent implements OnInit {
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
         private router: Router,
-        private tenantService: TenantService
+        private tenantService: TenantService,
+        private productService: ProductService
     ) {}
 
     ngOnInit(): void {
@@ -220,6 +225,7 @@ export class CampaignListComponent implements OnInit {
                     this.businessId = this.tenantId;
                 }
                 this.loadCampaigns();
+                this.checkBannerConditions();
             },
             error: (error) => {
                 console.error('No tenant found:');
@@ -511,5 +517,30 @@ export class CampaignListComponent implements OnInit {
      */
     getIncompleteCount(): number {
         return this.campaignsWithValidation().filter(item => !item.validation.configComplete).length;
+    }
+
+    private checkBannerConditions(): void {
+        if (this.tenantId === 0) return;
+
+        forkJoin({
+            products: this.productService.getProductsByTenantId(this.tenantId),
+            welcomeCampaign: this.campaignService.hasActiveWelcomeCampaign(this.tenantId)
+        }).subscribe({
+            next: ({ products, welcomeCampaign }) => {
+                const hasProducts = (products?.object?.length ?? 0) > 0;
+                const hasWelcome = welcomeCampaign?.hasActiveWelcomeCampaign ?? false;
+                this.showWelcomeBanner.set(hasProducts && !hasWelcome);
+            },
+            error: (err) => {
+                console.error('Error checking banner conditions:', err);
+                this.showWelcomeBanner.set(false);
+            }
+        });
+    }
+
+    navigateToWelcomeCampaign(): void {
+        this.router.navigate(['/dashboard/campaigns/create'], {
+            queryParams: { templateId: 1 }
+        });
     }
 }

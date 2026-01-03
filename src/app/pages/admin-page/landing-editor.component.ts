@@ -1,8 +1,9 @@
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { EditorModule } from 'primeng/editor';
@@ -18,6 +19,8 @@ import { TenantService } from './service/tenant.service';
 import { ImageService } from '../service/image.service';
 import { ConfettiService } from '@/confetti/confetti.service';
 import { ConfettiComponent } from '@/confetti/confetti.component';
+import { ProductService } from '@/pages/products-menu/service/product.service';
+import { CampaignService } from '@/pages/campaigns/services/campaign.service';
 
 @Component({
     selector: 'app-landing-editor',
@@ -42,6 +45,7 @@ export class LandingEditorComponent implements OnInit {
     userId: number = 0;
 
     showCongrats: boolean = false;
+    showWelcomeBanner = signal<boolean>(false);
 
 
     constructor(
@@ -50,7 +54,9 @@ export class LandingEditorComponent implements OnInit {
         private tenantService: TenantService,
         private imageService: ImageService,
         private confettiService: ConfettiService,
-        private router: Router
+        private router: Router,
+        private productService: ProductService,
+        private campaignService: CampaignService
     ) {
         this.landingForm = this.fb.group({
             logo: [null, Validators.required],
@@ -105,6 +111,9 @@ export class LandingEditorComponent implements OnInit {
                         linkedin: tenant.object.linkedin,
                         x: tenant.object.x
                     });
+                }
+                if (this.tenantId > 0) {
+                    this.checkBannerConditions();
                 }
             },
             error: (error) => {
@@ -257,5 +266,30 @@ export class LandingEditorComponent implements OnInit {
             const truncated = plainText.substring(0, 499);
             this.landingForm.get(controlName)?.setValue(truncated);
         }
+    }
+
+    private checkBannerConditions(): void {
+        if (this.tenantId === 0) return;
+
+        forkJoin({
+            products: this.productService.getProductsByTenantId(this.tenantId),
+            welcomeCampaign: this.campaignService.hasActiveWelcomeCampaign(this.tenantId)
+        }).subscribe({
+            next: ({ products, welcomeCampaign }) => {
+                const hasProducts = (products?.object?.length ?? 0) > 0;
+                const hasWelcome = welcomeCampaign?.hasActiveWelcomeCampaign ?? false;
+                this.showWelcomeBanner.set(hasProducts && !hasWelcome);
+            },
+            error: (err) => {
+                console.error('Error checking banner conditions:', err);
+                this.showWelcomeBanner.set(false);
+            }
+        });
+    }
+
+    navigateToWelcomeCampaign(): void {
+        this.router.navigate(['/dashboard/campaigns/create'], {
+            queryParams: { templateId: 1 }
+        });
     }
 }

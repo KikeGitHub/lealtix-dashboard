@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { AppLayout } from './app/layout/component/app.layout';
-import { Dashboard } from './app/pages/dashboard/dashboard';
+import { DashboardComponent } from './app/pages/dashboard/dashboard.component';
 import { Documentation } from './app/pages/documentation/documentation';
 import { LandingEditorComponent } from '@/pages/admin-page/landing-editor.component';
 import { ProductMenuComponent } from '@/pages/products-menu/products-menu.component';
@@ -17,6 +17,7 @@ import { CampaignDetailsComponent } from '@/pages/campaigns/components/campaign-
 import { CampaignTemplatesListComponent } from '@/pages/campaigns/components/campaign-templates-list/campaign-templates-list.component';
 import { CreateCampaignComponent } from '@/pages/campaigns/components/create-campaign/create-campaign.component';
 import { ManualRedemptionComponent } from '@/pages/manual-redemption/manual-redemption.component';
+import { MiPaginaComponent } from '@/pages/mi-pagina/mi-pagina.component';
 
 export const appRoutes: Routes = [
     // Everything under /dashboard/**
@@ -34,8 +35,8 @@ export const appRoutes: Routes = [
                 canActivate: [AuthGuard],
                 canActivateChild: [AuthGuard],
                 children: [
-                    { path: '', redirectTo: 'kpis', pathMatch: 'full' },
-                    { path: 'kpis', component: Dashboard },
+                    { path: '', redirectTo: 'adminPage', pathMatch: 'full' },
+                    { path: 'kpis', component: DashboardComponent },
                     { path: 'adminPage', component: LandingEditorComponent },
                     { path: 'categoriesMenu', component: CategoriesMenuComponent },
                     { path: 'adminMenu', component: ProductMenuComponent },
@@ -46,7 +47,8 @@ export const appRoutes: Routes = [
                     { path: 'campaigns/new', component: CampaignFormComponent, title: 'Nueva Campaña' },
                     { path: 'campaigns/:id', component: CampaignDetailsComponent, title: 'Detalles de Campaña' },
                     { path: 'campaign-templates', component: CampaignTemplatesListComponent, title: 'Plantillas de Campañas' },
-                    { path: 'manual-redemption', component: ManualRedemptionComponent, title: 'Redención Manual' }
+                    { path: 'manual-redemption', component: ManualRedemptionComponent, title: 'Redención Manual' },
+                    { path: 'mi-pagina', component: MiPaginaComponent, title: 'Mi Página' }
                 ]
             }
         ]

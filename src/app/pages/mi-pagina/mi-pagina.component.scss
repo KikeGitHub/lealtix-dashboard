@@ -1,0 +1,301 @@
+:host ::ng-deep {
+  // URL Section Layout
+  .url-section {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+
+    .url-input-wrapper {
+      flex: 1;
+      min-width: 0; // Para que respete el flex y no se desborde
+      width: 50%;
+    }
+
+    .url-action-wrapper {
+      flex: 1;
+      min-width: 0;
+      width: 50%;
+    }
+
+    // Dividers
+    .divider-desktop {
+      display: block;
+      margin: 0;
+      align-self: stretch;
+    }
+
+    .divider-mobile {
+      display: none;
+      margin: 1rem 0;
+    }
+  }
+
+  // QR Section Layout
+  .qr-section-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  // QR Display Area
+  .qr-display-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+
+  .qr-container {
+    background-color: #ffffff;
+    border: 2px dashed #dee2e6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--primary-color);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  .qr-label {
+    margin-top: 1rem;
+    margin-bottom: 0;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+  }
+
+  // QR Actions (Buttons)
+  .qr-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    .p-button {
+      min-width: 160px;
+    }
+  }
+
+  // Tips Section
+  .qr-tips {
+    margin-top: 0.5rem;
+  }
+
+  .tips-title {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+  }
+
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-color: var(--primary-color);
+
+      i {
+        transform: scale(1.1);
+        color: var(--primary-color);
+      }
+    }
+
+    i {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      margin-top: 0.125rem;
+    }
+  }
+
+  .tip-content {
+    flex: 1;
+
+    .tip-title {
+      margin: 0 0 0.25rem 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    small {
+      display: block;
+      color: #64748b;
+      line-height: 1.4;
+      font-size: 0.8125rem;
+    }
+  }
+
+  // Card heights
+  .h-full {
+    height: 100%;
+
+    .p-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .p-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  // URL Input styling
+  .url-input {
+    cursor: text !important;
+    user-select: all;
+
+    &:focus {
+      user-select: all;
+    }
+  }
+
+  // Input readonly styling
+  .p-inputtext[readonly] {
+    cursor: text;
+    user-select: all;
+  }
+
+  // Divider spacing
+  .p-divider {
+    margin: 1.5rem 0;
+  }
+
+  // List styling
+  ul {
+    margin: 0;
+
+    li {
+      margin-bottom: 0;
+    }
+  }
+
+  // Button adjustments
+  .p-button {
+    white-space: nowrap;
+  }
+
+  // Card header consistency
+  .p-card-header {
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  // Tooltip
+  .p-tooltip {
+    font-size: 0.875rem;
+  }
+
+  // Input group addon
+  .p-inputgroup-addon {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+
+    i {
+      color: #64748b;
+    }
+  }
+
+  // Link button styling
+  a.p-button {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  // Grid alignment
+  .align-items-end {
+    .col-12 {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 991px) {
+  :host ::ng-deep {
+    // URL Section - Stack vertically on tablets/mobile
+    .url-section {
+      flex-direction: column;
+      gap: 0;
+
+      .url-input-wrapper {
+        width: 100%;
+      }
+
+      .url-action-wrapper {
+        width: 100%;
+      }
+
+      .divider-desktop {
+        display: none;
+      }
+
+      .divider-mobile {
+        display: block;
+      }
+    }
+
+    .qr-container {
+      canvas {
+        max-width: 100%;
+        height: auto;
+      }
+    }
+
+    .tips-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .qr-actions {
+      flex-direction: column;
+
+      .p-button {
+        width: 100%;
+      }
+    }
+
+    .align-items-end {
+      align-items: stretch !important;
+
+      .col-12 {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  :host ::ng-deep {
+    .qr-display-area {
+      padding: 1rem 0.5rem;
+    }
+
+    .tip-item {
+      padding: 0.75rem;
+    }
+  }
+}

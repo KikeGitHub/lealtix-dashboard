@@ -491,6 +491,9 @@ export class ProductMenuComponent implements OnInit {
                                 detail: 'Product Deleted',
                                 life: 3000
                             });
+
+                            // Trigger event for menu update
+                            window.dispatchEvent(new Event('productsUpdated'));
                         },
                         error: (err) => {
                             console.error('Failed to delete product:', err);
@@ -591,6 +594,9 @@ export class ProductMenuComponent implements OnInit {
             this.productService.createProduct(newProduct).subscribe({
                 next: (resp) => {
                     this.messageService.add({ severity: 'success', summary: 'Producto creado', detail: `${newProduct.name} creado`, life: 3000 });
+
+                    // Trigger event for menu update
+                    window.dispatchEvent(new Event('productsUpdated'));
 
                     // Check if this is the first product created
                     if (isNewProduct) {

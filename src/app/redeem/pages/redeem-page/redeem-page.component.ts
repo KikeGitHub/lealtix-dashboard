@@ -368,7 +368,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
   /**
    * Obtiene la severidad del tag según el estado
    */
-  getStatusSeverity(status?: string | null): 'success' | 'danger' | 'warning' | 'info' {
+  getStatusSeverity(status?: string | null): 'success' | 'danger' | 'warn' | 'info' {
     if (!status) return 'info';
     switch (status) {
       case CouponStatus.ACTIVE:
@@ -376,7 +376,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
       case CouponStatus.REDEEMED:
         return 'danger';
       case CouponStatus.EXPIRED:
-        return 'warning';
+        return 'warn';
       case CouponStatus.CANCELLED:
         return 'danger';
       default:

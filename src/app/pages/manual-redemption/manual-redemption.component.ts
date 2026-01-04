@@ -291,15 +291,15 @@ export class ManualRedemptionComponent implements OnInit {
   /**
    * Obtiene la severidad para el tag del estado
    */
-  getStatusSeverity(status?: string | null): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {
+  getStatusSeverity(status?: string | null): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined {
     if (!status) return 'secondary';
-    const severityMap: { [key: string]: 'success' | 'secondary' | 'info' | 'warning' | 'danger' } = {
+    const severityMap: { [key: string]: 'success' | 'secondary' | 'info' | 'warn' | 'danger' } = {
       'CREATED': 'info',
       'SENT': 'info',
       'ACTIVE': 'success',
       'REDEEMED': 'secondary',
       'EXPIRED': 'danger',
-      'CANCELLED': 'warning'
+      'CANCELLED': 'warn'
     };
     return severityMap[status] || 'secondary';
   }

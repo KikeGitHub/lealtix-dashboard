@@ -5,6 +5,7 @@ import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
 import { CategoryService } from '../../pages/categories-menu/service/category.service';
 import { TenantService } from '../../pages/admin-page/service/tenant.service';
+import { ProductService } from '../../pages/products-menu/service/product.service';
 
 @Component({
     selector: 'app-menu',
@@ -22,11 +23,17 @@ export class AppMenu implements OnInit {
 
     constructor(
         private categoryService: CategoryService,
-        private tenantService: TenantService
+        private tenantService: TenantService,
+        private productService: ProductService
     ) {
         // Listen for category updates
         window.addEventListener('categoriesUpdated', () => {
             this.checkAndUpdateProductsMenu();
+        });
+
+        // Listen for product updates to show/hide Mi Página
+        window.addEventListener('productsUpdated', () => {
+            this.checkAndUpdateMiPaginaMenu();
         });
     }
 
@@ -48,15 +55,24 @@ export class AppMenu implements OnInit {
                     { label: 'Campañas', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/campaigns'] },
                     { label: 'Plantillas', icon: 'pi pi-fw pi-file', routerLink: ['/dashboard/campaign-templates'] },
                     { label: 'Redención', icon: 'pi pi-fw pi-ticket', routerLink: ['/dashboard/manual-redemption'] },
-                    { label: 'Reportes', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/dashboard/uikit/charts'] },
-                    { label: 'Usuarios', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/uikit/formlayout'] },
-                    { label: 'Utils', icon: 'pi pi-fw pi-table', routerLink: ['/dashboard/uikit/table'] }
+                    {
+                        label: 'Mi Página',
+                        icon: 'pi pi-fw pi-qrcode',
+                        routerLink: ['/dashboard/mi-pagina'],
+                        visible: false // Will be updated based on products check
+                    },
+                    { label: 'Reportes', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/dashboard/uikit/charts'], visible: false },
+                    { label: 'Usuarios', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/uikit/formlayout'], visible: false },
+                    { label: 'Utils', icon: 'pi pi-fw pi-table', routerLink: ['/dashboard/uikit/table'], visible: false }
                 ]
             }
         ];
 
         // Check if categories exist and enable/disable Products menu item
         this.checkAndUpdateProductsMenu();
+
+        // Check if products exist and show/hide Mi Página menu item
+        this.checkAndUpdateMiPaginaMenu();
     }
 
     private checkAndUpdateProductsMenu() {
@@ -80,6 +96,43 @@ export class AppMenu implements OnInit {
                                     },
                                     error: (err) => {
                                         console.error('Error checking categories:', err);
+                                    }
+                                });
+                            }
+                        },
+                        error: (err) => {
+                            console.error('Error fetching tenant:', err);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Failed to parse stored usuario:', e);
+            }
+        }
+    }
+
+    private checkAndUpdateMiPaginaMenu() {
+        const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
+        if (userStr) {
+            try {
+                const userObj = JSON.parse(userStr);
+                if (userObj && userObj.userEmail) {
+                    this.tenantService.getTenantByEmail(String(userObj.userEmail || '').trim()).subscribe({
+                        next: (resp) => {
+                            const tenant = resp?.object;
+                            const tenantId = tenant?.id ?? 0;
+                            if (tenantId > 0) {
+                                this.productService.getProductsByTenantId(tenantId).subscribe({
+                                    next: (productResp) => {
+                                        const products = productResp?.object || [];
+                                        const hasProducts = products.length > 0;
+                                        const miPaginaItem = this.model[0]?.items?.find(item => item.label === 'Mi Página');
+                                        if (miPaginaItem) {
+                                            miPaginaItem.visible = hasProducts;
+                                        }
+                                    },
+                                    error: (err) => {
+                                        console.error('Error checking products:', err);
                                     }
                                 });
                             }

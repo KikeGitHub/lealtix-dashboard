@@ -5,12 +5,12 @@
             <div class="flex align-items-start gap-3 flex-1">
                 <span class="text-4xl" style="line-height: 1;">🚀</span>
                 <div>
-                    <div class="font-semibold text-xl mb-2" style="color: #92400E;">Tu negocio ya está listo.</div>
-                    <div class="line-height-3" style="color: #78350F;">Ahora configura tu campaña de bienvenida para empezar a recibir clientes.</div>
+                    <div class="font-semibold text-xl mb-2" style="color: #92400E;">{{ bannerMessage().title }}</div>
+                    <div class="line-height-3" style="color: #78350F;">{{ bannerMessage().description }}</div>
                 </div>
             </div>
             <p-button
-                label="Configurar campaña de bienvenida"
+                [label]="bannerMessage().buttonText"
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 severity="warn"

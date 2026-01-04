@@ -62,6 +62,9 @@ export class ManualRedemptionComponent implements OnInit {
   redemptionData: RedemptionResponse | null = null;
   errorMessage: string = '';
   showWelcomeBanner = signal<boolean>(false);
+  bannerMessage = signal<{ title: string; description: string; buttonText: string }>(
+    { title: '', description: '', buttonText: '' }
+  );
 
   constructor(
     private redemptionService: RedemptionService,
@@ -296,23 +299,80 @@ export class ManualRedemptionComponent implements OnInit {
   private checkBannerConditions(tenantId: number): void {
     forkJoin({
       products: this.productService.getProductsByTenantId(tenantId),
-      welcomeCampaign: this.campaignService.hasActiveWelcomeCampaign(tenantId)
+      welcomeStatus: this.campaignService.getWelcomeCampaignStatus(tenantId)
     }).subscribe({
-      next: ({ products, welcomeCampaign }) => {
-        const hasProducts = (products?.object?.length ?? 0) > 0;
-        const hasWelcome = welcomeCampaign?.hasActiveWelcomeCampaign ?? false;
-        this.showWelcomeBanner.set(hasProducts && !hasWelcome);
+      next: ({ products, welcomeStatus }) => {
+        const productCount = Array.isArray(products) ? products.length : (products?.object?.length ?? 0);
+        const hasProducts = productCount > 0;
+        const campaignExists = welcomeStatus?.exists ?? false;
+        const campaignStatus = welcomeStatus?.status;
+
+        console.debug('[Banner][manual-redemption] tenantId=', tenantId, 'productCount=', productCount, 'welcomeStatus=', welcomeStatus);
+
+        if (!hasProducts || (campaignExists && campaignStatus === 'ACTIVE')) {
+          this.showWelcomeBanner.set(false);
+          return;
+        }
+
+        if (!campaignExists) {
+          this.showWelcomeBanner.set(true);
+          this.bannerMessage.set({
+            title: 'Tu negocio ya está listo.',
+            description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.',
+            buttonText: 'Configurar campaña de bienvenida'
+          });
+        } else if (campaignStatus === 'DRAFT') {
+          this.showWelcomeBanner.set(true);
+          this.bannerMessage.set({
+            title: '¡Ya casi está todo listo!',
+            description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.',
+            buttonText: 'Activar campaña de bienvenida'
+          });
+        }
       },
       error: (err) => {
-        console.error('Error checking banner conditions:', err);
-        this.showWelcomeBanner.set(false);
+        console.warn('[Banner][manual-redemption] welcome-status failed, falling back to campaigns list', err);
+        this.productService.getProductsByTenantId(tenantId).subscribe({
+          next: (productsResp) => {
+            const productCount = Array.isArray(productsResp) ? productsResp.length : (productsResp?.object?.length ?? 0);
+            const hasProducts = productCount > 0;
+
+            this.campaignService.getByBusiness(tenantId).subscribe({
+              next: (campaigns) => {
+                const welcomeCampaigns = (campaigns || []).filter(c => c.template?.id === 1);
+                const active = welcomeCampaigns.some(c => c.status === 'ACTIVE');
+                const draft = !active && welcomeCampaigns.some(c => c.status === 'DRAFT');
+
+                if (!hasProducts || active) { this.showWelcomeBanner.set(false); return; }
+
+                if (welcomeCampaigns.length === 0) {
+                  this.showWelcomeBanner.set(true);
+                  this.bannerMessage.set({ title: 'Tu negocio ya está listo.', description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.', buttonText: 'Configurar campaña de bienvenida' });
+                } else if (draft) {
+                  this.showWelcomeBanner.set(true);
+                  this.bannerMessage.set({ title: '¡Ya casi está todo listo!', description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.', buttonText: 'Activar campaña de bienvenida' });
+                }
+              },
+              error: (e2) => { console.error('[Banner][manual-redemption] fallback getByBusiness failed', e2); this.showWelcomeBanner.set(false); }
+            });
+          },
+          error: (e3) => { console.error('[Banner][manual-redemption] fallback getProducts failed', e3); this.showWelcomeBanner.set(false); }
+        });
       }
     });
   }
 
   navigateToWelcomeCampaign(): void {
-    this.router.navigate(['/dashboard/campaigns/create'], {
-      queryParams: { templateId: 1 }
+    this.campaignService.getByBusiness(this.tenantId).subscribe({
+      next: (campaigns) => {
+        const draftWelcome = (campaigns || []).find(c => c.template?.id === 1 && c.status === 'DRAFT');
+        if (draftWelcome) {
+          this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { id: draftWelcome.id, focusStatus: 'true' } });
+        } else {
+          this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } });
+        }
+      },
+      error: () => { this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } }); }
     });
   }
 }

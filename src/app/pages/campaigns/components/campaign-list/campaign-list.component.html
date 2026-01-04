@@ -5,12 +5,12 @@
             <div class="flex align-items-start gap-3 flex-1">
                 <span class="text-4xl" style="line-height: 1;">🚀</span>
                 <div>
-                    <div class="font-semibold text-xl mb-2" style="color: #92400E;">Tu negocio ya está listo.</div>
-                    <div class="line-height-3" style="color: #78350F;">Ahora configura tu campaña de bienvenida para empezar a recibir clientes.</div>
+                    <div class="font-semibold text-xl mb-2" style="color: #92400E;">{{ bannerMessage().title }}</div>
+                    <div class="line-height-3" style="color: #78350F;">{{ bannerMessage().description }}</div>
                 </div>
             </div>
             <p-button
-                label="Configurar campaña de bienvenida"
+                [label]="bannerMessage().buttonText"
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 severity="warn"
@@ -149,5 +149,33 @@
     (save)="saveCampaign(campaignDialogRef)"
     (hide)="hideCampaignDialog()">
 </app-campaign-dialog>
+
+<!-- Confetti Component for Welcome Campaign Celebration -->
+<app-confetti></app-confetti>
+
+<!-- Welcome Campaign Activated Dialog -->
+<p-dialog
+  [(visible)]="showWelcomeConfetti"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '30rem', textAlign: 'center', borderRadius: '1.5rem' }"
+  [contentStyle]="{ padding: '2.5rem 2rem' }"
+>
+  <div class="flex flex-col items-center gap-4">
+    <div style="font-size: 3.5rem;">🎉</div>
+    <h2 class="font-bold text-2xl text-primary-700 m-0">¡Campaña de bienvenida activada!</h2>
+    <p class="text-lg text-gray-700 m-0">
+      Tu campaña ya está lista. Ahora puedes registrar clientes para que reciban este beneficio automáticamente.
+    </p>
+        <div class="mt-3 w-full">
+            <p-button
+                label="¡Entendido!"
+                severity="success"
+                styleClass="w-full"
+                (onClick)="closeWelcomeConfetti()"
+            ></p-button>
+        </div>
+  </div>
+</p-dialog>
 
 <p-toast></p-toast>

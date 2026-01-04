@@ -16,6 +16,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CampaignResponse, CreateCampaignRequest, UpdateCampaignRequest, CampaignWithValidation, CampaignValidationResult } from '@/models/campaign.model';
 import { CampaignStatus } from '@/models/enums';
@@ -24,6 +25,8 @@ import { TenantService } from '@/pages/admin-page/service/tenant.service';
 import { CampaignDialogComponent } from '../campaign-dialog/campaign-dialog.component';
 import { ProductService } from '@/pages/products-menu/service/product.service';
 import { CampaignFormatters } from '../../utils/formatters';
+import { ConfettiService } from '@/confetti/confetti.service';
+import { ConfettiComponent } from '@/confetti/confetti.component';
 
 interface TableColumn {
     field: string;
@@ -48,7 +51,9 @@ interface TableColumn {
         SelectModule,
         ToastModule,
         TooltipModule,
-        CampaignDialogComponent
+        DialogModule,
+        CampaignDialogComponent,
+        ConfettiComponent
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './campaign-list.component.html',
@@ -137,6 +142,11 @@ export class CampaignListComponent implements OnInit {
     tenantId: number = 0;
     businessId: number = 0;
     showWelcomeBanner = signal<boolean>(false);
+    bannerMessage = signal<{ title: string; description: string; buttonText: string }>(
+        { title: '', description: '', buttonText: '' }
+    );
+    // Welcome campaign confetti
+    showWelcomeConfetti = signal<boolean>(false);
 
     // Dialog state
     campaignDialog = signal<boolean>(false);
@@ -202,7 +212,8 @@ export class CampaignListComponent implements OnInit {
         private messageService: MessageService,
         private router: Router,
         private tenantService: TenantService,
-        private productService: ProductService
+        private productService: ProductService,
+        private confettiService: ConfettiService
     ) {}
 
     ngOnInit(): void {
@@ -232,6 +243,8 @@ export class CampaignListComponent implements OnInit {
             }
         });
 
+        // Check if we should show welcome confetti
+        this.checkForWelcomeConfetti();
     }
 
     private loadCampaigns(): void {
@@ -245,6 +258,9 @@ export class CampaignListComponent implements OnInit {
                     // También actualizar la lista de campañas sin validación para compatibilidad
                     this.campaigns.set(campaignsWithValidation.map(item => item.campaign));
                     this.loading.set(false);
+
+                    // Check if we should show confetti after campaigns loaded
+                    this.checkForWelcomeConfetti();
                 },
                 error: (error) => {
                     console.error('Error loading campaigns:', error);
@@ -409,9 +425,13 @@ export class CampaignListComponent implements OnInit {
                     .pipe(takeUntilDestroyed(this.destroyRef))
                     .subscribe({
                         next: () => {
-                            // Remover de la lista
+                            // Remover de la lista (actualizar both campaigns y campaignsWithValidation)
                             const currentCampaigns = this.campaigns();
                             this.campaigns.set(currentCampaigns.filter((c) => c.id !== campaign.id));
+
+                            const currentWithValidation = this.campaignsWithValidation();
+                            this.campaignsWithValidation.set(currentWithValidation.filter((item) => item.campaign.id !== campaign.id));
+
                             this.messageService.add({
                                 severity: 'success',
                                 summary: 'Éxito',
@@ -448,17 +468,21 @@ export class CampaignListComponent implements OnInit {
 
                 Promise.all(deletePromises)
                     .then(() => {
-                        // Remover campañas eliminadas de la lista
-                        const currentCampaigns = this.campaigns();
-                        const selectedIds = this.selectedCampaigns.map(c => c.id);
-                        this.campaigns.set(currentCampaigns.filter(c => !selectedIds.includes(c.id)));
-                        this.selectedCampaigns = [];
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Éxito',
-                            detail: `${count} campaña${count > 1 ? 's eliminadas' : ' eliminada'} exitosamente`
-                        });
-                    })
+                            // Remover campañas eliminadas de la lista (actualizar campaigns y campaignsWithValidation)
+                            const currentCampaigns = this.campaigns();
+                            const selectedIds = this.selectedCampaigns.map(c => c.id);
+                            this.campaigns.set(currentCampaigns.filter(c => !selectedIds.includes(c.id)));
+
+                            const currentWithValidation = this.campaignsWithValidation();
+                            this.campaignsWithValidation.set(currentWithValidation.filter(item => !selectedIds.includes(item.campaign.id)));
+
+                            this.selectedCampaigns = [];
+                            this.messageService.add({
+                                severity: 'success',
+                                summary: 'Éxito',
+                                detail: `${count} campaña${count > 1 ? 's eliminadas' : ' eliminada'} exitosamente`
+                            });
+                        })
                     .catch((error) => {
                         console.error('Error deleting campaigns:', error);
                         this.messageService.add({
@@ -524,23 +548,100 @@ export class CampaignListComponent implements OnInit {
 
         forkJoin({
             products: this.productService.getProductsByTenantId(this.tenantId),
-            welcomeCampaign: this.campaignService.hasActiveWelcomeCampaign(this.tenantId)
+            welcomeStatus: this.campaignService.getWelcomeCampaignStatus(this.tenantId)
         }).subscribe({
-            next: ({ products, welcomeCampaign }) => {
-                const hasProducts = (products?.object?.length ?? 0) > 0;
-                const hasWelcome = welcomeCampaign?.hasActiveWelcomeCampaign ?? false;
-                this.showWelcomeBanner.set(hasProducts && !hasWelcome);
+            next: ({ products, welcomeStatus }) => {
+                const productCount = Array.isArray(products) ? products.length : (products?.object?.length ?? 0);
+                const hasProducts = productCount > 0;
+                const campaignExists = welcomeStatus?.exists ?? false;
+                const campaignStatus = welcomeStatus?.status;
+
+                console.debug('[Banner][campaign-list] tenantId=', this.tenantId, 'productCount=', productCount, 'welcomeStatus=', welcomeStatus);
+
+                if (!hasProducts || (campaignExists && campaignStatus === 'ACTIVE')) {
+                    this.showWelcomeBanner.set(false);
+                    return;
+                }
+
+                if (!campaignExists) {
+                    this.showWelcomeBanner.set(true);
+                    this.bannerMessage.set({
+                        title: 'Tu negocio ya está listo.',
+                        description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.',
+                        buttonText: 'Configurar campaña de bienvenida'
+                    });
+                } else if (campaignStatus === 'DRAFT') {
+                    this.showWelcomeBanner.set(true);
+                    this.bannerMessage.set({
+                        title: '¡Ya casi está todo listo!',
+                        description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.',
+                        buttonText: 'Activar campaña de bienvenida'
+                    });
+                }
             },
             error: (err) => {
-                console.error('Error checking banner conditions:', err);
-                this.showWelcomeBanner.set(false);
+                console.warn('[Banner][campaign-list] welcome-status failed, falling back to campaigns list', err);
+                this.productService.getProductsByTenantId(this.tenantId).subscribe({
+                    next: (productsResp) => {
+                        const productCount = Array.isArray(productsResp) ? productsResp.length : (productsResp?.object?.length ?? 0);
+                        const hasProducts = productCount > 0;
+
+                        this.campaignService.getByBusiness(this.tenantId).subscribe({
+                            next: (campaigns) => {
+                                const welcomeCampaigns = (campaigns || []).filter(c => c.template?.id === 1);
+                                const active = welcomeCampaigns.some(c => c.status === 'ACTIVE');
+                                const draft = !active && welcomeCampaigns.some(c => c.status === 'DRAFT');
+
+                                if (!hasProducts || active) { this.showWelcomeBanner.set(false); return; }
+
+                                if (welcomeCampaigns.length === 0) {
+                                    this.showWelcomeBanner.set(true);
+                                    this.bannerMessage.set({ title: 'Tu negocio ya está listo.', description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.', buttonText: 'Configurar campaña de bienvenida' });
+                                } else if (draft) {
+                                    this.showWelcomeBanner.set(true);
+                                    this.bannerMessage.set({ title: '¡Ya casi está todo listo!', description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.', buttonText: 'Activar campaña de bienvenida' });
+                                }
+                            },
+                            error: (e2) => { console.error('[Banner][campaign-list] fallback getByBusiness failed', e2); this.showWelcomeBanner.set(false); }
+                        });
+                    },
+                    error: (e3) => { console.error('[Banner][campaign-list] fallback getProducts failed', e3); this.showWelcomeBanner.set(false); }
+                });
             }
         });
     }
 
     navigateToWelcomeCampaign(): void {
-        this.router.navigate(['/dashboard/campaigns/create'], {
-            queryParams: { templateId: 1 }
+        this.campaignService.getByBusiness(this.tenantId).subscribe({
+            next: (campaigns) => {
+                const draftWelcome = (campaigns || []).find(c => c.template?.id === 1 && c.status === 'DRAFT');
+                if (draftWelcome) {
+                    this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { id: draftWelcome.id, focusStatus: 'true' } });
+                } else {
+                    this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } });
+                }
+            },
+            error: () => { this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } }); }
         });
+    }
+
+    private checkForWelcomeConfetti(): void {
+        const navigation = this.router.getCurrentNavigation();
+        const state = navigation?.extras?.state || window.history.state;
+
+        console.log('[Confetti Debug] checkForWelcomeConfetti - state:', state);
+
+        if (state?.showWelcomeConfetti) {
+            console.log('[Confetti Debug] Showing welcome confetti!');
+            // Wait a bit for table to render before showing confetti
+            setTimeout(() => {
+                this.confettiService.trigger({ action: 'burst' });
+                this.showWelcomeConfetti.set(true);
+            }, 300);
+        }
+    }
+
+    closeWelcomeConfetti(): void {
+        this.showWelcomeConfetti.set(false);
     }
 }

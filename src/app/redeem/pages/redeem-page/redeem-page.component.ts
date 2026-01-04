@@ -67,19 +67,35 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Obtener token de la ruta
+    // Obtener token de la ruta o del query param `code` (soporta enlaces como ?code=...)
     this.route.params
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
-        this.qrToken = params['qrToken'];
-        if (this.qrToken) {
-          // Detectar sesión y tenant, luego validar cupón
-          this.checkStaffAccess();
-        } else {
+        const tokenFromParam = params['qrToken'];
+        if (tokenFromParam) {
+          this.setTokenAndValidate(tokenFromParam);
+        }
+      });
+
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(qparams => {
+        const tokenFromQuery = qparams['code'] || qparams['qrToken'];
+        if (tokenFromQuery) {
+          this.setTokenAndValidate(tokenFromQuery);
+        } else if (!this.qrToken) {
           this.pageState = 'not-found';
           this.errorMessage = 'No se proporcionó un código de cupón válido';
         }
       });
+  }
+
+  // Establece el token si cambió y lanza la validación
+  private setTokenAndValidate(token: string): void {
+    if (!token) return;
+    if (this.qrToken === token) return;
+    this.qrToken = token;
+    this.checkStaffAccess();
   }
 
   /**

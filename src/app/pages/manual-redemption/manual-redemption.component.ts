@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 // PrimeNG Imports
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { TagModule } from 'primeng/tag';
@@ -39,6 +40,7 @@ type PageState = 'idle' | 'validating' | 'valid' | 'redeeming' | 'success' | 'er
     FormsModule,
     CardModule,
     InputTextModule,
+    InputNumberModule,
     ButtonModule,
     DividerModule,
     TagModule,
@@ -56,6 +58,8 @@ export class ManualRedemptionComponent implements OnInit {
   pageState: PageState = 'idle';
   couponCode: string = '';
   tenantId: number = 1;
+  originalAmount: number = 0;
+  minRedemptionAmount: number = 0;
 
   // Data
   validationData: CouponValidationResponse | null = null;
@@ -119,6 +123,9 @@ export class ManualRedemptionComponent implements OnInit {
           });
         } else if (response.valid) {
           this.pageState = 'valid';
+          // Guardar el monto mínimo de redención
+          this.minRedemptionAmount = response.minRedemptionAmount || 0;
+          this.originalAmount = this.minRedemptionAmount;
           this.messageService.add({
             severity: 'success',
             summary: 'Cupón válido',
@@ -157,8 +164,19 @@ export class ManualRedemptionComponent implements OnInit {
       return;
     }
 
+    // Validar que el monto sea mayor o igual al mínimo
+    if (this.originalAmount < this.minRedemptionAmount) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Monto inválido',
+        detail: `El monto debe ser al menos $${this.minRedemptionAmount.toFixed(2)}`,
+        life: 3000
+      });
+      return;
+    }
+
     this.confirmationService.confirm({
-      message: `¿Confirma la redención del cupón para ${this.validationData.customerName}?`,
+      message: `¿Confirma la redención del cupón para ${this.validationData.customerName} por un monto de $${this.originalAmount.toFixed(2)}?`,
       header: 'Confirmar Redención',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, redimir',
@@ -179,6 +197,7 @@ export class ManualRedemptionComponent implements OnInit {
     const request: RedemptionRequest = {
       redeemedBy: currentUser?.userEmail || 'staff',
       channel: RedemptionChannel.MANUAL,
+      originalAmount: this.originalAmount,
       location: 'Dashboard Admin',
       metadata: JSON.stringify({
         redeemedFrom: 'Manual Redemption Dashboard',

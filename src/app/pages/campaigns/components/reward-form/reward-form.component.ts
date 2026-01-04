@@ -1,11 +1,12 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { Button } from 'primeng/button';
 import { Select } from 'primeng/select';
 import { InputNumber } from 'primeng/inputnumber';
 import { Textarea } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
+import { Message } from 'primeng/message';
 import { RewardType } from '@/models/enums';
 import { CreateRewardRequest, RewardResponse } from '../../models/reward.model';
 import { CampaignService } from '../../services/campaign.service';
@@ -16,10 +17,11 @@ import { CampaignService } from '../../services/campaign.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    Button,
     Select,
     InputNumber,
-    Textarea
+    Textarea,
+    TooltipModule,
+    Message
   ],
   templateUrl: './reward-form.component.html',
   styleUrls: ['./reward-form.component.scss']
@@ -29,6 +31,8 @@ export class RewardFormComponent implements OnInit, OnChanges {
   @Input() existingReward?: RewardResponse;
   @Output() saved = new EventEmitter<RewardResponse>();
   @Output() cancelled = new EventEmitter<void>();
+  @Output() pending = new EventEmitter<CreateRewardRequest>();
+  @Output() rewardDataChanged = new EventEmitter<CreateRewardRequest>();
 
   private fb = inject(FormBuilder);
   private campaignService = inject(CampaignService);
@@ -45,6 +49,31 @@ export class RewardFormComponent implements OnInit, OnChanges {
 
   isSubmitting = false;
   isEditMode = false;
+  @ViewChild('rewardTypeSelect') rewardTypeSelect!: Select;
+  @ViewChild('rewardTypeSelect', { read: ElementRef }) rewardTypeSelectElement!: ElementRef;
+
+  public focusRewardType(): void {
+    // Allow the view to settle, then scroll to the component, open the dropdown and mark as touched
+    setTimeout(() => {
+      try {
+        // Scroll to the select element so it's visible
+        if (this.rewardTypeSelectElement?.nativeElement) {
+          this.rewardTypeSelectElement.nativeElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+
+        // Mark the field as touched to show the validation message
+        this.rewardForm.get('rewardType')?.markAsTouched();
+
+        // Do not automatically open the dropdown; only mark touched and scroll into view
+        // (previous behavior called this.rewardTypeSelect.show())
+      } catch (e) {
+        console.warn('Unable to open reward select dropdown', e);
+      }
+    }, 300);
+  }
 
   ngOnInit(): void {
     this.initForm();
@@ -96,7 +125,20 @@ export class RewardFormComponent implements OnInit, OnChanges {
   private setupFormListeners(): void {
     this.rewardForm.get('rewardType')?.valueChanges.subscribe((type: RewardType) => {
       this.updateValidators(type);
+      this.emitRewardDataIfValid();
     });
+
+    // Emit changes on any form value change
+    this.rewardForm.valueChanges.subscribe(() => {
+      this.emitRewardDataIfValid();
+    });
+  }
+
+  private emitRewardDataIfValid(): void {
+    if (this.rewardForm.valid) {
+      const request = this.buildRequest();
+      this.rewardDataChanged.emit(request);
+    }
   }
 
   private updateValidators(rewardType: RewardType): void {
@@ -165,14 +207,39 @@ export class RewardFormComponent implements OnInit, OnChanges {
     return 'Valor';
   }
 
+  // Public method to get reward data for parent component
+  public getRewardData(): CreateRewardRequest | null {
+    if (this.rewardForm.valid) {
+      return this.buildRequest();
+    }
+    return null;
+  }
+
+  // Public method to check if reward form has valid data
+  public hasValidRewardData(): boolean {
+    return this.rewardForm.valid && this.rewardForm.get('rewardType')?.value !== null;
+  }
+
   onSubmit(): void {
     if (this.rewardForm.invalid) {
       this.rewardForm.markAllAsTouched();
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Formulario incompleto',
-        detail: 'Por favor complete todos los campos requeridos'
-      });
+
+      // Mensaje específico si falta el tipo de beneficio
+      if (this.rewardForm.get('rewardType')?.invalid) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Falta seleccionar tipo de beneficio',
+          detail: 'Debes seleccionar el tipo de beneficio que recibirán tus clientes',
+          life: 5000
+        });
+      } else {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Formulario incompleto',
+          detail: 'Por favor completa todos los campos requeridos',
+          life: 4000
+        });
+      }
       return;
     }
 this.isSubmitting = true;
@@ -185,11 +252,14 @@ this.isSubmitting = true;
       // Si no es edición pero hay campaignId, crear nuevo reward
       this.createReward(this.campaignId, request);
     } else {
+      // If no campaignId is provided (we're creating a campaign), emit the pending reward
       this.isSubmitting = false;
+      this.pending.emit(request);
       this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'ID de campaña no proporcionado'
+        severity: 'info',
+        summary: 'Beneficio pendiente',
+        detail: 'El beneficio se guardará automáticamente después de crear la campaña',
+        life: 5000
       });
     }
   }

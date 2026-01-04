@@ -78,6 +78,32 @@
             </div>
           </div>
 
+          <div class="info-row" *ngIf="validationData?.couponType && validationData?.couponValue">
+            <i class="pi pi-percentage icon"></i>
+            <div class="info-content">
+              <span class="info-label">Tipo de Descuento</span>
+              <span class="info-value">
+                <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
+                  {{ validationData?.couponValue }}% de descuento
+                </span>
+                <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
+                  ${{ validationData?.couponValue }} de descuento
+                </span>
+                <span *ngIf="validationData?.couponType === 'FREE_ITEM'">
+                  Artículo gratis
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div class="info-row" *ngIf="validationData?.minRedemptionAmount">
+            <i class="pi pi-money-bill icon"></i>
+            <div class="info-content">
+              <span class="info-label">Compra Mínima</span>
+              <span class="info-value">${{ validationData?.minRedemptionAmount?.toFixed(2) }}</span>
+            </div>
+          </div>
+
           <div class="info-row">
             <i class="pi pi-calendar icon"></i>
             <div class="info-content">
@@ -162,6 +188,30 @@
             <div class="benefit-content">
               <span class="benefit-label">Beneficio aplicado</span>
               <h3 class="benefit-text">{{ redemptionData?.benefit }}</h3>
+            </div>
+          </div>
+
+          <div class="info-row" *ngIf="redemptionData?.originalAmount">
+            <i class="pi pi-shopping-cart icon"></i>
+            <div class="info-content">
+              <span class="info-label">Monto Original</span>
+              <span class="info-value">${{ redemptionData?.originalAmount?.toFixed(2) }}</span>
+            </div>
+          </div>
+
+          <div class="info-row" *ngIf="redemptionData?.discountAmount">
+            <i class="pi pi-tag icon"></i>
+            <div class="info-content">
+              <span class="info-label">Descuento Aplicado</span>
+              <span class="info-value discount-value">-${{ redemptionData?.discountAmount?.toFixed(2) }}</span>
+            </div>
+          </div>
+
+          <div class="info-row final-amount" *ngIf="redemptionData?.finalAmount">
+            <i class="pi pi-money-bill icon"></i>
+            <div class="info-content">
+              <span class="info-label">Total a Pagar</span>
+              <span class="info-value final-value">${{ redemptionData?.finalAmount?.toFixed(2) }}</span>
             </div>
           </div>
 
@@ -370,6 +420,91 @@
 
 <!-- Confirmation Dialog -->
 <p-confirmDialog></p-confirmDialog>
+
+<!-- Amount Input Dialog -->
+<p-dialog
+  header="Ingrese el Monto de la Compra"
+  [(visible)]="showAmountDialog"
+  [modal]="true"
+  [closable]="true"
+  [style]="{width: '90vw', maxWidth: '450px'}"
+  (onHide)="cancelAmountDialog()">
+
+  <div class="amount-dialog-content">
+    <p class="dialog-description">
+      <i class="pi pi-info-circle"></i>
+      Para redimir este cupón, ingrese el monto total de la compra.
+    </p>
+
+    <div class="amount-info" *ngIf="minRedemptionAmount > 0">
+      <p-message
+        severity="info"
+        [text]="'Compra mínima requerida: $' + minRedemptionAmount.toFixed(2)"
+        styleClass="w-full">
+      </p-message>
+    </div>
+
+    <div class="field">
+      <label for="originalAmount" class="amount-label">
+        <i class="pi pi-money-bill"></i> Monto de la Compra
+      </label>
+      <p-inputNumber
+        id="originalAmount"
+        [(ngModel)]="originalAmount"
+        mode="currency"
+        currency="MXN"
+        locale="es-MX"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+        [min]="minRedemptionAmount"
+        placeholder="0.00"
+        styleClass="w-full"
+        inputStyleClass="w-full">
+      </p-inputNumber>
+    </div>
+
+    <div class="preview-info" *ngIf="originalAmount >= minRedemptionAmount && validationData?.couponType && validationData?.couponValue">
+      <p-divider></p-divider>
+      <div class="preview-row">
+        <span class="preview-label">Descuento estimado:</span>
+        <span class="preview-value discount-preview">
+          <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
+            -${{ (originalAmount * (validationData?.couponValue || 0) / 100).toFixed(2) }}
+          </span>
+          <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
+            -${{ (validationData?.couponValue || 0).toFixed(2) }}
+          </span>
+        </span>
+      </div>
+      <div class="preview-row final">
+        <span class="preview-label">Total a pagar:</span>
+        <span class="preview-value final-preview">
+          <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
+            ${{ (originalAmount - (originalAmount * (validationData?.couponValue || 0) / 100)).toFixed(2) }}
+          </span>
+          <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
+            ${{ (originalAmount - (validationData?.couponValue || 0)).toFixed(2) }}
+          </span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancelar"
+      icon="pi pi-times"
+      styleClass="p-button-text"
+      (onClick)="cancelAmountDialog()">
+    </p-button>
+    <p-button
+      label="Continuar"
+      icon="pi pi-check"
+      (onClick)="confirmRedemption()"
+      [disabled]="originalAmount < minRedemptionAmount">
+    </p-button>
+  </ng-template>
+</p-dialog>
 
 <!-- Toast Messages -->
 <p-toast position="top-center"></p-toast>

@@ -26,4 +26,11 @@ export interface RedemptionResponse {
   // Información del tenant
   tenantId?: number | null;
   tenantName?: string | null;
+
+  // Información de montos y descuentos
+  originalAmount?: number | null;
+  discountAmount?: number | null;
+  finalAmount?: number | null;
+  couponType?: string | null;
+  couponValue?: number | null;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, DestroyRef, model } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, DestroyRef, model, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -27,7 +27,7 @@ import { CampaignTemplate } from '@/models/campaign-template.model';
 import { CreateCampaignRequest } from '@/models/campaign.model';
 import { PromoType } from '@/models/enums';
 import { CampaignFormModel, TemplateField, CampaignPreviewData } from '../../models/create-campaign.models';
-import { RewardResponse } from '../../models/reward.model';
+import { RewardResponse, CreateRewardRequest } from '../../models/reward.model';
 import { CampaignService } from '../../services/campaign.service';
 import { CampaignTemplateService } from '../../services/campaign-template.service';
 import { CampaignPreviewDialogComponent } from './campaign-dialog/campaign-preview-dialog.component';
@@ -91,6 +91,8 @@ export class CreateCampaignComponent implements OnInit {
   currentReward = signal<RewardResponse | null>(null);
   loadingReward = signal<boolean>(false);
   campaignId = signal<number | null>(null);
+  @ViewChild('rewardFormComp') rewardFormComp?: RewardFormComponent;
+  @ViewChild('statusSelect', { read: ElementRef }) statusSelect?: ElementRef;
   // Trigger to make preview computed reactive to form changes
   private formTrigger = signal<number>(0);
 
@@ -100,6 +102,7 @@ export class CreateCampaignComponent implements OnInit {
 
   // Form
   campaignForm!: FormGroup;
+  private pendingRewardRequest: CreateRewardRequest | null = null;
 
   // Computed values
   previewData = computed<CampaignPreviewData>(() => {
@@ -173,15 +176,16 @@ export class CreateCampaignComponent implements OnInit {
 
   private checkEditMode(): void {
     const campaignId = this.route.snapshot.queryParamMap.get('id');
+    const focusStatus = this.route.snapshot.queryParamMap.get('focusStatus');
 
     if (campaignId) {
       this.isEditMode.set(true);
       this.campaignId.set(+campaignId);
-      this.loadCampaignForEdit(+campaignId);
+      this.loadCampaignForEdit(+campaignId, focusStatus === 'true');
     }
   }
 
-  private loadCampaignForEdit(id: number): void {
+  private loadCampaignForEdit(id: number, shouldFocusStatus: boolean = false): void {
     this.loading.set(true);
 
     this.campaignService.get(id)
@@ -191,6 +195,21 @@ export class CreateCampaignComponent implements OnInit {
           // Guardar la campaña en la señal
           this.campaignToEdit.set(campaign);
 
+          // Cargar el template si la campaña tiene uno
+          if (campaign.template?.id) {
+            this.templateService.get(campaign.template.id)
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe({
+                next: (template: CampaignTemplate) => {
+                  this.template.set(template);
+                  console.log('[Template Debug] Template loaded in edit mode:', template.id, template.name);
+                },
+                error: (error: any) => {
+                  console.error('Error loading template in edit mode:', error);
+                }
+              });
+          }
+
           // Poblar el formulario con los datos de la campaña
           this.populateFormWithCampaign(campaign);
 
@@ -199,6 +218,11 @@ export class CreateCampaignComponent implements OnInit {
 
           // Finalizar la carga
           this.loading.set(false);
+
+          // Si viene del banner, hacer scroll y focus en el campo de estado
+          if (shouldFocusStatus) {
+            setTimeout(() => this.scrollAndFocusStatus(), 500);
+          }
         },
         error: (error) => {
           console.error('Error loading campaign for edit:', error);
@@ -300,9 +324,9 @@ export class CreateCampaignComponent implements OnInit {
       callToAction: [''], // URL opcional
       channelsText: [''],
       channels: [['email']],
-      segmentation: [[]],
+      segmentation: [['all']],
       status: ['DRAFT'], // Control de estado
-      isAutomatic: [false]
+      isAutomatic: [true]
     });
 
     // Subscribe to form changes for live preview
@@ -326,6 +350,8 @@ export class CreateCampaignComponent implements OnInit {
             this.template.set(template);
             this.applyTemplate(template);
             this.loading.set(false);
+            // Focus and open the reward type select after view is fully rendered
+            setTimeout(() => this.rewardFormComp?.focusRewardType(), 500);
           },
           error: (error: any) => {
             console.error('Error loading template:', error);
@@ -429,9 +455,9 @@ export class CreateCampaignComponent implements OnInit {
     }
 
     if (this.isEditMode()) {
-      this.updateCampaign();
+      this.updateCampaignWithReward();
     } else {
-      this.saveCampaign(false);
+      this.saveCampaignWithReward(false);
     }
   }
 
@@ -449,7 +475,171 @@ export class CreateCampaignComponent implements OnInit {
       return;
     }
 
-    this.saveCampaign(true);
+    if (this.isEditMode()) {
+      this.updateCampaignWithReward();
+    } else {
+      this.saveCampaignWithReward(true);
+    }
+  }
+
+  private updateCampaignWithReward(): void {
+    this.updateCampaign();
+
+    // Si hay datos válidos de reward, guardarlos también
+    if (this.rewardFormComp?.hasValidRewardData()) {
+      const rewardData = this.rewardFormComp.getRewardData();
+      const currentCampaignId = this.campaignId();
+
+      if (rewardData && currentCampaignId) {
+        const existingReward = this.currentReward();
+        if (existingReward?.id) {
+          // Actualizar reward existente
+          this.campaignService.updateReward(existingReward.id, rewardData)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (reward) => {
+                this.currentReward.set(reward);
+              },
+              error: (err) => {
+                console.error('Error updating reward:', err);
+              }
+            });
+        } else {
+          // Crear nuevo reward
+          this.campaignService.createReward(currentCampaignId, rewardData)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (reward) => {
+                this.currentReward.set(reward);
+              },
+              error: (err) => {
+                console.error('Error creating reward:', err);
+              }
+            });
+        }
+      }
+    }
+  }
+
+  private saveCampaignWithReward(isDraft: boolean): void {
+    this.saving.set(true);
+
+    const formValue = this.campaignForm.value;
+    const businessId = this.tenantId || 1;
+
+    const request: CreateCampaignRequest = {
+      templateId: this.template()?.id || null,
+      businessId: businessId,
+      title: formValue.title,
+      subtitle: formValue.subtitle,
+      description: formValue.description,
+      imageUrl: this.uploadedImageUrl() || formValue.imageUrl,
+      startDate: this.formatDateForBackend(formValue.startDate),
+      endDate: this.formatDateForBackend(formValue.endDate),
+      callToAction: formValue.callToAction || 'Obtener promoción',
+      channels: formValue.channels,
+      segmentation: formValue.segmentation,
+      isAutomatic: formValue.isAutomatic,
+      isDraft: isDraft
+    };
+
+    const saveObservable = isDraft
+      ? this.campaignService.saveDraft(request)
+      : this.campaignService.create(request);
+
+    saveObservable
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response: any) => {
+          const createdCampaignId = response.id;
+          this.campaignId.set(createdCampaignId);
+
+          // Si hay datos válidos de reward, crear el reward
+          if (this.rewardFormComp?.hasValidRewardData()) {
+            const rewardData = this.rewardFormComp.getRewardData();
+            if (rewardData) {
+              this.campaignService.createReward(createdCampaignId, rewardData)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                  next: (reward) => {
+                    this.currentReward.set(reward);
+                    // Detectar si es campaña de bienvenida y está activa para mostrar confeti
+                    const isWelcomeCampaign = this.template()?.id === 1;
+                    const isActive = !isDraft;
+                    console.log('[Confetti Debug] saveCampaignWithReward - templateId:', this.template()?.id, 'isWelcomeCampaign:', isWelcomeCampaign, 'isDraft:', isDraft, 'isActive:', isActive);
+
+                    this.messageService.add({
+                      severity: 'success',
+                      summary: 'Éxito',
+                      detail: isDraft
+                        ? 'Borrador y beneficio guardados correctamente'
+                        : 'Campaña y beneficio creados correctamente'
+                    });
+                    this.saving.set(false);
+                    this.campaignSaved.set(true);
+
+                    setTimeout(() => {
+                      this.router.navigate(['/dashboard/campaigns'], {
+                        state: { showWelcomeConfetti: isWelcomeCampaign && isActive }
+                      });
+                    }, 1500);
+                  },
+                  error: (err) => {
+                    console.error('Error creating reward:', err);
+                    this.messageService.add({
+                      severity: 'success',
+                      summary: 'Campaña guardada',
+                      detail: isDraft
+                        ? 'Borrador guardado pero hubo un error al guardar el beneficio'
+                        : 'Campaña creada pero hubo un error al guardar el beneficio'
+                    });
+                    this.saving.set(false);
+                    this.campaignSaved.set(true);
+
+                    setTimeout(() => {
+                      this.router.navigate(['/dashboard/campaigns']);
+                    }, 1500);
+                  }
+                });
+            } else {
+              this.showSuccessAndNavigate(isDraft);
+            }
+          } else {
+            this.showSuccessAndNavigate(isDraft);
+          }
+        },
+        error: (error) => {
+          console.error('Error saving campaign:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: error.error?.message || `No se pudo guardar ${isDraft ? 'el borrador' : 'la campaña'}`
+          });
+          this.saving.set(false);
+        }
+      });
+  }
+
+  private showSuccessAndNavigate(isDraft: boolean): void {
+    const isWelcomeCampaign = this.template()?.id === 1;
+    const isActive = !isDraft;
+    console.log('[Confetti Debug] showSuccessAndNavigate - templateId:', this.template()?.id, 'isWelcomeCampaign:', isWelcomeCampaign, 'isDraft:', isDraft, 'isActive:', isActive);
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: isDraft
+        ? 'Borrador guardado correctamente'
+        : 'Campaña creada correctamente'
+    });
+    this.saving.set(false);
+    this.campaignSaved.set(true);
+
+    setTimeout(() => {
+      this.router.navigate(['/dashboard/campaigns'], {
+        state: { showWelcomeConfetti: isWelcomeCampaign && isActive }
+      });
+    }, 1500);
   }
 
   private updateCampaign(): void {
@@ -486,6 +676,10 @@ export class CreateCampaignComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
+          const isWelcomeCampaign = this.template()?.id === 1;
+          const isNowActive = formValue.status === 'ACTIVE';
+          console.log('[Confetti Debug] updateCampaign - templateId:', this.template()?.id, 'isWelcomeCampaign:', isWelcomeCampaign, 'status:', formValue.status, 'isNowActive:', isNowActive);
+
           this.messageService.add({
             severity: 'success',
             summary: 'Éxito',
@@ -493,6 +687,31 @@ export class CreateCampaignComponent implements OnInit {
           });
           this.saving.set(false);
           this.campaignSaved.set(true);
+
+          // Pequeño delay para que el usuario vea el mensaje antes de navegar
+          setTimeout(() => {
+            this.router.navigate(['/dashboard/campaigns'], {
+              state: { showWelcomeConfetti: isWelcomeCampaign && isNowActive }
+            });
+          }, 1500);
+
+          // If there was a pending reward request (created before campaign existed), attach it now
+          const createdCampaignId = (response as any)?.id;
+          if (createdCampaignId && this.pendingRewardRequest) {
+            this.campaignService.createReward(createdCampaignId, this.pendingRewardRequest)
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe({
+                next: (reward) => {
+                  this.currentReward.set(reward);
+                  this.messageService.add({ severity: 'success', summary: 'Beneficio guardado', detail: 'El beneficio pendiente fue adjuntado a la campaña' });
+                  this.pendingRewardRequest = null;
+                },
+                error: (err) => {
+                  console.error('Error creating pending reward:', err);
+                  this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el beneficio pendiente' });
+                }
+              });
+          }
 
           // Pequeño delay para que el usuario vea el mensaje antes de navegar
           setTimeout(() => {
@@ -619,6 +838,86 @@ export class CreateCampaignComponent implements OnInit {
     });
   }
 
+  onPendingReward(request: CreateRewardRequest): void {
+    // When a reward is configured but no campaign exists yet, save the campaign as DRAFT first
+    // Then attach the reward to it
+
+    if (this.campaignForm.invalid) {
+      this.campaignForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Formulario incompleto',
+        detail: 'Por favor, completa los campos requeridos de la campaña antes de guardar el beneficio'
+      });
+      return;
+    }
+
+    this.saving.set(true);
+
+    const formValue = this.campaignForm.value;
+    const businessId = this.tenantId || 1;
+
+    const campaignRequest: CreateCampaignRequest = {
+      templateId: this.template()?.id || null,
+      businessId: businessId,
+      title: formValue.title,
+      subtitle: formValue.subtitle,
+      description: formValue.description,
+      imageUrl: this.uploadedImageUrl() || formValue.imageUrl,
+      startDate: this.formatDateForBackend(formValue.startDate),
+      endDate: this.formatDateForBackend(formValue.endDate),
+      callToAction: formValue.callToAction || 'Obtener promoción',
+      channels: formValue.channels,
+      segmentation: formValue.segmentation,
+      isAutomatic: formValue.isAutomatic,
+      isDraft: true // Save as draft
+    };
+
+    // First save the campaign as draft
+    this.campaignService.saveDraft(campaignRequest)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (campaignResponse: any) => {
+          const createdCampaignId = campaignResponse.id;
+          this.campaignId.set(createdCampaignId);
+          this.isEditMode.set(true);
+
+          // Now create the reward with the campaign ID
+          this.campaignService.createReward(createdCampaignId, request)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (rewardResponse) => {
+                this.currentReward.set(rewardResponse);
+                this.saving.set(false);
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Éxito',
+                  detail: 'Campaña guardada como borrador y beneficio configurado correctamente'
+                });
+              },
+              error: (error) => {
+                console.error('Error creating reward:', error);
+                this.saving.set(false);
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Error',
+                  detail: error.error?.message || 'No se pudo crear el beneficio'
+                });
+              }
+            });
+        },
+        error: (error) => {
+          console.error('Error saving draft campaign:', error);
+          this.saving.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: error.error?.message || 'No se pudo guardar la campaña como borrador'
+          });
+        }
+      });
+  }
+
   getRewardSummary(): string {
     const reward = this.currentReward();
     if (!reward) return 'No configurado';
@@ -654,5 +953,30 @@ export class CreateCampaignComponent implements OnInit {
     const day = String(dateObj.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+  }
+
+  private scrollAndFocusStatus(): void {
+    if (this.statusSelect?.nativeElement) {
+      const element = this.statusSelect.nativeElement;
+
+      // Scroll suave al elemento
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Marcar el campo como touched para mostrar validaciones
+      const statusControl = this.campaignForm.get('status');
+      if (statusControl) {
+        statusControl.markAsTouched();
+      }
+
+      // Dar foco al select (buscar el elemento interno del p-select)
+      setTimeout(() => {
+        const selectElement = element.querySelector('input, button, [role="combobox"]');
+        if (selectElement) {
+          (selectElement as HTMLElement).focus();
+          // Intentar abrir el dropdown si es posible
+          (selectElement as HTMLElement).click();
+        }
+      }, 600);
+    }
   }
 }

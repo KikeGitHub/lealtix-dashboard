@@ -518,3 +518,122 @@ $breakpoint-mobile: 768px;
     }
   }
 }
+
+// Amount Dialog
+.amount-dialog-content {
+  padding: $spacing-md 0;
+
+  .dialog-description {
+    color: $color-text-secondary;
+    margin-bottom: $spacing-lg;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    font-size: 0.95rem;
+
+    .pi {
+      color: $color-info;
+      font-size: 1.25rem;
+    }
+  }
+
+  .amount-info {
+    margin-bottom: $spacing-lg;
+  }
+
+  .field {
+    margin-bottom: $spacing-lg;
+
+    .amount-label {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-sm;
+      font-weight: 600;
+      color: $color-text-primary;
+      font-size: 0.95rem;
+
+      .pi {
+        color: $color-success;
+      }
+    }
+  }
+
+  .preview-info {
+    margin-top: $spacing-lg;
+
+    .preview-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: $spacing-sm 0;
+
+      .preview-label {
+        font-weight: 500;
+        color: $color-text-secondary;
+        font-size: 0.95rem;
+      }
+
+      .preview-value {
+        font-weight: 600;
+        font-size: 1rem;
+
+        &.discount-preview {
+          color: $color-success;
+        }
+
+        &.final-preview {
+          color: $color-text-primary;
+          font-size: 1.25rem;
+        }
+      }
+
+      &.final {
+        padding-top: $spacing-md;
+        border-top: 2px solid $color-border;
+        margin-top: $spacing-sm;
+      }
+    }
+  }
+}
+
+// Discount and amount values in success card
+.discount-value {
+  color: $color-success !important;
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+}
+
+.final-amount {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 8px;
+  padding: $spacing-md !important;
+  margin-top: $spacing-sm !important;
+
+  .info-content {
+    .info-label {
+      font-weight: 700;
+      color: $color-text-primary;
+    }
+
+    .final-value {
+      color: $color-success !important;
+      font-weight: 800 !important;
+      font-size: 1.5rem !important;
+    }
+  }
+}
+
+::ng-deep {
+  .p-inputnumber {
+    width: 100%;
+
+    .p-inputtext {
+      width: 100%;
+      padding: $spacing-md;
+      font-size: 1.125rem;
+      font-weight: 600;
+      text-align: right;
+    }
+  }
+}

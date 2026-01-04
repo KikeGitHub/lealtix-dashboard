@@ -270,4 +270,32 @@ export class CampaignService {
         map(() => undefined)
       );
   }
+
+  /**
+   * Valida si existe una campaña de bienvenida activa para un tenant
+   * GET /campaigns/tenant/{tenantId}/has-welcome
+   */
+  hasActiveWelcomeCampaign(tenantId: number): Observable<{ hasActiveWelcomeCampaign: boolean }> {
+    return this.http.get<GenericResponse<{ hasActiveWelcomeCampaign: boolean }>>(`${this.baseUrl}/tenant/${tenantId}/has-welcome`)
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return mappedResponse.object;
+        })
+      );
+  }
+
+  /**
+   * Valida el estado de la campaña de bienvenida (ACTIVE o DRAFT)
+   * GET /campaigns/tenant/{tenantId}/welcome-status
+   */
+  getWelcomeCampaignStatus(tenantId: number): Observable<{ status: string | null; exists: boolean }> {
+    return this.http.get<GenericResponse<{ status: string | null; exists: boolean }>>(`${this.baseUrl}/tenant/${tenantId}/welcome-status`)
+      .pipe(
+        map(response => {
+          const mappedResponse = this.mapper.mapGenericResponse(response);
+          return mappedResponse.object;
+        })
+      );
+  }
 }

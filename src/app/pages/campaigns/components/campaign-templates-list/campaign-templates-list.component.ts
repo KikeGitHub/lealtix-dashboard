@@ -8,6 +8,10 @@ import { ChipModule } from 'primeng/chip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { CampaignTemplate } from '@/models/campaign-template.model';
 import { CampaignTemplateService } from '../../services/campaign-template.service';
+import { ProductService } from '@/pages/products-menu/service/product.service';
+import { CampaignService } from '../../services/campaign.service';
+import { TenantService } from '@/pages/admin-page/service/tenant.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-campaign-templates-list',
@@ -25,11 +29,19 @@ import { CampaignTemplateService } from '../../services/campaign-template.servic
 export class CampaignTemplatesListComponent implements OnInit {
   templates = signal<CampaignTemplate[]>([]);
   loading = signal<boolean>(true);
+  showWelcomeBanner = signal<boolean>(false);
+  bannerMessage = signal<{ title: string; description: string; buttonText: string }>(
+    { title: '', description: '', buttonText: '' }
+  );
+  private tenantId: number = 0;
   private destroyRef = inject(DestroyRef);
 
   constructor(
     private campaignTemplateService: CampaignTemplateService,
-    private router: Router
+    private router: Router,
+    private productService: ProductService,
+    private campaignService: CampaignService,
+    private tenantService: TenantService
   ) {}
 
   // Fallback handler for template images
@@ -60,7 +72,33 @@ export class CampaignTemplatesListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadTenantAndBanner();
     this.loadTemplates();
+  }
+
+  private loadTenantAndBanner(): void {
+    const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
+    if (!userStr) return;
+
+    try {
+      const userObj = JSON.parse(userStr);
+      if (!userObj?.userEmail) return;
+
+      this.tenantService.getTenantByEmail(String(userObj.userEmail).trim()).subscribe({
+        next: (resp) => {
+          const tenant = resp?.object;
+          this.tenantId = tenant?.id ?? 0;
+          if (this.tenantId > 0) {
+            this.checkBannerConditions();
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching tenant:', err);
+        }
+      });
+    } catch (e) {
+      console.warn('Failed to parse stored usuario:', e);
+    }
   }
 
   private loadTemplates(): void {
@@ -129,5 +167,87 @@ export class CampaignTemplatesListComponent implements OnInit {
     };
 
     return colors[promoType] || 'var(--primary-color)';
+  }
+
+  private checkBannerConditions(): void {
+    if (this.tenantId === 0) return;
+
+    forkJoin({
+      products: this.productService.getProductsByTenantId(this.tenantId),
+      welcomeStatus: this.campaignService.getWelcomeCampaignStatus(this.tenantId)
+    }).subscribe({
+      next: ({ products, welcomeStatus }) => {
+        const productCount = Array.isArray(products) ? products.length : (products?.object?.length ?? 0);
+        const hasProducts = productCount > 0;
+        const campaignExists = welcomeStatus?.exists ?? false;
+        const campaignStatus = welcomeStatus?.status;
+
+        console.debug('[Banner][templates-list] tenantId=', this.tenantId, 'productCount=', productCount, 'welcomeStatus=', welcomeStatus);
+
+        if (!hasProducts || (campaignExists && campaignStatus === 'ACTIVE')) {
+          this.showWelcomeBanner.set(false);
+          return;
+        }
+
+        if (!campaignExists) {
+          this.showWelcomeBanner.set(true);
+          this.bannerMessage.set({
+            title: 'Tu negocio ya está listo.',
+            description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.',
+            buttonText: 'Configurar campaña de bienvenida'
+          });
+        } else if (campaignStatus === 'DRAFT') {
+          this.showWelcomeBanner.set(true);
+          this.bannerMessage.set({
+            title: '¡Ya casi está todo listo!',
+            description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.',
+            buttonText: 'Activar campaña de bienvenida'
+          });
+        }
+      },
+      error: (err) => {
+        console.warn('[Banner][templates-list] welcome-status failed, falling back to campaigns list', err);
+        this.productService.getProductsByTenantId(this.tenantId).subscribe({
+          next: (productsResp) => {
+            const productCount = Array.isArray(productsResp) ? productsResp.length : (productsResp?.object?.length ?? 0);
+            const hasProducts = productCount > 0;
+
+            this.campaignService.getByBusiness(this.tenantId).subscribe({
+              next: (campaigns) => {
+                const welcomeCampaigns = (campaigns || []).filter(c => c.template?.id === 1);
+                const active = welcomeCampaigns.some(c => c.status === 'ACTIVE');
+                const draft = !active && welcomeCampaigns.some(c => c.status === 'DRAFT');
+
+                if (!hasProducts || (active)) { this.showWelcomeBanner.set(false); return; }
+
+                if (welcomeCampaigns.length === 0) {
+                  this.showWelcomeBanner.set(true);
+                  this.bannerMessage.set({ title: 'Tu negocio ya está listo.', description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.', buttonText: 'Configurar campaña de bienvenida' });
+                } else if (draft) {
+                  this.showWelcomeBanner.set(true);
+                  this.bannerMessage.set({ title: '¡Ya casi está todo listo!', description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.', buttonText: 'Activar campaña de bienvenida' });
+                }
+              },
+              error: (e2) => { console.error('[Banner][templates-list] fallback getByBusiness failed', e2); this.showWelcomeBanner.set(false); }
+            });
+          },
+          error: (e3) => { console.error('[Banner][templates-list] fallback getProducts failed', e3); this.showWelcomeBanner.set(false); }
+        });
+      }
+    });
+  }
+
+  navigateToWelcomeCampaign(): void {
+    this.campaignService.getByBusiness(this.tenantId).subscribe({
+      next: (campaigns) => {
+        const draftWelcome = (campaigns || []).find(c => c.template?.id === 1 && c.status === 'DRAFT');
+        if (draftWelcome) {
+          this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { id: draftWelcome.id, focusStatus: 'true' } });
+        } else {
+          this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } });
+        }
+      },
+      error: () => { this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } }); }
+    });
   }
 }

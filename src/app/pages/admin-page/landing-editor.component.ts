@@ -1,8 +1,9 @@
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { EditorModule } from 'primeng/editor';
@@ -18,6 +19,8 @@ import { TenantService } from './service/tenant.service';
 import { ImageService } from '../service/image.service';
 import { ConfettiService } from '@/confetti/confetti.service';
 import { ConfettiComponent } from '@/confetti/confetti.component';
+import { ProductService } from '@/pages/products-menu/service/product.service';
+import { CampaignService } from '@/pages/campaigns/services/campaign.service';
 
 @Component({
     selector: 'app-landing-editor',
@@ -42,6 +45,10 @@ export class LandingEditorComponent implements OnInit {
     userId: number = 0;
 
     showCongrats: boolean = false;
+    showWelcomeBanner = signal<boolean>(false);
+    bannerMessage = signal<{ title: string; description: string; buttonText: string }>(
+        { title: '', description: '', buttonText: '' }
+    );
 
 
     constructor(
@@ -50,7 +57,9 @@ export class LandingEditorComponent implements OnInit {
         private tenantService: TenantService,
         private imageService: ImageService,
         private confettiService: ConfettiService,
-        private router: Router
+        private router: Router,
+        private productService: ProductService,
+        private campaignService: CampaignService
     ) {
         this.landingForm = this.fb.group({
             logo: [null, Validators.required],
@@ -105,6 +114,9 @@ export class LandingEditorComponent implements OnInit {
                         linkedin: tenant.object.linkedin,
                         x: tenant.object.x
                     });
+                }
+                if (this.tenantId > 0) {
+                    this.checkBannerConditions();
                 }
             },
             error: (error) => {
@@ -257,5 +269,87 @@ export class LandingEditorComponent implements OnInit {
             const truncated = plainText.substring(0, 499);
             this.landingForm.get(controlName)?.setValue(truncated);
         }
+    }
+
+    private checkBannerConditions(): void {
+        if (this.tenantId === 0) return;
+
+        forkJoin({
+            products: this.productService.getProductsByTenantId(this.tenantId),
+            welcomeStatus: this.campaignService.getWelcomeCampaignStatus(this.tenantId)
+        }).subscribe({
+            next: ({ products, welcomeStatus }) => {
+                const productCount = Array.isArray(products) ? products.length : (products?.object?.length ?? 0);
+                const hasProducts = productCount > 0;
+                const campaignExists = welcomeStatus?.exists ?? false;
+                const campaignStatus = welcomeStatus?.status;
+
+                console.debug('[Banner] tenantId=', this.tenantId, 'productCount=', productCount, 'welcomeStatus=', welcomeStatus);
+
+                if (!hasProducts || (campaignExists && campaignStatus === 'ACTIVE')) {
+                    this.showWelcomeBanner.set(false);
+                    return;
+                }
+
+                if (!campaignExists) {
+                    this.showWelcomeBanner.set(true);
+                    this.bannerMessage.set({
+                        title: 'Tu negocio ya está listo.',
+                        description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.',
+                        buttonText: 'Configurar campaña de bienvenida'
+                    });
+                } else if (campaignStatus === 'DRAFT') {
+                    this.showWelcomeBanner.set(true);
+                    this.bannerMessage.set({
+                        title: '¡Ya casi está todo listo!',
+                        description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.',
+                        buttonText: 'Activar campaña de bienvenida'
+                    });
+                }
+            },
+            error: (err) => {
+                console.warn('[Banner][landing-editor] welcome-status failed, falling back to campaigns list', err);
+                this.productService.getProductsByTenantId(this.tenantId).subscribe({
+                    next: (productsResp) => {
+                        const productCount = Array.isArray(productsResp) ? productsResp.length : (productsResp?.object?.length ?? 0);
+                        const hasProducts = productCount > 0;
+
+                        this.campaignService.getByBusiness(this.tenantId).subscribe({
+                            next: (campaigns) => {
+                                const welcomeCampaigns = (campaigns || []).filter(c => c.template?.id === 1);
+                                const active = welcomeCampaigns.some(c => c.status === 'ACTIVE');
+                                const draft = !active && welcomeCampaigns.some(c => c.status === 'DRAFT');
+
+                                if (!hasProducts || active) { this.showWelcomeBanner.set(false); return; }
+
+                                if (welcomeCampaigns.length === 0) {
+                                    this.showWelcomeBanner.set(true);
+                                    this.bannerMessage.set({ title: 'Tu negocio ya está listo.', description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.', buttonText: 'Configurar campaña de bienvenida' });
+                                } else if (draft) {
+                                    this.showWelcomeBanner.set(true);
+                                    this.bannerMessage.set({ title: '¡Ya casi está todo listo!', description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.', buttonText: 'Activar campaña de bienvenida' });
+                                }
+                            },
+                            error: (e2) => { console.error('[Banner][landing-editor] fallback getByBusiness failed', e2); this.showWelcomeBanner.set(false); }
+                        });
+                    },
+                    error: (e3) => { console.error('[Banner][landing-editor] fallback getProducts failed', e3); this.showWelcomeBanner.set(false); }
+                });
+            }
+        });
+    }
+
+    navigateToWelcomeCampaign(): void {
+        this.campaignService.getByBusiness(this.tenantId).subscribe({
+            next: (campaigns) => {
+                const draftWelcome = (campaigns || []).find(c => c.template?.id === 1 && c.status === 'DRAFT');
+                if (draftWelcome) {
+                    this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { id: draftWelcome.id, focusStatus: 'true' } });
+                } else {
+                    this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } });
+                }
+            },
+            error: () => { this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } }); }
+        });
     }
 }

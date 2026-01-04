@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -25,6 +26,10 @@ import { CategoryService } from './service/category.service';
 import { forkJoin } from 'rxjs';
 import { TenantService } from '../admin-page/service/tenant.service';
 import { CategoryDialogComponent } from './category-dialog.component';
+import { ConfettiService } from '@/confetti/confetti.service';
+import { ConfettiComponent } from '@/confetti/confetti.component';
+import { ProductService } from '@/pages/products-menu/service/product.service';
+import { CampaignService } from '@/pages/campaigns/services/campaign.service';
 
 interface Column {
     field: string;
@@ -61,7 +66,8 @@ interface ExportColumn {
         ConfirmDialogModule,
         DragDropModule,
         InputNumberModule,
-        CategoryDialogComponent
+        CategoryDialogComponent,
+        ConfettiComponent
     ],
     templateUrl: './categories-menu.component.html',
     styleUrls: ['./categories-menu.component.scss'],
@@ -69,9 +75,15 @@ interface ExportColumn {
 })
 export class CategoriesMenuComponent implements OnInit {
     loading: boolean = false;
+    showWelcomeBanner = signal<boolean>(false);
+    bannerMessage = signal<{ title: string; description: string; buttonText: string }>(
+        { title: '', description: '', buttonText: '' }
+    );
     categoryDialog: boolean = false;
     tenantId: number = 0;
     draggedCategory: Category | null = null;
+    showFirstCategoryCongrats: boolean = false;
+    firstCategoryId: number | null = null;
 
     categories = signal<Category[]>([]);
     category!: Category;
@@ -89,7 +101,11 @@ export class CategoriesMenuComponent implements OnInit {
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private fb: FormBuilder,
-        private tenantService: TenantService
+        private tenantService: TenantService,
+        private confettiService: ConfettiService,
+        private router: Router,
+        private productService: ProductService,
+        private campaignService: CampaignService
     ) {
         this.categoryForm = this.fb.group({
             id: [null],
@@ -114,6 +130,7 @@ export class CategoriesMenuComponent implements OnInit {
                             this.tenantId = tenant?.id ?? 0;
                             this.categoryForm.patchValue({ tenantId: this.tenantId });
                             this.loadCategories();
+                            this.checkBannerConditions();
                         },
                         error: (err) => {
                             console.error('Error fetching tenant:', err);
@@ -138,18 +155,25 @@ export class CategoriesMenuComponent implements OnInit {
         this.startLoading();
         this.categoryService.getCategoriesByTenantId(this.tenantId).subscribe({
             next: (data) => {
-                const mapped = data.object.map((item: any) => ({
-                    id: item.categoryId,
-                    name: item.categoryName,
-                    description: item.categoryDescription || '',
-                    active: typeof item.active === 'boolean' ? item.active : true,
-                    tenantId: item.tenantId,
-                    displayOrder: item.displayOrder ?? 0
-                }));
-                // Ordenar por displayOrder
-                mapped.sort((a: Category, b: Category) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
-                this.categories.set(mapped);
-                console.log('Loaded categories:', mapped);
+                // Validar si hay objeto y es un array
+                if (data && data.object && Array.isArray(data.object)) {
+                    const mapped = data.object.map((item: any) => ({
+                        id: item.categoryId,
+                        name: item.categoryName,
+                        description: item.categoryDescription || '',
+                        active: typeof item.active === 'boolean' ? item.active : true,
+                        tenantId: item.tenantId,
+                        displayOrder: item.displayOrder ?? 0
+                    }));
+                    // Ordenar por displayOrder
+                    mapped.sort((a: Category, b: Category) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+                    this.categories.set(mapped);
+                    console.log('Loaded categories:', mapped);
+                } else {
+                    // Si no hay categorías o la respuesta es inválida, limpiar la tabla
+                    this.categories.set([]);
+                    console.log('No categories found or invalid response');
+                }
             },
             error: (err) => {
                 console.error('Failed to load categories', err);
@@ -222,13 +246,14 @@ export class CategoriesMenuComponent implements OnInit {
                 if (deletes.length > 0) {
                     forkJoin(deletes).subscribe({
                         next: () => {
-                            this.loadCategories();
                             this.messageService.add({
                                 severity: 'success',
                                 summary: 'Exitoso',
                                 detail: 'Categorías Eliminadas',
                                 life: 3000
                             });
+                            this.selectedCategories = null;
+                            this.loadCategories();
                         },
                         error: (err) => {
                             console.error('Error deleting categories', err);
@@ -238,15 +263,12 @@ export class CategoriesMenuComponent implements OnInit {
                                 detail: 'Error al eliminar algunas categorías',
                                 life: 3000
                             });
-                        },
-                        complete: () => {
                             this.stopLoading();
                         }
                     });
                 } else {
                     this.stopLoading();
                 }
-                this.selectedCategories = null;
             }
         });
     }
@@ -269,13 +291,13 @@ export class CategoriesMenuComponent implements OnInit {
                     this.startLoading();
                     this.categoryService.deleteCategoryById(idNum).subscribe({
                         next: () => {
-                            this.loadCategories();
                             this.messageService.add({
                                 severity: 'success',
                                 summary: 'Exitoso',
                                 detail: 'Categoría Eliminada',
                                 life: 3000
                             });
+                            this.loadCategories();
                         },
                         error: (err) => {
                             console.error('Failed to delete category:', err);
@@ -285,8 +307,6 @@ export class CategoriesMenuComponent implements OnInit {
                                 detail: 'No se pudo eliminar la categoría',
                                 life: 3000
                             });
-                        },
-                        complete: () => {
                             this.stopLoading();
                         }
                     });
@@ -347,10 +367,10 @@ export class CategoriesMenuComponent implements OnInit {
             payload.id = formValue.id;
         }
         debugger;
+        const isNewCategory = !payload.id;
         this.startLoading();
         this.categoryService.createCategory(payload).subscribe({
             next: (resp) => {
-                this.loadCategories();
                 this.categoryDialog = false;
                 this.messageService.add({
                     severity: 'success',
@@ -358,6 +378,39 @@ export class CategoriesMenuComponent implements OnInit {
                     detail: payload.id ? 'Categoría actualizada' : 'Categoría creada',
                     life: 3000
                 });
+
+                // Check if this is the first category created
+                if (isNewCategory) {
+                    this.categoryService.getCategoriesByTenantId(this.tenantId).subscribe({
+                        next: (data) => {
+                            const mapped = data.object.map((item: any) => ({
+                                id: item.categoryId,
+                                name: item.categoryName,
+                                description: item.categoryDescription || '',
+                                active: typeof item.active === 'boolean' ? item.active : true,
+                                tenantId: item.tenantId,
+                                displayOrder: item.displayOrder ?? 0
+                            }));
+                            mapped.sort((a: Category, b: Category) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+                            this.categories.set(mapped);
+
+                            // Show confetti dialog only if this is the first category (count === 1)
+                            if (mapped.length === 1) {
+                                this.firstCategoryId = mapped[0].id ?? null;
+                                this.confettiService.trigger({ action: 'burst' });
+                                this.showFirstCategoryCongrats = true;
+                                // Emit event to refresh menu - categories now exist
+                                window.dispatchEvent(new CustomEvent('categoriesUpdated'));
+                            }
+                        },
+                        error: (err) => {
+                            console.error('Failed to load categories after save', err);
+                            this.loadCategories();
+                        }
+                    });
+                } else {
+                    this.loadCategories();
+                }
             },
             error: (err) => {
                 console.error('Error saving category', err);
@@ -436,6 +489,100 @@ export class CategoriesMenuComponent implements OnInit {
                 // Recargar para restaurar el orden original
                 this.loadCategories();
             }
+        });
+    }
+
+    closeFirstCategoryDialog() {
+        this.showFirstCategoryCongrats = false;
+    }
+
+    goToCreateProduct() {
+        this.showFirstCategoryCongrats = false;
+        // Navigate to products page with the first category ID as query param
+        this.router.navigate(['/dashboard/adminMenu'], {
+            queryParams: { categoryId: this.firstCategoryId }
+        });
+    }
+
+    private checkBannerConditions(): void {
+        if (this.tenantId === 0) return;
+
+        forkJoin({
+            products: this.productService.getProductsByTenantId(this.tenantId),
+            welcomeStatus: this.campaignService.getWelcomeCampaignStatus(this.tenantId)
+        }).subscribe({
+            next: ({ products, welcomeStatus }) => {
+                const productCount = Array.isArray(products) ? products.length : (products?.object?.length ?? 0);
+                const hasProducts = productCount > 0;
+                const campaignExists = welcomeStatus?.exists ?? false;
+                const campaignStatus = welcomeStatus?.status;
+
+                console.debug('[Banner][categories-menu] tenantId=', this.tenantId, 'productCount=', productCount, 'welcomeStatus=', welcomeStatus);
+
+                if (!hasProducts || (campaignExists && campaignStatus === 'ACTIVE')) {
+                    this.showWelcomeBanner.set(false);
+                    return;
+                }
+
+                if (!campaignExists) {
+                    this.showWelcomeBanner.set(true);
+                    this.bannerMessage.set({
+                        title: 'Tu negocio ya está listo.',
+                        description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.',
+                        buttonText: 'Configurar campaña de bienvenida'
+                    });
+                } else if (campaignStatus === 'DRAFT') {
+                    this.showWelcomeBanner.set(true);
+                    this.bannerMessage.set({
+                        title: '¡Ya casi está todo listo!',
+                        description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.',
+                        buttonText: 'Activar campaña de bienvenida'
+                    });
+                }
+            },
+            error: (err) => {
+                console.warn('[Banner][categories-menu] welcome-status failed, falling back to campaigns list', err);
+                this.productService.getProductsByTenantId(this.tenantId).subscribe({
+                    next: (productsResp) => {
+                        const productCount = Array.isArray(productsResp) ? productsResp.length : (productsResp?.object?.length ?? 0);
+                        const hasProducts = productCount > 0;
+
+                        this.campaignService.getByBusiness(this.tenantId).subscribe({
+                            next: (campaigns) => {
+                                const welcomeCampaigns = (campaigns || []).filter(c => c.template?.id === 1);
+                                const active = welcomeCampaigns.some(c => c.status === 'ACTIVE');
+                                const draft = !active && welcomeCampaigns.some(c => c.status === 'DRAFT');
+
+                                if (!hasProducts || active) { this.showWelcomeBanner.set(false); return; }
+
+                                if (welcomeCampaigns.length === 0) {
+                                    this.showWelcomeBanner.set(true);
+                                    this.bannerMessage.set({ title: 'Tu negocio ya está listo.', description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.', buttonText: 'Configurar campaña de bienvenida' });
+                                } else if (draft) {
+                                    this.showWelcomeBanner.set(true);
+                                    this.bannerMessage.set({ title: '¡Ya casi está todo listo!', description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.', buttonText: 'Activar campaña de bienvenida' });
+                                }
+                            },
+                            error: (e2) => { console.error('[Banner][categories-menu] fallback getByBusiness failed', e2); this.showWelcomeBanner.set(false); }
+                        });
+                    },
+                    error: (e3) => { console.error('[Banner][categories-menu] fallback getProducts failed', e3); this.showWelcomeBanner.set(false); }
+                });
+            }
+        });
+    }
+
+    navigateToWelcomeCampaign(): void {
+        this.campaignService.getByBusiness(this.tenantId).subscribe({
+            next: (campaigns) => {
+                const draftWelcome = (campaigns || []).find(c => c.template?.id === 1 && c.status === 'DRAFT');
+                if (draftWelcome) {
+                    this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { id: draftWelcome.id, focusStatus: 'true' } });
+                } else {
+                    this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } });
+                }
+            },
+            error: () => { this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } }); }
         });
     }
 }

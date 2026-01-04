@@ -11,6 +11,9 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DividerModule } from 'primeng/divider';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
+import { DialogModule } from 'primeng/dialog';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { FormsModule } from '@angular/forms';
 import { RedemptionService } from '../../services/redemption.service';
 import { CouponValidationResponse, CouponStatus } from '../../models/coupon-validation.model';
 import { RedemptionRequest, RedemptionChannel } from '../../models/redemption-request.model';
@@ -32,7 +35,10 @@ type PageState = 'loading' | 'valid' | 'invalid' | 'redeemed' | 'expired' | 'not
     ProgressSpinnerModule,
     DividerModule,
     ConfirmDialogModule,
-    ToastModule
+    ToastModule,
+    DialogModule,
+    InputNumberModule,
+    FormsModule
   ],
   templateUrl: './redeem-page.component.html',
   styleUrls: ['./redeem-page.component.scss'],
@@ -45,6 +51,11 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
   redemptionData: RedemptionResponse | null = null;
   errorMessage: string = '';
   isRedeeming: boolean = false;
+
+  // Dialog para solicitar monto
+  showAmountDialog: boolean = false;
+  originalAmount: number = 0;
+  minRedemptionAmount: number = 0;
 
   // Control de acceso
   email: string = '';
@@ -67,19 +78,35 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Obtener token de la ruta
+    // Obtener token de la ruta o del query param `code` (soporta enlaces como ?code=...)
     this.route.params
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
-        this.qrToken = params['qrToken'];
-        if (this.qrToken) {
-          // Detectar sesión y tenant, luego validar cupón
-          this.checkStaffAccess();
-        } else {
+        const tokenFromParam = params['qrToken'];
+        if (tokenFromParam) {
+          this.setTokenAndValidate(tokenFromParam);
+        }
+      });
+
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(qparams => {
+        const tokenFromQuery = qparams['code'] || qparams['qrToken'];
+        if (tokenFromQuery) {
+          this.setTokenAndValidate(tokenFromQuery);
+        } else if (!this.qrToken) {
           this.pageState = 'not-found';
           this.errorMessage = 'No se proporcionó un código de cupón válido';
         }
       });
+  }
+
+  // Establece el token si cambió y lanza la validación
+  private setTokenAndValidate(token: string): void {
+    if (!token) return;
+    if (this.qrToken === token) return;
+    this.qrToken = token;
+    this.checkStaffAccess();
   }
 
   /**
@@ -175,9 +202,33 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
    * Inicia el proceso de redención con confirmación
    */
   onRedeemCoupon(): void {
+    // Mostrar diálogo para solicitar monto original
+    this.minRedemptionAmount = this.validationData?.minRedemptionAmount || 0;
+    this.originalAmount = this.minRedemptionAmount;
+    this.showAmountDialog = true;
+  }
+
+  /**
+   * Confirma la redención con el monto ingresado
+   */
+  confirmRedemption(): void {
+    // Validar que el monto sea mayor o igual al mínimo
+    if (this.originalAmount < this.minRedemptionAmount) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Monto inválido',
+        detail: `El monto debe ser al menos $${this.minRedemptionAmount.toFixed(2)}`,
+        life: 3000
+      });
+      return;
+    }
+
+    // Cerrar diálogo y mostrar confirmación
+    this.showAmountDialog = false;
+
     this.confirmationService.confirm({
       header: '¿Confirmar redención?',
-      message: '¿Está seguro que desea redimir este cupón? Esta acción no se puede deshacer.',
+      message: `¿Está seguro que desea redimir este cupón por un monto de $${this.originalAmount.toFixed(2)}? Esta acción no se puede deshacer.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, redimir',
       rejectLabel: 'Cancelar',
@@ -185,8 +236,20 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
       rejectButtonStyleClass: 'p-button-secondary',
       accept: () => {
         this.redeemCoupon();
+      },
+      reject: () => {
+        // Si cancela, volver a mostrar el diálogo
+        this.showAmountDialog = true;
       }
     });
+  }
+
+  /**
+   * Cancela el diálogo de monto
+   */
+  cancelAmountDialog(): void {
+    this.showAmountDialog = false;
+    this.originalAmount = 0;
   }
 
   /**
@@ -202,6 +265,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
     const request: RedemptionRequest = {
       redeemedBy: currentUser?.email || currentUser?.userEmail || 'unknown',
       channel: RedemptionChannel.QR_WEB,
+      originalAmount: this.originalAmount,
       location: 'Web Dashboard',
       metadata: JSON.stringify({
         device: this.getDeviceType(),

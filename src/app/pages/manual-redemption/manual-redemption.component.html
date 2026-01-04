@@ -1,6 +1,29 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
+<!-- Banner persistente de bienvenida -->
+<div class="mb-4" *ngIf="showWelcomeBanner()">
+    <div class="border-round p-4 shadow-2" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-left: 4px solid #F59E0B;">
+        <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="flex align-items-start gap-3 flex-1">
+                <span class="text-4xl" style="line-height: 1;">🚀</span>
+                <div>
+                    <div class="font-semibold text-xl mb-2" style="color: #92400E;">{{ bannerMessage().title }}</div>
+                    <div class="line-height-3" style="color: #78350F;">{{ bannerMessage().description }}</div>
+                </div>
+            </div>
+            <p-button
+                [label]="bannerMessage().buttonText"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                severity="warn"
+                (onClick)="navigateToWelcomeCampaign()"
+                styleClass="white-space-nowrap">
+            </p-button>
+        </div>
+    </div>
+</div>
+
 <div class="card">
 
   <div class="page-header">
@@ -154,6 +177,95 @@
               <span class="info-value coupon-code">{{ validationData?.couponCode }}</span>
             </div>
           </div>
+
+          <div class="info-item" *ngIf="validationData?.couponType && validationData?.couponValue">
+            <i class="pi pi-percentage"></i>
+            <div class="info-details">
+              <span class="info-label">Tipo de Descuento</span>
+              <span class="info-value">
+                <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
+                  {{ validationData?.couponValue }}% de descuento
+                </span>
+                <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
+                  ${{ validationData?.couponValue }} de descuento
+                </span>
+                <span *ngIf="validationData?.couponType === 'FREE_ITEM'">
+                  Artículo gratis
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="validationData?.minRedemptionAmount">
+            <i class="pi pi-money-bill"></i>
+            <div class="info-details">
+              <span class="info-label">Compra Mínima</span>
+              <span class="info-value">${{ validationData?.minRedemptionAmount?.toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Amount Input Section -->
+        <div class="amount-section">
+          <div class="amount-header">
+            <i class="pi pi-shopping-cart"></i>
+            <h3>Monto de la Compra</h3>
+          </div>
+
+          <div *ngIf="minRedemptionAmount > 0" class="amount-info">
+            <p-message
+              severity="info"
+              [text]="'Compra mínima requerida: $' + minRedemptionAmount.toFixed(2)"
+              styleClass="w-full mb-3">
+            </p-message>
+          </div>
+
+          <div class="amount-input-group">
+            <label for="originalAmount" class="amount-label">
+              <i class="pi pi-money-bill"></i> Monto Total
+            </label>
+            <p-inputNumber
+              id="originalAmount"
+              [(ngModel)]="originalAmount"
+              mode="currency"
+              currency="MXN"
+              locale="es-MX"
+              [minFractionDigits]="2"
+              [maxFractionDigits]="2"
+              [min]="minRedemptionAmount"
+              placeholder="0.00"
+              styleClass="w-full"
+              inputStyleClass="w-full text-lg">
+            </p-inputNumber>
+          </div>
+
+          <!-- Preview calculations -->
+          <div class="amount-preview" *ngIf="originalAmount >= minRedemptionAmount && validationData?.couponType && validationData?.couponValue">
+            <div class="preview-row">
+              <span class="preview-label">Descuento:</span>
+              <span class="preview-value discount">
+                <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
+                  -${{ (originalAmount * (validationData?.couponValue || 0) / 100).toFixed(2) }}
+                </span>
+                <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
+                  -${{ (validationData?.couponValue || 0).toFixed(2) }}
+                </span>
+              </span>
+            </div>
+            <div class="preview-row final">
+              <span class="preview-label">Total a Pagar:</span>
+              <span class="preview-value total">
+                <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
+                  ${{ (originalAmount - (originalAmount * (validationData?.couponValue || 0) / 100)).toFixed(2) }}
+                </span>
+                <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
+                  ${{ (originalAmount - (validationData?.couponValue || 0)).toFixed(2) }}
+                </span>
+              </span>
+            </div>
+          </div>
         </div>
 
         <!-- Warnings -->
@@ -287,6 +399,31 @@
               <span class="info-label">Código del cupón</span>
               <span class="info-value coupon-code">{{ redemptionData?.couponCode }}</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Amount Summary -->
+        <div class="amount-summary" *ngIf="redemptionData?.originalAmount">
+          <p-divider></p-divider>
+
+          <div class="summary-header">
+            <i class="pi pi-money-bill"></i>
+            <h3>Resumen de Compra</h3>
+          </div>
+
+          <div class="summary-row">
+            <span class="summary-label">Monto Original:</span>
+            <span class="summary-value">${{ redemptionData?.originalAmount?.toFixed(2) }}</span>
+          </div>
+
+          <div class="summary-row discount" *ngIf="redemptionData?.discountAmount">
+            <span class="summary-label">Descuento Aplicado:</span>
+            <span class="summary-value">-${{ redemptionData?.discountAmount?.toFixed(2) }}</span>
+          </div>
+
+          <div class="summary-row total" *ngIf="redemptionData?.finalAmount">
+            <span class="summary-label">Total Pagado:</span>
+            <span class="summary-value">${{ redemptionData?.finalAmount?.toFixed(2) }}</span>
           </div>
         </div>
       </div>

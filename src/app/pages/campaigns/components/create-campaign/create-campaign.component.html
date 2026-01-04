@@ -38,11 +38,11 @@
         ariaLabel="Guardar borrador"
       ></p-button>
       <p-button
-        [label]="isEditMode() ? 'Actualizar Campaña' : 'Guardar'"
+        [label]="isEditMode() ? 'Actualizar Campaña' : 'Activar promoción'"
         icon="pi pi-check"
         [loading]="saving()"
         (onClick)="save()"
-        [ariaLabel]="isEditMode() ? 'Actualizar campaña' : 'Guardar campaña'"
+        [ariaLabel]="isEditMode() ? 'Actualizar campaña' : 'Activar promoción'"
       ></p-button>
     </div>
   </div>
@@ -203,10 +203,11 @@
               </div>
 
               <!-- Componente de formulario de reward -->
-              <app-reward-form
+              <app-reward-form #rewardFormComp
                 [campaignId]="campaignId() ?? undefined"
                 [existingReward]="currentReward() ?? undefined"
                 (saved)="onRewardSaved($event)"
+                (pending)="onPendingReward($event)"
               ></app-reward-form>
             </div>
 
@@ -276,7 +277,7 @@
               </h3>
 
               <!-- Status field - prominent position -->
-              <div class="field">
+              <div class="field" #statusSelect>
                 <label for="status" class="font-semibold">
                   Estado de la Campaña
                   <i class="pi pi-info-circle ml-2 text-500"

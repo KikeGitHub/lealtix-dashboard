@@ -25,6 +25,11 @@ export interface CouponValidationResponse {
   // Información del tenant
   tenantId?: number | null;
   tenantName?: string | null;
+
+  // Información de descuento y montos
+  minRedemptionAmount?: number | null;
+  couponType?: string | null;
+  couponValue?: number | null;
 }
 
 export enum CouponStatus {

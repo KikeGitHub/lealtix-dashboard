@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 // PrimeNG Imports
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { TagModule } from 'primeng/tag';
@@ -22,6 +23,12 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { CouponValidationResponse } from '@/redeem/models/coupon-validation.model';
 import { RedemptionRequest, RedemptionChannel } from '@/redeem/models/redemption-request.model';
 import { RedemptionResponse } from '@/redeem/models/redemption-response.model';
+import { ProductService } from '@/pages/products-menu/service/product.service';
+import { CampaignService } from '@/pages/campaigns/services/campaign.service';
+import { TenantService } from '@/pages/admin-page/service/tenant.service';
+import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { signal } from '@angular/core';
 
 type PageState = 'idle' | 'validating' | 'valid' | 'redeeming' | 'success' | 'error' | 'already-redeemed';
 
@@ -33,6 +40,7 @@ type PageState = 'idle' | 'validating' | 'valid' | 'redeeming' | 'success' | 'er
     FormsModule,
     CardModule,
     InputTextModule,
+    InputNumberModule,
     ButtonModule,
     DividerModule,
     TagModule,
@@ -50,23 +58,36 @@ export class ManualRedemptionComponent implements OnInit {
   pageState: PageState = 'idle';
   couponCode: string = '';
   tenantId: number = 1;
+  originalAmount: number = 0;
+  minRedemptionAmount: number = 0;
 
   // Data
   validationData: CouponValidationResponse | null = null;
   redemptionData: RedemptionResponse | null = null;
   errorMessage: string = '';
+  showWelcomeBanner = signal<boolean>(false);
+  bannerMessage = signal<{ title: string; description: string; buttonText: string }>(
+    { title: '', description: '', buttonText: '' }
+  );
 
   constructor(
     private redemptionService: RedemptionService,
     private authService: AuthService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private productService: ProductService,
+    private campaignService: CampaignService,
+    private tenantService: TenantService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.authService.getCurrentUserWithTenant().subscribe(currentUser => {
         debugger;
       this.tenantId = currentUser?.tenantId || 1;
+      if (this.tenantId > 0) {
+        this.checkBannerConditions(this.tenantId);
+      }
     });
   }
 
@@ -102,6 +123,9 @@ export class ManualRedemptionComponent implements OnInit {
           });
         } else if (response.valid) {
           this.pageState = 'valid';
+          // Guardar el monto mínimo de redención
+          this.minRedemptionAmount = response.minRedemptionAmount || 0;
+          this.originalAmount = this.minRedemptionAmount;
           this.messageService.add({
             severity: 'success',
             summary: 'Cupón válido',
@@ -140,8 +164,19 @@ export class ManualRedemptionComponent implements OnInit {
       return;
     }
 
+    // Validar que el monto sea mayor o igual al mínimo
+    if (this.originalAmount < this.minRedemptionAmount) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Monto inválido',
+        detail: `El monto debe ser al menos $${this.minRedemptionAmount.toFixed(2)}`,
+        life: 3000
+      });
+      return;
+    }
+
     this.confirmationService.confirm({
-      message: `¿Confirma la redención del cupón para ${this.validationData.customerName}?`,
+      message: `¿Confirma la redención del cupón para ${this.validationData.customerName} por un monto de $${this.originalAmount.toFixed(2)}?`,
       header: 'Confirmar Redención',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, redimir',
@@ -162,6 +197,7 @@ export class ManualRedemptionComponent implements OnInit {
     const request: RedemptionRequest = {
       redeemedBy: currentUser?.userEmail || 'staff',
       channel: RedemptionChannel.MANUAL,
+      originalAmount: this.originalAmount,
       location: 'Dashboard Admin',
       metadata: JSON.stringify({
         redeemedFrom: 'Manual Redemption Dashboard',
@@ -277,5 +313,85 @@ export class ManualRedemptionComponent implements OnInit {
            this.validationData.valid === true &&
            !this.validationData.alreadyRedeemed &&
            !this.validationData.isExpired;
+  }
+
+  private checkBannerConditions(tenantId: number): void {
+    forkJoin({
+      products: this.productService.getProductsByTenantId(tenantId),
+      welcomeStatus: this.campaignService.getWelcomeCampaignStatus(tenantId)
+    }).subscribe({
+      next: ({ products, welcomeStatus }) => {
+        const productCount = Array.isArray(products) ? products.length : (products?.object?.length ?? 0);
+        const hasProducts = productCount > 0;
+        const campaignExists = welcomeStatus?.exists ?? false;
+        const campaignStatus = welcomeStatus?.status;
+
+        console.debug('[Banner][manual-redemption] tenantId=', tenantId, 'productCount=', productCount, 'welcomeStatus=', welcomeStatus);
+
+        if (!hasProducts || (campaignExists && campaignStatus === 'ACTIVE')) {
+          this.showWelcomeBanner.set(false);
+          return;
+        }
+
+        if (!campaignExists) {
+          this.showWelcomeBanner.set(true);
+          this.bannerMessage.set({
+            title: 'Tu negocio ya está listo.',
+            description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.',
+            buttonText: 'Configurar campaña de bienvenida'
+          });
+        } else if (campaignStatus === 'DRAFT') {
+          this.showWelcomeBanner.set(true);
+          this.bannerMessage.set({
+            title: '¡Ya casi está todo listo!',
+            description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.',
+            buttonText: 'Activar campaña de bienvenida'
+          });
+        }
+      },
+      error: (err) => {
+        console.warn('[Banner][manual-redemption] welcome-status failed, falling back to campaigns list', err);
+        this.productService.getProductsByTenantId(tenantId).subscribe({
+          next: (productsResp) => {
+            const productCount = Array.isArray(productsResp) ? productsResp.length : (productsResp?.object?.length ?? 0);
+            const hasProducts = productCount > 0;
+
+            this.campaignService.getByBusiness(tenantId).subscribe({
+              next: (campaigns) => {
+                const welcomeCampaigns = (campaigns || []).filter(c => c.template?.id === 1);
+                const active = welcomeCampaigns.some(c => c.status === 'ACTIVE');
+                const draft = !active && welcomeCampaigns.some(c => c.status === 'DRAFT');
+
+                if (!hasProducts || active) { this.showWelcomeBanner.set(false); return; }
+
+                if (welcomeCampaigns.length === 0) {
+                  this.showWelcomeBanner.set(true);
+                  this.bannerMessage.set({ title: 'Tu negocio ya está listo.', description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.', buttonText: 'Configurar campaña de bienvenida' });
+                } else if (draft) {
+                  this.showWelcomeBanner.set(true);
+                  this.bannerMessage.set({ title: '¡Ya casi está todo listo!', description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.', buttonText: 'Activar campaña de bienvenida' });
+                }
+              },
+              error: (e2) => { console.error('[Banner][manual-redemption] fallback getByBusiness failed', e2); this.showWelcomeBanner.set(false); }
+            });
+          },
+          error: (e3) => { console.error('[Banner][manual-redemption] fallback getProducts failed', e3); this.showWelcomeBanner.set(false); }
+        });
+      }
+    });
+  }
+
+  navigateToWelcomeCampaign(): void {
+    this.campaignService.getByBusiness(this.tenantId).subscribe({
+      next: (campaigns) => {
+        const draftWelcome = (campaigns || []).find(c => c.template?.id === 1 && c.status === 'DRAFT');
+        if (draftWelcome) {
+          this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { id: draftWelcome.id, focusStatus: 'true' } });
+        } else {
+          this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } });
+        }
+      },
+      error: () => { this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } }); }
+    });
   }
 }

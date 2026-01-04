@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { RippleModule } from 'primeng/ripple';
 import { StyleClassModule } from 'primeng/styleclass';
 import { ButtonModule } from 'primeng/button';
@@ -28,4 +28,18 @@ import { FooterWidget } from './components/footerwidget';
         </div>
     `
 })
-export class Landing {}
+export class Landing implements OnInit {
+    tenantSlug: string | null = null;
+
+    constructor(private route: ActivatedRoute) {}
+
+    ngOnInit(): void {
+        // Obtener el slug del parámetro de ruta
+        this.route.paramMap.subscribe(params => {
+            this.tenantSlug = params.get('slug');
+            console.log('Landing page slug:', this.tenantSlug);
+            // Aquí puedes cargar los datos del tenant basándote en el slug
+            // y pasarlos a los componentes hijos si es necesario
+        });
+    }
+}

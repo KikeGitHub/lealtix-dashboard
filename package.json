@@ -23,6 +23,7 @@
         "@angular/router": "^20",
         "@primeuix/themes": "^1.2.1",
         "@tailwindcss/postcss": "^4.1.11",
+        "angularx-qrcode": "^20.0.0",
         "canvas-confetti": "^1.9.3",
         "chart.js": "^4.4.2",
         "html2canvas": "^1.4.1",

@@ -17,6 +17,7 @@ import { CampaignDetailsComponent } from '@/pages/campaigns/components/campaign-
 import { CampaignTemplatesListComponent } from '@/pages/campaigns/components/campaign-templates-list/campaign-templates-list.component';
 import { CreateCampaignComponent } from '@/pages/campaigns/components/create-campaign/create-campaign.component';
 import { ManualRedemptionComponent } from '@/pages/manual-redemption/manual-redemption.component';
+import { MiPaginaComponent } from '@/pages/mi-pagina/mi-pagina.component';
 
 export const appRoutes: Routes = [
     // Everything under /dashboard/**
@@ -46,7 +47,8 @@ export const appRoutes: Routes = [
                     { path: 'campaigns/new', component: CampaignFormComponent, title: 'Nueva Campaña' },
                     { path: 'campaigns/:id', component: CampaignDetailsComponent, title: 'Detalles de Campaña' },
                     { path: 'campaign-templates', component: CampaignTemplatesListComponent, title: 'Plantillas de Campañas' },
-                    { path: 'manual-redemption', component: ManualRedemptionComponent, title: 'Redención Manual' }
+                    { path: 'manual-redemption', component: ManualRedemptionComponent, title: 'Redención Manual' },
+                    { path: 'mi-pagina', component: MiPaginaComponent, title: 'Mi Página' }
                 ]
             }
         ]

@@ -1,396 +1,522 @@
-// Campaign Preview Dialog Styles - Diseño para captura como imagen
+// Modern Promotional Card Design - Professional & Minimalist
 
 .preview-capture {
-  max-width: 1200px;
-  background: #ffffff;
+  max-width: 800px;
+  background: transparent;
   border-radius: 0;
   overflow: hidden;
   margin: 0 auto;
   box-shadow: none;
-  // Ratio 1200x630 óptimo para compartir
   position: relative;
 }
 
-// Header minimalista con branding del cliente
-.preview-header {
-  padding: 24px 32px;
-  background: #ffffff;
-  border-bottom: none;
+// Main promotional card container
+.promo-card {
+  position: relative;
+  width: 100%;
+  min-height: 600px;
+  background: linear-gradient(145deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow:
+    0 25px 50px rgba(102, 126, 234, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+// Decorative background elements
+.promo-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 1;
+
+  .gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(102, 126, 234, 0.9) 0%,
+      rgba(118, 75, 162, 0.85) 50%,
+      rgba(240, 147, 251, 0.8) 100%
+    );
+  }
+
+  .geometric-patterns {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+
+    .pattern-circle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+
+      &.pattern-1 {
+        width: 120px;
+        height: 120px;
+        top: -60px;
+        right: -60px;
+      }
+
+      &.pattern-2 {
+        width: 80px;
+        height: 80px;
+        bottom: 20%;
+        left: -40px;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      &.pattern-3 {
+        width: 200px;
+        height: 200px;
+        top: 50%;
+        right: -100px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+    }
+  }
+}
+
+// Header with client branding
+.promo-header-modern {
   position: relative;
   z-index: 10;
-}
+  padding: 24px 32px 16px;
 
-.client-branding-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  transition: opacity 0.2s ease;
-
-  &:hover {
-    opacity: 0.85;
-  }
-}
-
-.client-branding {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-}
-
-.client-logo {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  border-radius: 12px;
-  border: 2px solid #f3f4f6;
-  background: #ffffff;
-  padding: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.client-initials {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-  color: white;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
-}
-
-.client-info {
-  flex: 1;
-}
-
-.client-name {
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 4px 0;
-  line-height: 1.2;
-}
-
-.client-tagline {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0;
-  font-weight: 500;
-}
-
-// Body: layout de dos columnas (40% info, 60% imagen)
-.preview-body {
-  display: flex;
-  gap: 0;
-  padding: 0;
-  align-items: stretch;
-  height: 400px; // Altura reducida para mejor adaptación
-  position: relative;
-}
-
-// Columna izquierda: información (40%)
-.preview-info {
-  flex: 0 0 40%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 24px;
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  position: relative;
-  height: 100%;
-
-  // Efecto de sombra sutil hacia la derecha
-  &::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.05) 50%, transparent 100%);
-  }
-}// Columna derecha: imagen (60%)
-.preview-image {
-  flex: 0 0 60%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  padding: 20px;
-  position: relative;
-  overflow: visible;
-  height: 100%;
-}
-
-.no-image-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  color: #ffffff;
-  text-align: center;
-  padding: 60px;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
-  i {
-    font-size: 4rem;
-    opacity: 0.5;
+  .client-branding-compact {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
 
-  p {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    opacity: 0.8;
-  }
-}
-
-.promo-main-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  display: block;
-  object-fit: cover;
-  object-position: center;
-}
-
-.promo-header {
-  margin-bottom: 0;
-}
-
-// Badge de categoría
-.promo-category {
-  margin-bottom: 0;
-}
-
-.category-badge {
-  display: inline-block;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 6px 16px;
-  border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.promo-title {
-  font-size: 18px;
-  font-weight: 900;
-  color: #111827;
-  margin: 0 0 6px 0;
-  line-height: 1.15;
-  letter-spacing: -0.5px;
-}
-
-.promo-subtitle {
-  font-size: 14px;
-  color: #4b5563;
-  margin: 0;
-  line-height: 1.3;
-  font-weight: 600;
-}
-
-.promo-description-section {
-  margin-bottom: 0;
-}
-
-.promo-description {
-  font-size: 13px;
-  color: #374151;
-  line-height: 1.5;
-  margin: 0;
-}
-
-// Oferta destacada
-.promo-offer {
-  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
-  border: 2px solid #3b82f6;
-  border-radius: 10px;
-  padding: 12px 16px;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: center;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
-}
-
-.offer-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #1e40af;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-
-  i {
-    font-size: 14px;
-  }
-}
-
-.offer-value {
-  .value-text {
-    font-size: 32px;
-    font-weight: 900;
-    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: -1.5px;
-    line-height: 1;
-  }
-}
-
-// Fechas de vigencia compactas
-.promo-validity {
-  background: transparent;
-  border-radius: 0;
-  padding: 0;
-  margin: 0;
-  border: none;
-}
-
-.validity-compact {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #f3f4f6;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  white-space: nowrap;
-
-  i {
-    font-size: 14px;
-    color: #6b7280;
+  .client-avatar {
     flex-shrink: 0;
   }
-}
 
-.validity-text {
-  font-size: 13px;
-  color: #4b5563;
-  font-weight: 600;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-// Call to Action
-.promo-cta {
-  margin-top: 0;
-
-  ::ng-deep .cta-button {
-    font-size: 14px;
-    font-weight: 700;
-    padding: 10px 24px;
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
-    transition: all 0.3s ease;
-    width: 100%;
-    letter-spacing: 0.2px;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
-    }
-  }
-}
-
-// Footer discreto
-.promo-footer {
-  padding: 24px 32px;
-  text-align: center;
-  background: #fafbfc;
-  border-top: 1px solid #e5e7eb;
-}
-
-.footer-divider {
-  display: none;
-}
-
-.footer-text {
-  font-size: 12px;
-  color: #9ca3af;
-  margin: 0 0 2px 0;
-  font-weight: 500;
-}
-
-.footer-link {
-  color: #4F46E5;
-  text-decoration: none;
-  font-weight: 700;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #7C3AED;
-  }
-}
-
-.footer-subtext {
-  font-size: 11px;
-  color: #d1d5db;
-  margin: 0;
-  font-weight: 400;
-}
-
-// Responsive
-@media (max-width: 768px) {
-  .preview-header {
-    padding: 20px 24px;
-  }
-
-  .client-logo,
-  .client-initials {
+  .client-logo-modern {
     width: 56px;
     height: 56px;
+    object-fit: contain;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   }
 
-  .client-name {
+  .client-initials-modern {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #667eea;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+
+  .client-info-compact {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .client-name-modern {
+    color: white;
     font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
-  .preview-body {
+  .promo-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}
+
+// Main content area
+.promo-content-main {
+  position: relative;
+  z-index: 10;
+  padding: 0 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// Visual section (image)
+.promo-visual-section {
+  .image-container-modern {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .promo-hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    background: white;
+    border-radius: 20px;
+  }
+
+  .image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0) 60%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
+    border-radius: 20px;
+  }
+}
+
+// Content section (text)
+.promo-content-section {
+  color: white;
+  text-align: center;
+
+  .title-section {
+    margin-bottom: 24px;
+  }
+
+  .promo-title-modern {
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1.1;
+    margin: 0 0 12px 0;
+    color: white;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    letter-spacing: -0.5px;
+  }
+
+  .promo-subtitle-modern {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+}
+
+// Offer highlight section
+.offer-highlight {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: center;
+
+  .offer-value-modern {
+    display: flex;
     flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
 
-  .preview-info {
-    flex: 1 1 100%;
-    padding: 32px 24px;
+  .discount-text {
+    font-size: 48px;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    letter-spacing: -2px;
+  }
 
-    &::after {
-      display: none;
+  .offer-type-text {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+}
+
+// Description section
+.description-section {
+  margin-bottom: 24px;
+
+  .promo-description-modern {
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    text-align: center;
+    font-weight: 400;
+  }
+}
+
+// Time information
+.time-info {
+  .validity-modern {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: 12px 20px;
+    margin: 0 auto;
+    width: fit-content;
+  }
+
+  .time-icon {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .validity-text-modern {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+}
+
+// Call to Action section
+.cta-section {
+  text-align: center;
+  margin-top: 8px;
+
+  ::ng-deep .cta-button-modern {
+    background: white !important;
+    color: #667eea !important;
+    border: none !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    padding: 16px 32px !important;
+    border-radius: 50px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    box-shadow:
+      0 12px 24px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    min-width: 200px !important;
+
+    &:hover {
+      transform: translateY(-2px) !important;
+      box-shadow:
+        0 16px 32px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+      background: rgba(255, 255, 255, 0.95) !important;
+    }
+
+    &:active {
+      transform: translateY(0) !important;
+    }
+
+    .p-button-icon {
+      margin-left: 8px !important;
+    }
+  }
+}
+
+// No image placeholder
+.no-image-section {
+  .no-image-placeholder-modern {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    text-align: center;
+  }
+
+  .placeholder-icon {
+    i {
+      font-size: 48px;
+      color: rgba(255, 255, 255, 0.6);
     }
   }
 
-  .preview-image {
-    flex: 1 1 100%;
-    min-height: 300px;
-    order: -1; // Muestra la imagen primero en móvil
-  }
-
-  .promo-title {
-    font-size: 26px;
-  }
-
-  .promo-subtitle {
+  .placeholder-text {
     font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    font-weight: 500;
+  }
+}
+
+// Footer with Lealtix branding
+.promo-footer-modern {
+  position: relative;
+  z-index: 10;
+  padding: 24px 32px;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+
+  .footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
   }
 
-  .offer-value .value-text {
-    font-size: 36px;
+  .powered-text {
+    font-weight: 400;
+  }
+
+  .lealtix-brand {
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .promo-card {
+    border-radius: 20px;
+    min-height: 550px;
+  }
+
+  .promo-header-modern {
+    padding: 20px 24px 12px;
+
+    .client-logo-modern,
+    .client-initials-modern {
+      width: 48px;
+      height: 48px;
+    }
+
+    .client-name-modern {
+      font-size: 16px;
+    }
+
+    .promo-badge {
+      font-size: 9px;
+      padding: 5px 10px;
+    }
+  }
+
+  .promo-content-main {
+    padding: 0 24px 24px;
+    gap: 20px;
+  }
+
+  .promo-visual-section {
+    .image-container-modern {
+      height: 220px;
+      border-radius: 16px;
+    }
+  }
+
+  .promo-title-modern {
+    font-size: 26px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .promo-subtitle-modern {
+    font-size: 14px !important;
+  }
+
+  .offer-highlight {
+    padding: 16px;
+    border-radius: 16px;
+
+    .discount-text {
+      font-size: 36px;
+    }
+
+    .offer-type-text {
+      font-size: 12px;
+    }
+  }
+
+  .promo-description-modern {
+    font-size: 14px !important;
+  }
+
+  .validity-modern {
+    padding: 10px 16px !important;
+
+    .time-icon {
+      font-size: 14px;
+    }
+
+    .validity-text-modern {
+      font-size: 12px;
+    }
+  }
+
+  .cta-section ::ng-deep .cta-button-modern {
+    font-size: 14px !important;
+    padding: 14px 24px !important;
+    min-width: 180px !important;
+  }
+
+  .promo-footer-modern {
+    padding: 20px 24px;
+
+    .footer-content {
+      font-size: 11px;
+    }
+  }
+}
+
+// Compact mobile version
+@media (max-width: 480px) {
+  .promo-card {
+    border-radius: 16px;
+    min-height: 500px;
+  }
+
+  .promo-content-main {
+    padding: 0 20px 20px;
+  }
+
+  .promo-title-modern {
+    font-size: 22px !important;
+  }
+
+  .offer-highlight .discount-text {
+    font-size: 32px;
   }
 }

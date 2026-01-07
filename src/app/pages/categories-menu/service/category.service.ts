@@ -33,4 +33,22 @@ export class CategoryService {
         const body = { categories };
         return this.http.put<any>(`${this.apiUrlReorderCategories}/${tenantId}/reorder`, body);
     }
+
+    checkCategoriesExist(tenantId: number): Observable<boolean> {
+        return new Observable<boolean>((observer) => {
+            this.getCategoriesByTenantId(tenantId).subscribe({
+                next: (data) => {
+                    // Check if the response code is 200 and has categories
+                    const hasCategories = data.code === 200 && data.object && data.object.length > 0;
+                    observer.next(hasCategories);
+                    observer.complete();
+                },
+                error: (err) => {
+                    // If 404 or any error, assume no categories exist
+                    observer.next(false);
+                    observer.complete();
+                }
+            });
+        });
+    }
 }

@@ -1,3 +1,26 @@
+<!-- Banner persistente de bienvenida -->
+<div class="mb-4" *ngIf="showWelcomeBanner()">
+    <div class="border-round p-4 shadow-2" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-left: 4px solid #F59E0B;">
+        <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="flex align-items-start gap-3 flex-1">
+                <span class="text-4xl" style="line-height: 1;">🚀</span>
+                <div>
+                    <div class="font-semibold text-xl mb-2" style="color: #92400E;">{{ bannerMessage().title }}</div>
+                    <div class="line-height-3" style="color: #78350F;">{{ bannerMessage().description }}</div>
+                </div>
+            </div>
+            <p-button
+                [label]="bannerMessage().buttonText"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                severity="warn"
+                (onClick)="navigateToWelcomeCampaign()"
+                styleClass="white-space-nowrap">
+            </p-button>
+        </div>
+    </div>
+</div>
+
 <p-toolbar styleClass="mb-6">
     <ng-template #start>
         <p-button label="Nueva Categoría" icon="pi pi-plus" severity="secondary" class="mr-2" styleClass="text-sm p-button-sm" (onClick)="openNew()" />
@@ -100,3 +123,35 @@
 ></app-category-dialog>
 
 <p-confirmdialog [style]="{ width: '450px' }" />
+
+<app-confetti></app-confetti>
+
+<p-dialog
+  [(visible)]="showFirstCategoryCongrats"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '30rem', textAlign: 'center', borderRadius: '1.5rem', overflow: 'hidden' }"
+  contentStyle="padding:2.5rem 2rem; border-radius:1.5rem;"
+  baseZIndex="2000"
+>
+  <div class="flex flex-col items-center justify-center gap-4">
+    <div style="font-size:2.2rem;">✅</div>
+    <h2 class="font-bold text-2xl text-primary-700 mb-2">¡Perfecto! Ya tienes tu primera categoría</h2>
+    <div class="text-lg text-gray-700 mb-2">
+      Ahora puedes comenzar a crear productos y asignarlos a esta categoría.
+    </div>
+    <div class="flex gap-3 mt-3">
+      <button pButton
+          label="Lo haré después"
+          class="p-button-outlined"
+          (click)="closeFirstCategoryDialog()">
+      </button>
+      <button pButton
+          label="Crear mi primer producto"
+          icon="pi pi-plus"
+          class="p-button-success"
+          (click)="goToCreateProduct()">
+      </button>
+    </div>
+  </div>
+</p-dialog>

@@ -1,0 +1,623 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<!-- Banner persistente de bienvenida -->
+<div class="mb-4" *ngIf="showWelcomeBanner()">
+    <div class="border-round p-4 shadow-2" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-left: 4px solid #F59E0B;">
+        <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="flex align-items-start gap-3 flex-1">
+                <span class="text-4xl" style="line-height: 1;">🚀</span>
+                <div>
+                    <div class="font-semibold text-xl mb-2" style="color: #92400E;">{{ bannerMessage().title }}</div>
+                    <div class="line-height-3" style="color: #78350F;">{{ bannerMessage().description }}</div>
+                </div>
+            </div>
+            <p-button
+                [label]="bannerMessage().buttonText"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                severity="warn"
+                (onClick)="navigateToWelcomeCampaign()"
+                styleClass="white-space-nowrap">
+            </p-button>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+
+  <div class="page-header">
+    <div class="header-content">
+      <i class="pi pi-ticket header-icon"></i>
+      <div>
+        <h1 class="page-title">Redención Manual de Cupones</h1>
+        <p class="page-subtitle">Valida y redime cupones ingresando el código</p>
+      </div>
+    </div>
+  </div>
+
+    <!-- IDLE STATE - FORMULARIO DE ENTRADA -->
+    <p-card *ngIf="pageState === 'idle'" styleClass="input-card">
+      <ng-template pTemplate="header">
+        <div class="card-header-simple">
+          <i class="pi pi-search"></i>
+          <h2>Buscar Cupón</h2>
+        </div>
+      </ng-template>
+
+      <div class="input-section">
+        <p-message
+          severity="info"
+          text="Ingrese el código del cupón que desea validar"
+          styleClass="info-message">
+        </p-message>
+
+        <div class="input-group">
+          <label for="couponCode" class="input-label">
+            <i class="pi pi-ticket"></i>
+            Código del Cupón
+          </label>
+          <input
+            pInputText
+            id="couponCode"
+            [(ngModel)]="couponCode"
+            placeholder="Ej: ABC123XYZ"
+            class="coupon-input"
+            (keyup.enter)="onValidateCoupon()"
+            [disabled]="pageState !== 'idle'"
+            autocomplete="off" />
+        </div>
+
+        <p-button
+          label="Validar Cupón"
+          icon="pi pi-search"
+          styleClass="validate-button"
+          (onClick)="onValidateCoupon()"
+          [disabled]="!couponCode || couponCode.trim() === ''">
+        </p-button>
+      </div>
+    </p-card>
+
+    <!-- VALIDATING STATE -->
+    <p-card *ngIf="pageState === 'validating'" styleClass="loading-card">
+      <div class="loading-content">
+        <p-progressSpinner
+          styleClass="spinner-custom"
+          strokeWidth="4"
+          fill="transparent"
+          animationDuration="1s">
+        </p-progressSpinner>
+        <p class="loading-text">Validando cupón...</p>
+        <p class="loading-subtext">Por favor espere</p>
+      </div>
+    </p-card>
+
+    <!-- VALID STATE -->
+    <p-card *ngIf="pageState === 'valid'" styleClass="coupon-card valid-card">
+      <ng-template pTemplate="header">
+        <div class="card-header-success">
+          <i class="pi pi-check-circle success-icon"></i>
+          <div>
+            <h2>CUPÓN VÁLIDO</h2>
+            <p class="header-subtitle">Listo para redimir</p>
+          </div>
+        </div>
+      </ng-template>
+
+      <div class="coupon-details">
+        <!-- Status Badge -->
+        <div class="status-section">
+          <span class="status-label">Estado:</span>
+          <p-tag
+            [value]="getStatusText(validationData?.status)"
+            [severity]="getStatusSeverity(validationData?.status)"
+            styleClass="status-tag">
+          </p-tag>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Benefit Highlight -->
+        <div class="benefit-highlight">
+          <i class="pi pi-gift benefit-icon"></i>
+          <div class="benefit-content">
+            <span class="benefit-label">Beneficio</span>
+            <h3 class="benefit-title">{{ validationData?.benefit }}</h3>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Customer & Campaign Info -->
+        <div class="info-grid">
+          <div class="info-item">
+            <i class="pi pi-user"></i>
+            <div class="info-details">
+              <span class="info-label">Cliente</span>
+              <span class="info-value">{{ validationData?.customerName }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-envelope"></i>
+            <div class="info-details">
+              <span class="info-label">Email</span>
+              <span class="info-value">{{ validationData?.customerEmail }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-tag"></i>
+            <div class="info-details">
+              <span class="info-label">Campaña</span>
+              <span class="info-value">{{ validationData?.campaignTitle }}</span>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="validationData?.campaignDescription">
+            <i class="pi pi-info-circle"></i>
+            <div class="info-details">
+              <span class="info-label">Descripción</span>
+              <span class="info-value">{{ validationData?.campaignDescription }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-calendar"></i>
+            <div class="info-details">
+              <span class="info-label">Válido hasta</span>
+              <span class="info-value">{{ formatDate(validationData?.expiresAt) }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-ticket"></i>
+            <div class="info-details">
+              <span class="info-label">Código</span>
+              <span class="info-value coupon-code">{{ validationData?.couponCode }}</span>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="validationData?.couponType && validationData?.couponValue">
+            <i class="pi pi-percentage"></i>
+            <div class="info-details">
+              <span class="info-label">Tipo de Descuento</span>
+              <span class="info-value">
+                <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
+                  {{ validationData?.couponValue }}% de descuento
+                </span>
+                <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
+                  ${{ validationData?.couponValue }} de descuento
+                </span>
+                <span *ngIf="validationData?.couponType === 'FREE_ITEM'">
+                  Artículo gratis
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="validationData?.minRedemptionAmount">
+            <i class="pi pi-money-bill"></i>
+            <div class="info-details">
+              <span class="info-label">Compra Mínima</span>
+              <span class="info-value">${{ validationData?.minRedemptionAmount?.toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Amount Input Section -->
+        <div class="amount-section">
+          <div class="amount-header">
+            <i class="pi pi-shopping-cart"></i>
+            <h3>Monto de la Compra</h3>
+          </div>
+
+          <div *ngIf="minRedemptionAmount > 0" class="amount-info">
+            <p-message
+              severity="info"
+              [text]="'Compra mínima requerida: $' + minRedemptionAmount.toFixed(2)"
+              styleClass="w-full mb-3">
+            </p-message>
+          </div>
+
+          <div class="amount-input-group">
+            <label for="originalAmount" class="amount-label">
+              <i class="pi pi-money-bill"></i> Monto Total
+            </label>
+            <p-inputNumber
+              id="originalAmount"
+              [(ngModel)]="originalAmount"
+              mode="currency"
+              currency="MXN"
+              locale="es-MX"
+              [minFractionDigits]="2"
+              [maxFractionDigits]="2"
+              [min]="minRedemptionAmount"
+              placeholder="0.00"
+              styleClass="w-full"
+              inputStyleClass="w-full text-lg">
+            </p-inputNumber>
+          </div>
+
+          <!-- Preview calculations -->
+          <div class="amount-preview" *ngIf="originalAmount >= minRedemptionAmount && validationData?.couponType && validationData?.couponValue">
+            <div class="preview-row">
+              <span class="preview-label">Descuento:</span>
+              <span class="preview-value discount">
+                <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
+                  -${{ (originalAmount * (validationData?.couponValue || 0) / 100).toFixed(2) }}
+                </span>
+                <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
+                  -${{ (validationData?.couponValue || 0).toFixed(2) }}
+                </span>
+              </span>
+            </div>
+            <div class="preview-row final">
+              <span class="preview-label">Total a Pagar:</span>
+              <span class="preview-value total">
+                <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
+                  ${{ (originalAmount - (originalAmount * (validationData?.couponValue || 0) / 100)).toFixed(2) }}
+                </span>
+                <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
+                  ${{ (originalAmount - (validationData?.couponValue || 0)).toFixed(2) }}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warnings -->
+        <div *ngIf="validationData?.alreadyRedeemed" class="warning-section">
+          <p-message
+            severity="warn"
+            text="Este cupón ya fue redimido anteriormente"
+            styleClass="warning-message">
+          </p-message>
+        </div>
+
+        <div *ngIf="validationData?.isExpired" class="warning-section">
+          <p-message
+            severity="error"
+            text="Este cupón ha expirado y no puede ser redimido"
+            styleClass="error-message">
+          </p-message>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <div class="button-group">
+          <p-button
+            label="Cancelar"
+            icon="pi pi-times"
+            styleClass="secondary-button"
+            (onClick)="onValidateAnother()">
+          </p-button>
+          <p-button
+            label="🎁 Redimir Cupón"
+            icon="pi pi-check"
+            styleClass="redeem-button"
+            (onClick)="onRedeemCoupon()"
+            [disabled]="!canRedeem()">
+          </p-button>
+        </div>
+      </ng-template>
+    </p-card>
+
+    <!-- REDEEMING STATE -->
+    <p-card *ngIf="pageState === 'redeeming'" styleClass="loading-card">
+      <div class="loading-content">
+        <p-progressSpinner
+          styleClass="spinner-custom"
+          strokeWidth="4"
+          fill="transparent"
+          animationDuration="1s">
+        </p-progressSpinner>
+        <p class="loading-text">Redimiendo cupón...</p>
+        <p class="loading-subtext">Procesando redención</p>
+      </div>
+    </p-card>
+
+    <!-- SUCCESS STATE -->
+    <p-card *ngIf="pageState === 'success'" styleClass="coupon-card success-card">
+      <ng-template pTemplate="header">
+        <div class="card-header-success">
+          <i class="pi pi-check-circle success-icon large"></i>
+          <div>
+            <h2>¡CUPÓN REDIMIDO!</h2>
+            <p class="header-subtitle">Redención completada exitosamente</p>
+          </div>
+        </div>
+      </ng-template>
+
+      <div class="coupon-details">
+        <p-message
+          severity="success"
+          [text]="redemptionData?.message || 'El cupón ha sido redimido exitosamente'"
+          styleClass="success-message">
+        </p-message>
+
+        <p-divider></p-divider>
+
+        <!-- Benefit Applied -->
+        <div class="benefit-highlight success">
+          <i class="pi pi-check-circle benefit-icon"></i>
+          <div class="benefit-content">
+            <span class="benefit-label">Beneficio Aplicado</span>
+            <h3 class="benefit-title">{{ redemptionData?.benefit }}</h3>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Redemption Details -->
+        <div class="info-grid">
+          <div class="info-item">
+            <i class="pi pi-user"></i>
+            <div class="info-details">
+              <span class="info-label">Cliente</span>
+              <span class="info-value">{{ redemptionData?.customerName }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-envelope"></i>
+            <div class="info-details">
+              <span class="info-label">Email</span>
+              <span class="info-value">{{ redemptionData?.customerEmail }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-calendar"></i>
+            <div class="info-details">
+              <span class="info-label">Fecha de redención</span>
+              <span class="info-value">{{ formatDate(redemptionData?.redeemedAt) }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-user-edit"></i>
+            <div class="info-details">
+              <span class="info-label">Redimido por</span>
+              <span class="info-value">{{ redemptionData?.redeemedBy }}</span>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="redemptionData?.redemptionId">
+            <i class="pi pi-hashtag"></i>
+            <div class="info-details">
+              <span class="info-label">ID de Redención</span>
+              <span class="info-value coupon-code">{{ redemptionData?.redemptionId }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-ticket"></i>
+            <div class="info-details">
+              <span class="info-label">Código del cupón</span>
+              <span class="info-value coupon-code">{{ redemptionData?.couponCode }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Amount Summary -->
+        <div class="amount-summary" *ngIf="redemptionData?.originalAmount">
+          <p-divider></p-divider>
+
+          <div class="summary-header">
+            <i class="pi pi-money-bill"></i>
+            <h3>Resumen de Compra</h3>
+          </div>
+
+          <div class="summary-row">
+            <span class="summary-label">Monto Original:</span>
+            <span class="summary-value">${{ redemptionData?.originalAmount?.toFixed(2) }}</span>
+          </div>
+
+          <div class="summary-row discount" *ngIf="redemptionData?.discountAmount">
+            <span class="summary-label">Descuento Aplicado:</span>
+            <span class="summary-value">-${{ redemptionData?.discountAmount?.toFixed(2) }}</span>
+          </div>
+
+          <div class="summary-row total" *ngIf="redemptionData?.finalAmount">
+            <span class="summary-label">Total Pagado:</span>
+            <span class="summary-value">${{ redemptionData?.finalAmount?.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <p-button
+          label="Redimir otro cupón"
+          icon="pi pi-refresh"
+          styleClass="primary-button"
+          (onClick)="onValidateAnother()">
+        </p-button>
+      </ng-template>
+    </p-card>
+
+    <!-- ALREADY REDEEMED STATE -->
+    <p-card *ngIf="pageState === 'already-redeemed'" styleClass="coupon-card error-card">
+      <ng-template pTemplate="header">
+        <div class="card-header-error">
+          <i class="pi pi-check-circle error-icon"></i>
+          <div>
+            <h2>Cupón Ya Redimido</h2>
+            <p class="header-subtitle">Este cupón fue utilizado anteriormente</p>
+          </div>
+        </div>
+      </ng-template>
+
+      <div class="coupon-details">
+        <p-message
+          severity="warn"
+          text="Este cupón ya fue redimido y no puede volver a utilizarse"
+          styleClass="warning-message">
+        </p-message>
+
+        <p-divider></p-divider>
+
+        <!-- Información del Cupón -->
+        <div class="benefit-highlight">
+          <i class="pi pi-gift benefit-icon"></i>
+          <div class="benefit-content">
+            <span class="benefit-label">Beneficio Aplicado</span>
+            <h3 class="benefit-title">{{ validationData?.benefit }}</h3>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <h3 class="section-title">Información de la Redención</h3>
+
+        <!-- Detalles de la Redención -->
+        <div class="info-grid">
+          <div class="info-item">
+            <i class="pi pi-calendar"></i>
+            <div class="info-details">
+              <span class="info-label">Redimido el</span>
+              <span class="info-value">{{ formatDate(validationData?.redeemedAt) }}</span>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="validationData?.redeemedBy">
+            <i class="pi pi-user-edit"></i>
+            <div class="info-details">
+              <span class="info-label">Redimido por</span>
+              <span class="info-value">{{ validationData?.redeemedBy }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-ticket"></i>
+            <div class="info-details">
+              <span class="info-label">Código del cupón</span>
+              <span class="info-value coupon-code">{{ validationData?.couponCode }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-info-circle"></i>
+            <div class="info-details">
+              <span class="info-label">Estado</span>
+              <p-tag
+                value="Redimido"
+                severity="secondary"
+                styleClass="status-tag">
+              </p-tag>
+            </div>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <h3 class="section-title">Información del Cliente</h3>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <i class="pi pi-user"></i>
+            <div class="info-details">
+              <span class="info-label">Cliente</span>
+              <span class="info-value">{{ validationData?.customerName }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-envelope"></i>
+            <div class="info-details">
+              <span class="info-label">Email</span>
+              <span class="info-value">{{ validationData?.customerEmail }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="pi pi-tag"></i>
+            <div class="info-details">
+              <span class="info-label">Campaña</span>
+              <span class="info-value">{{ validationData?.campaignTitle }}</span>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="validationData?.campaignDescription">
+            <i class="pi pi-align-left"></i>
+            <div class="info-details">
+              <span class="info-label">Descripción</span>
+              <span class="info-value">{{ validationData?.campaignDescription }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <p-button
+          label="Validar otro cupón"
+          icon="pi pi-refresh"
+          styleClass="secondary-button"
+          (onClick)="onValidateAnother()">
+        </p-button>
+      </ng-template>
+    </p-card>
+
+    <!-- ERROR STATE -->
+    <p-card *ngIf="pageState === 'error'" styleClass="coupon-card error-card">
+      <ng-template pTemplate="header">
+        <div class="card-header-error">
+          <i class="pi pi-times-circle error-icon"></i>
+          <div>
+            <h2>Error</h2>
+            <p class="header-subtitle">No se pudo procesar la solicitud</p>
+          </div>
+        </div>
+      </ng-template>
+
+      <div class="coupon-details">
+        <p-message
+          severity="error"
+          [text]="errorMessage"
+          styleClass="error-message">
+        </p-message>
+
+        <div *ngIf="validationData && !validationData.valid" class="error-details">
+          <p-divider></p-divider>
+
+          <div class="info-grid">
+            <div class="info-item" *ngIf="validationData.couponCode">
+              <i class="pi pi-ticket"></i>
+              <div class="info-details">
+                <span class="info-label">Código buscado</span>
+                <span class="info-value">{{ validationData.couponCode }}</span>
+              </div>
+            </div>
+
+            <div class="info-item" *ngIf="validationData.alreadyRedeemed">
+              <i class="pi pi-exclamation-triangle"></i>
+              <div class="info-details">
+                <span class="info-label">Estado</span>
+                <span class="info-value">Ya redimido</span>
+              </div>
+            </div>
+
+            <div class="info-item" *ngIf="validationData.isExpired">
+              <i class="pi pi-clock"></i>
+              <div class="info-details">
+                <span class="info-label">Estado</span>
+                <span class="info-value">Expirado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <p-button
+          label="Intentar nuevamente"
+          icon="pi pi-refresh"
+          styleClass="secondary-button"
+          (onClick)="onValidateAnother()">
+        </p-button>
+      </ng-template>
+    </p-card>
+
+</div>

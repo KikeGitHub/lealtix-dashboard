@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray, FormControl } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -29,6 +30,10 @@ import { ImageService } from '../service/image.service';
 import { ProductDialogComponent } from './product-dialog.component';
 import { forkJoin } from 'rxjs';
 import { TenantService } from '../admin-page/service/tenant.service';
+import { ConfettiService } from '@/confetti/confetti.service';
+import { ConfettiComponent } from '@/confetti/confetti.component';
+import { environment } from '../commons/environment.dev';
+import { CampaignService } from '@/pages/campaigns/services/campaign.service';
 
 interface Column {
     field: string;
@@ -68,7 +73,8 @@ interface ExportColumn {
         IconFieldModule,
         FileUploadModule,
         ConfirmDialogModule,
-        ProductDialogComponent
+        ProductDialogComponent,
+        ConfettiComponent
     ],
     templateUrl: './products-menu.component.html',
     styleUrls: ['./products-menu.component.scss'],
@@ -87,6 +93,12 @@ export class ProductMenuComponent implements OnInit {
 
     productDialog: boolean = false;
     tenantId: number = 0;
+    showFirstProductCongrats: boolean = false;
+    tenantSlug: string | null = null;
+    showWelcomeBanner = signal<boolean>(false);
+    bannerMessage = signal<{ title: string; description: string; buttonText: string }>(
+        { title: '', description: '', buttonText: '' }
+    );
 
     products = signal<Product[]>([]);
 
@@ -109,7 +121,11 @@ export class ProductMenuComponent implements OnInit {
         private confirmationService: ConfirmationService,
         private fb: FormBuilder,
         private imageService: ImageService,
-        private tenantService: TenantService
+        private tenantService: TenantService,
+        private route: ActivatedRoute,
+        private confettiService: ConfettiService,
+        private campaignService: CampaignService,
+        private router: Router
     ) {
         this.categoryForm = this.fb.group({
             id: [0],
@@ -133,7 +149,6 @@ export class ProductMenuComponent implements OnInit {
     }
 
     ngOnInit() {
-        debugger;
         const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
         if (userStr) {
             try {
@@ -143,8 +158,21 @@ export class ProductMenuComponent implements OnInit {
                         next: (resp) => {
                             const tenant = resp?.object;
                             this.tenantId = tenant?.id ?? 0;
+                            this.tenantSlug = tenant?.slug ?? null;
                             this.loadCategories();
                             this.loadProducts();
+                            this.checkBannerConditions();
+
+                            // Check for categoryId query param to auto-open product dialog
+                            this.route.queryParams.subscribe(params => {
+                                const categoryId = params['categoryId'];
+                                if (categoryId) {
+                                    // Wait a bit for categories to load
+                                    setTimeout(() => {
+                                        this.openNewWithCategory(Number(categoryId));
+                                    }, 500);
+                                }
+                            });
                         },
                         error: (err) => {
                             console.error('Error fetching tenant:', err);
@@ -344,8 +372,28 @@ export class ProductMenuComponent implements OnInit {
         this.productDialog = true;
     }
 
+    openNewWithCategory(categoryId: number) {
+        this.product = {};
+        // Preselect the category
+        (this.product as any).categoryId = categoryId;
+        this.submitted = false;
+        // reset product form with preselected category
+        this.productForm.reset({
+            id: null,
+            name: '',
+            description: '',
+            price: null,
+            img_url: '',
+            productImage: null,
+            isActive: true
+        });
+        // ensure preview and internal file reference are cleared when creating new
+        this.productImagePreview = null;
+        this.productForm.get('productImage')?.setValue(null);
+        this.productDialog = true;
+    }
+
     editProduct(product: Product) {
-        debugger;
         this.product = { ...product };
         // populate productForm
         this.productForm.patchValue({
@@ -441,6 +489,9 @@ export class ProductMenuComponent implements OnInit {
                                 detail: 'Product Deleted',
                                 life: 3000
                             });
+
+                            // Trigger event for menu update
+                            window.dispatchEvent(new Event('productsUpdated'));
                         },
                         error: (err) => {
                             console.error('Failed to delete product:', err);
@@ -506,7 +557,7 @@ export class ProductMenuComponent implements OnInit {
     }
 
     saveProduct() {
-        debugger;
+
         this.submitted = true;
         if (!this.product || (this.product as any).categoryId === null || (this.product as any).categoryId === undefined) {
             this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'Seleccione una categoría', life: 3000 });
@@ -524,6 +575,8 @@ export class ProductMenuComponent implements OnInit {
 
         const selectedCategoryId = (this.product as any).categoryId;
 
+        const isNewProduct = !prod.id;
+
         const createProductAndClose = (imageUrl?: string) => {
             const newProduct: Product = {
                 id: prod.id,
@@ -538,8 +591,30 @@ export class ProductMenuComponent implements OnInit {
             this.startLoading();
             this.productService.createProduct(newProduct).subscribe({
                 next: (resp) => {
-                    this.loadProducts();
                     this.messageService.add({ severity: 'success', summary: 'Producto creado', detail: `${newProduct.name} creado`, life: 3000 });
+
+                    // Trigger event for menu update
+                    window.dispatchEvent(new Event('productsUpdated'));
+
+                    // Check if this is the first product created
+                    if (isNewProduct) {
+                        this.productService.getProductsByTenantId(this.tenantId).subscribe({
+                            next: (data) => {
+                                this.loadProducts();
+                                // Show confetti dialog only if this is the first product (count === 1)
+                                if (data.totalRecords === 1) {
+                                    this.confettiService.trigger({ action: 'burst' });
+                                    this.showFirstProductCongrats = true;
+                                }
+                            },
+                            error: (err) => {
+                                console.error('Failed to load products after save', err);
+                                this.loadProducts();
+                            }
+                        });
+                    } else {
+                        this.loadProducts();
+                    }
                 },
                 error: (err) => {
                     console.error('Error creating product:', err);
@@ -555,7 +630,6 @@ export class ProductMenuComponent implements OnInit {
 
         // If we have a real File/Blob, upload first and then create product with returned URL
         if (imgFile instanceof File || imgFile instanceof Blob) {
-            // Cast to File because uploadImageProd expects a File. We already ensure imgFile is a File or Blob above.
             this.startLoading();
             this.imageService.uploadImageProd(imgFile as File, 'product', this.tenantId, prod.name).subscribe({
                 next: (imgURresp: string) => {
@@ -564,22 +638,18 @@ export class ProductMenuComponent implements OnInit {
                 },
                 error: (error) => {
                     console.error('Error uploading image:', error);
-                    // fallback: still attempt to create using existing img_url (if any)
                     createProductAndClose();
                 },
                 complete: () => {
-                    // createProductAndClose will call stopLoading when create completes; ensure we don't stop prematurely here
-                }
+                    this.stopLoading();}
             });
         } else {
-            // No file to upload: create product using whatever img_url is set (could be a URL or null)
             createProductAndClose();
         }
     }
 
     // Create a new category and add it to the categories list
     createCategory() {
-        debugger;
         this.categoryForm.markAllAsTouched();
         if (this.categoryForm.invalid) {
             this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'Nombre y descripción son requeridos', life: 3000 });
@@ -663,5 +733,134 @@ export class ProductMenuComponent implements OnInit {
 
     getProductImagePreview(): string | null {
         return this.productImagePreview || this.productForm.get('img_url')?.value || null;
+    }
+
+    closeFirstProductDialog() {
+        this.showFirstProductCongrats = false;
+    }
+
+    openLandingPage() {
+        this.showFirstProductCongrats = false;
+        // Get slug from tenant or fetch it if not available
+        if (!this.tenantSlug) {
+            this.tenantService.getTenantById(this.tenantId).subscribe({
+                next: (tenant) => {
+                    this.tenantSlug = tenant.slug ?? null;
+                    this.navigateToLanding();
+                },
+                error: (err) => {
+                    console.error('Error fetching tenant:', err);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'No se pudo obtener la información del tenant',
+                        life: 3000
+                    });
+                }
+            });
+        } else {
+            this.navigateToLanding();
+        }
+    }
+
+    private navigateToLanding() {
+        if (!this.tenantSlug) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Advertencia',
+                detail: 'No se encontró el slug del tenant',
+                life: 3000
+            });
+            return;
+        }
+
+        // Construir la URL de la landing page basándose en el entorno
+        const baseUrl = environment.production
+            ? 'https://lealtix.com.mx/landing-page'
+            : 'http://localhost:4200/landing-page';
+        const landingUrl = `${baseUrl}/${this.tenantSlug}`;
+        window.open(landingUrl, '_blank');
+    }
+
+    private checkBannerConditions(): void {
+        if (this.tenantId === 0) return;
+
+        forkJoin({
+            products: this.productService.getProductsByTenantId(this.tenantId),
+            welcomeStatus: this.campaignService.getWelcomeCampaignStatus(this.tenantId)
+        }).subscribe({
+            next: ({ products, welcomeStatus }) => {
+                const productCount = Array.isArray(products) ? products.length : (products?.object?.length ?? 0);
+                const hasProducts = productCount > 0;
+                const campaignExists = welcomeStatus?.exists ?? false;
+                const campaignStatus = welcomeStatus?.status;
+
+                console.debug('[Banner][products-menu] tenantId=', this.tenantId, 'productCount=', productCount, 'welcomeStatus=', welcomeStatus);
+
+                if (!hasProducts || (campaignExists && campaignStatus === 'ACTIVE')) {
+                    this.showWelcomeBanner.set(false);
+                    return;
+                }
+
+                if (!campaignExists) {
+                    this.showWelcomeBanner.set(true);
+                    this.bannerMessage.set({
+                        title: 'Tu negocio ya está listo.',
+                        description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.',
+                        buttonText: 'Configurar campaña de bienvenida'
+                    });
+                } else if (campaignStatus === 'DRAFT') {
+                    this.showWelcomeBanner.set(true);
+                    this.bannerMessage.set({
+                        title: '¡Ya casi está todo listo!',
+                        description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.',
+                        buttonText: 'Activar campaña de bienvenida'
+                    });
+                }
+            },
+            error: (err) => {
+                console.warn('[Banner][products-menu] welcome-status failed, falling back to campaigns list', err);
+                this.productService.getProductsByTenantId(this.tenantId).subscribe({
+                    next: (productsResp) => {
+                        const productCount = Array.isArray(productsResp) ? productsResp.length : (productsResp?.object?.length ?? 0);
+                        const hasProducts = productCount > 0;
+
+                        this.campaignService.getByBusiness(this.tenantId).subscribe({
+                            next: (campaigns) => {
+                                const welcomeCampaigns = (campaigns || []).filter(c => c.template?.id === 1);
+                                const active = welcomeCampaigns.some(c => c.status === 'ACTIVE');
+                                const draft = !active && welcomeCampaigns.some(c => c.status === 'DRAFT');
+
+                                if (!hasProducts || active) { this.showWelcomeBanner.set(false); return; }
+
+                                if (welcomeCampaigns.length === 0) {
+                                    this.showWelcomeBanner.set(true);
+                                    this.bannerMessage.set({ title: 'Tu negocio ya está listo.', description: 'Ahora configura tu campaña de bienvenida para empezar a recibir clientes.', buttonText: 'Configurar campaña de bienvenida' });
+                                } else if (draft) {
+                                    this.showWelcomeBanner.set(true);
+                                    this.bannerMessage.set({ title: '¡Ya casi está todo listo!', description: 'Tienes una campaña de bienvenida guardada como borrador. Actívala para comenzar a recibir clientes.', buttonText: 'Activar campaña de bienvenida' });
+                                }
+                            },
+                            error: (e2) => { console.error('[Banner][products-menu] fallback getByBusiness failed', e2); this.showWelcomeBanner.set(false); }
+                        });
+                    },
+                    error: (e3) => { console.error('[Banner][products-menu] fallback getProducts failed', e3); this.showWelcomeBanner.set(false); }
+                });
+            }
+        });
+    }
+
+    navigateToWelcomeCampaign(): void {
+        this.campaignService.getByBusiness(this.tenantId).subscribe({
+            next: (campaigns) => {
+                const draftWelcome = (campaigns || []).find(c => c.template?.id === 1 && c.status === 'DRAFT');
+                if (draftWelcome) {
+                    this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { id: draftWelcome.id, focusStatus: 'true' } });
+                } else {
+                    this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } });
+                }
+            },
+            error: () => { this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } }); }
+        });
     }
 }

@@ -1,0 +1,639 @@
+// Colors
+$color-success: #10b981;
+$color-error: #ef4444;
+$color-warning: #f59e0b;
+$color-info: #3b82f6;
+$color-disabled: #9ca3af;
+$color-text-primary: #1f2937;
+$color-text-secondary: #6b7280;
+$color-background: #f9fafb;
+$color-white: #ffffff;
+$color-border: #e5e7eb;
+$color-gold: #d4af37;
+
+// Spacing
+$spacing-xs: 0.5rem;
+$spacing-sm: 0.75rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+$spacing-xxl: 3rem;
+
+// Breakpoints
+$breakpoint-mobile: 768px;
+
+.redeem-container {
+  min-height: 100vh;
+  background: $color-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-lg;
+
+  @media (max-width: $breakpoint-mobile) {
+    padding: $spacing-md;
+    align-items: flex-start;
+    padding-top: $spacing-xl;
+  }
+}
+
+.redeem-wrapper {
+  width: 100%;
+  max-width: 600px;
+  animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.redeem-header {
+  text-align: center;
+  margin-bottom: $spacing-xl;
+  color: $color-text-primary;
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    margin-bottom: $spacing-xs;
+
+    @media (max-width: $breakpoint-mobile) {
+      font-size: 2rem;
+    }
+
+    .lealtix-link {
+      color: $color-gold;
+      text-decoration: none;
+      transition: all 0.3s ease;
+
+      &:hover {
+        color: darken($color-gold, 10%);
+        text-shadow: 0 2px 8px rgba($color-gold, 0.3);
+      }
+    }
+  }
+
+  .subtitle {
+    font-size: 1.125rem;
+    font-weight: 400;
+    margin: 0;
+    color: $color-text-secondary;
+
+    @media (max-width: $breakpoint-mobile) {
+      font-size: 1rem;
+    }
+  }
+}
+
+// Loading State
+.loading-container {
+  text-align: center;
+  padding: $spacing-xxl;
+  background: $color-white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+
+  ::ng-deep .spinner-custom {
+    width: 80px;
+    height: 80px;
+
+    .p-progress-spinner-circle {
+      stroke: $color-info;
+    }
+  }
+
+  .loading-text {
+    margin-top: $spacing-lg;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: $color-text-primary;
+    margin-bottom: 0;
+  }
+
+  .loading-subtext {
+    margin-top: $spacing-sm;
+    font-size: 0.875rem;
+    color: $color-text-secondary;
+    margin-bottom: 0;
+  }
+}
+
+// Card Styles
+::ng-deep .coupon-card {
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: slideUp 0.4s ease-out;
+
+  .p-card-header {
+    padding: 0;
+    margin: 0;
+  }
+
+  .p-card-body {
+    padding: 0;
+  }
+
+  .p-card-content {
+    padding: $spacing-xl;
+
+    @media (max-width: $breakpoint-mobile) {
+      padding: $spacing-lg;
+    }
+  }
+
+  .p-card-footer {
+    padding: $spacing-xl;
+    padding-top: 0;
+
+    @media (max-width: $breakpoint-mobile) {
+      padding: $spacing-lg;
+      padding-top: 0;
+    }
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-header {
+  background: $color-text-primary;
+  padding: $spacing-xl;
+  text-align: center;
+  color: $color-white;
+
+  @media (max-width: $breakpoint-mobile) {
+    padding: $spacing-lg;
+  }
+
+  i {
+    font-size: 3rem;
+    margin-bottom: $spacing-sm;
+    display: block;
+
+    &.large {
+      font-size: 4rem;
+    }
+
+    @media (max-width: $breakpoint-mobile) {
+      font-size: 2.5rem;
+
+      &.large {
+        font-size: 3.5rem;
+      }
+    }
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+
+    @media (max-width: $breakpoint-mobile) {
+      font-size: 1.5rem;
+    }
+  }
+
+  .view-mode-text {
+    margin: $spacing-sm 0 0 0;
+    font-size: 0.875rem;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+}
+
+.valid-card .card-header {
+  background: linear-gradient(135deg, $color-success 0%, darken($color-success, 10%) 100%);
+}
+
+.success-card .card-header {
+  background: linear-gradient(135deg, $color-success 0%, darken($color-success, 10%) 100%);
+}
+
+.error-card .card-header {
+  background: linear-gradient(135deg, $color-error 0%, darken($color-error, 10%) 100%);
+}
+
+.warning-card .card-header {
+  background: linear-gradient(135deg, $color-warning 0%, darken($color-warning, 10%) 100%);
+}
+
+.redeeming-card {
+  background: $color-white;
+}
+
+// Content Styles
+.coupon-content {
+  .status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-lg;
+
+    .label {
+      font-weight: 600;
+      color: $color-text-primary;
+      font-size: 1.125rem;
+    }
+  }
+}
+
+::ng-deep .status-tag {
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+
+  .icon {
+    font-size: 1.25rem;
+    color: $color-info;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .info-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+
+  .info-label {
+    font-size: 0.875rem;
+    color: $color-text-secondary;
+    font-weight: 500;
+  }
+
+  .info-value {
+    font-size: 1rem;
+    color: $color-text-primary;
+    font-weight: 600;
+
+    &.code {
+      font-family: 'Courier New', monospace;
+      background: $color-background;
+      padding: $spacing-xs $spacing-sm;
+      border-radius: 4px;
+      display: inline-block;
+    }
+  }
+}
+
+.benefit-box {
+  background: linear-gradient(135deg, rgba($color-success, 0.1) 0%, rgba($color-success, 0.05) 100%);
+  border: 2px solid $color-success;
+  border-radius: 12px;
+  padding: $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+
+  &.success {
+    background: linear-gradient(135deg, rgba($color-success, 0.15) 0%, rgba($color-success, 0.08) 100%);
+  }
+
+  i {
+    font-size: 2rem;
+    color: $color-success;
+    flex-shrink: 0;
+
+    @media (max-width: $breakpoint-mobile) {
+      font-size: 1.5rem;
+    }
+  }
+
+  .benefit-content {
+    flex: 1;
+  }
+
+  .benefit-label {
+    font-size: 0.875rem;
+    color: $color-text-secondary;
+    font-weight: 500;
+    display: block;
+    margin-bottom: $spacing-xs;
+  }
+
+  .benefit-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $color-success;
+    margin: 0;
+    line-height: 1.3;
+
+    @media (max-width: $breakpoint-mobile) {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+// Messages
+::ng-deep {
+  .success-message,
+  .error-message,
+  .warning-message,
+  .info-message {
+    margin-bottom: $spacing-lg;
+
+    .p-message-wrapper {
+      padding: $spacing-md $spacing-lg;
+    }
+
+    .p-message-text {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+  }
+}
+
+// Mensaje para clientes
+.client-message {
+  margin-top: $spacing-lg;
+  padding-top: $spacing-lg;
+  border-top: 1px solid $color-border;
+
+  ::ng-deep .info-message {
+    margin-bottom: 0;
+
+    .p-message-wrapper {
+      background: linear-gradient(135deg, rgba($color-info, 0.1) 0%, rgba($color-info, 0.05) 100%);
+      border-color: $color-info;
+    }
+
+    .p-message-icon {
+      color: $color-info;
+    }
+
+    .p-message-text {
+      color: $color-text-primary;
+      font-weight: 600;
+    }
+  }
+}
+
+// Help Text
+.help-text {
+  color: $color-text-secondary;
+
+  p {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    font-weight: 600;
+    margin-bottom: $spacing-md;
+
+    i {
+      color: $color-info;
+    }
+  }
+
+  ul {
+    margin: 0;
+    padding-left: $spacing-lg;
+
+    li {
+      margin-bottom: $spacing-sm;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+// Buttons
+::ng-deep {
+  .redeem-button {
+    width: 100%;
+    height: 60px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, $color-success 0%, darken($color-success, 10%) 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba($color-success, 0.4);
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba($color-success, 0.5);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: $breakpoint-mobile) {
+      height: 56px;
+      font-size: 1.125rem;
+    }
+  }
+
+  .secondary-button {
+    width: 100%;
+    height: 48px;
+    font-size: 1rem;
+    font-weight: 600;
+
+    @media (max-width: $breakpoint-mobile) {
+      height: 44px;
+    }
+  }
+}
+
+// Divider
+::ng-deep {
+  .p-divider {
+    margin: $spacing-lg 0;
+
+    &.p-divider-horizontal {
+      &:before {
+        border-top-color: $color-border;
+      }
+    }
+  }
+}
+
+// Mobile specific styles
+@media (max-width: $breakpoint-mobile) {
+  .redeem-container {
+    padding-bottom: $spacing-xl;
+  }
+
+  .info-row {
+    .icon {
+      font-size: 1.125rem;
+    }
+  }
+}
+
+// Confirmation Dialog
+::ng-deep {
+  .p-confirm-dialog {
+    .p-dialog-header {
+      padding: $spacing-lg;
+    }
+
+    .p-dialog-content {
+      padding: $spacing-lg;
+    }
+
+    .p-dialog-footer {
+      padding: $spacing-lg;
+
+      .p-button {
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// Amount Dialog
+.amount-dialog-content {
+  padding: $spacing-md 0;
+
+  .dialog-description {
+    color: $color-text-secondary;
+    margin-bottom: $spacing-lg;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    font-size: 0.95rem;
+
+    .pi {
+      color: $color-info;
+      font-size: 1.25rem;
+    }
+  }
+
+  .amount-info {
+    margin-bottom: $spacing-lg;
+  }
+
+  .field {
+    margin-bottom: $spacing-lg;
+
+    .amount-label {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-sm;
+      font-weight: 600;
+      color: $color-text-primary;
+      font-size: 0.95rem;
+
+      .pi {
+        color: $color-success;
+      }
+    }
+  }
+
+  .preview-info {
+    margin-top: $spacing-lg;
+
+    .preview-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: $spacing-sm 0;
+
+      .preview-label {
+        font-weight: 500;
+        color: $color-text-secondary;
+        font-size: 0.95rem;
+      }
+
+      .preview-value {
+        font-weight: 600;
+        font-size: 1rem;
+
+        &.discount-preview {
+          color: $color-success;
+        }
+
+        &.final-preview {
+          color: $color-text-primary;
+          font-size: 1.25rem;
+        }
+      }
+
+      &.final {
+        padding-top: $spacing-md;
+        border-top: 2px solid $color-border;
+        margin-top: $spacing-sm;
+      }
+    }
+  }
+}
+
+// Discount and amount values in success card
+.discount-value {
+  color: $color-success !important;
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+}
+
+.final-amount {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 8px;
+  padding: $spacing-md !important;
+  margin-top: $spacing-sm !important;
+
+  .info-content {
+    .info-label {
+      font-weight: 700;
+      color: $color-text-primary;
+    }
+
+    .final-value {
+      color: $color-success !important;
+      font-weight: 800 !important;
+      font-size: 1.5rem !important;
+    }
+  }
+}
+
+::ng-deep {
+  .p-inputnumber {
+    width: 100%;
+
+    .p-inputtext {
+      width: 100%;
+      padding: $spacing-md;
+      font-size: 1.125rem;
+      font-weight: 600;
+      text-align: right;
+    }
+  }
+}

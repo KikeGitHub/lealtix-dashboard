@@ -94,6 +94,15 @@
             &:focus {
                 @include focused-inset();
             }
+
+            &.disabled-menuitem {
+                opacity: 0.5;
+                cursor: not-allowed;
+
+                &:hover {
+                    background-color: transparent;
+                }
+            }
         }
 
         ul {

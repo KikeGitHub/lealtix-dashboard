@@ -83,7 +83,6 @@ export class ManualRedemptionComponent implements OnInit {
 
   ngOnInit(): void {
     this.authService.getCurrentUserWithTenant().subscribe(currentUser => {
-        debugger;
       this.tenantId = currentUser?.tenantId || 1;
       if (this.tenantId > 0) {
         this.checkBannerConditions(this.tenantId);
@@ -204,7 +203,6 @@ export class ManualRedemptionComponent implements OnInit {
         timestamp: new Date().toISOString()
       })
     };
-    debugger;
     this.redemptionService.redeemCouponByCode(this.couponCode.trim(), request, this.tenantId).subscribe({
       next: (response) => {
         this.redemptionData = response;

@@ -23,7 +23,6 @@ export class CampaignService {
    * Crea una nueva campaña
    */
   create(req: CreateCampaignRequest): Observable<CampaignResponse> {
-    debugger;
     return this.http.post<GenericResponse<CampaignResponse>>(this.baseUrl, req)
       .pipe(
         map(response => {
@@ -97,7 +96,6 @@ export class CampaignService {
    * Los borradores tienen validaciones más flexibles y pueden ser completados más tarde
    */
   saveDraft(req: CreateCampaignRequest): Observable<CampaignResponse> {
-    debugger;
     const draftRequest = { ...req, isDraft: true };
     return this.http.post<GenericResponse<CampaignResponse>>(`${this.baseUrl}/draft`, draftRequest)
       .pipe(

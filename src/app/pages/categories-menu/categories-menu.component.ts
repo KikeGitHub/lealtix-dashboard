@@ -125,7 +125,6 @@ export class CategoriesMenuComponent implements OnInit {
                 if (userObj && userObj.userEmail) {
                     this.tenantService.getTenantByEmail(String(userObj.userEmail || '').trim()).subscribe({
                         next: (resp) => {
-                            debugger;
                             const tenant = resp?.object;
                             this.tenantId = tenant?.id ?? 0;
                             this.categoryForm.patchValue({ tenantId: this.tenantId });
@@ -211,7 +210,6 @@ export class CategoriesMenuComponent implements OnInit {
     }
 
     editCategory(category: Category) {
-        debugger;
         this.category = { ...category };
         this.categoryForm.patchValue({
             id: category.id ?? null,
@@ -366,7 +364,7 @@ export class CategoriesMenuComponent implements OnInit {
         if (formValue.id !== undefined && formValue.id !== null) {
             payload.id = formValue.id;
         }
-        debugger;
+
         const isNewCategory = !payload.id;
         this.startLoading();
         this.categoryService.createCategory(payload).subscribe({

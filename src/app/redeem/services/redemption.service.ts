@@ -23,7 +23,6 @@ export class RedemptionService {
    * Valida un cupón por QR token sin redimirlo (para staff con tenantId)
    */
   validateCouponByQr(qrToken: string, tenantId: number): Observable<CouponValidationResponse> {
-    debugger;
     return this.http.get<CouponValidationResponse>(
       `${this.apiUrl}/validate/qr/${qrToken}`,
       { params: { tenantId: tenantId.toString() } }
@@ -47,8 +46,6 @@ export class RedemptionService {
    * Valida un cupón por código
    */
   validateCouponByCode(code: string, tenantId: number): Observable<CouponValidationResponse> {
-    debugger;
-
     return this.http.get<CouponValidationResponse>(
       `${this.apiUrl}/validate/code/${code}`,
       { params: { tenantId: tenantId.toString() } }

@@ -113,7 +113,6 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
    * Verifica si el usuario tiene sesión y tenantId válido (staff)
    */
   private checkStaffAccess(): void {
-    debugger;
     // Obtener usuario usando el servicio de autenticación
     const currentUser = this.authService.getCurrentUser();
 
@@ -258,7 +257,6 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
   private redeemCoupon(): void {
     this.isRedeeming = true;
     this.pageState = 'redeeming';
-    debugger;
     // Obtener información del usuario actual usando el método genérico
     const currentUser = this.authService.getCurrentUser();
 

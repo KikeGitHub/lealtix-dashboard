@@ -156,7 +156,6 @@ export class ProductMenuComponent implements OnInit {
                 if (userObj && userObj.userEmail) {
                     this.tenantService.getTenantByEmail(String(userObj.userEmail || '').trim()).subscribe({
                         next: (resp) => {
-                            debugger;
                             const tenant = resp?.object;
                             this.tenantId = tenant?.id ?? 0;
                             this.tenantSlug = tenant?.slug ?? null;
@@ -395,7 +394,6 @@ export class ProductMenuComponent implements OnInit {
     }
 
     editProduct(product: Product) {
-        debugger;
         this.product = { ...product };
         // populate productForm
         this.productForm.patchValue({
@@ -559,7 +557,7 @@ export class ProductMenuComponent implements OnInit {
     }
 
     saveProduct() {
-        debugger;
+
         this.submitted = true;
         if (!this.product || (this.product as any).categoryId === null || (this.product as any).categoryId === undefined) {
             this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'Seleccione una categoría', life: 3000 });
@@ -743,7 +741,6 @@ export class ProductMenuComponent implements OnInit {
 
     openLandingPage() {
         this.showFirstProductCongrats = false;
-        debugger;
         // Get slug from tenant or fetch it if not available
         if (!this.tenantSlug) {
             this.tenantService.getTenantById(this.tenantId).subscribe({

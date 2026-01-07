@@ -408,7 +408,6 @@ export class CreateCampaignComponent implements OnInit {
   }
 
   onImageUpload(event: any): void {
-    debugger;
     const file = event.files[0];
     if (!file) return;
 
@@ -731,7 +730,6 @@ export class CreateCampaignComponent implements OnInit {
   }
 
   private saveCampaign(isDraft: boolean): void {
-    debugger;
     this.saving.set(true);
 
     const formValue = this.campaignForm.value;

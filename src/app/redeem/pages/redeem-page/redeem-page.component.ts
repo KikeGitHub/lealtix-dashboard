@@ -211,12 +211,27 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
    * Confirma la redención con el monto ingresado
    */
   confirmRedemption(): void {
-    // Validar que el monto sea mayor o igual al mínimo
-    if (this.originalAmount < this.minRedemptionAmount) {
+    // Convertir explícitamente a números para evitar comparaciones incorrectas
+    const amount = Number(this.originalAmount);
+    const minAmount = Number(this.minRedemptionAmount);
+
+    // Validar que el monto sea válido
+    if (isNaN(amount) || amount <= 0) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Monto inválido',
-        detail: `El monto debe ser al menos $${this.minRedemptionAmount.toFixed(2)}`,
+        detail: 'Por favor ingrese un monto válido mayor a $0.00',
+        life: 3000
+      });
+      return;
+    }
+
+    // Validar que el monto sea mayor o igual al mínimo
+    if (amount < minAmount) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Monto insuficiente',
+        detail: `El monto de compra debe ser al menos $${minAmount.toFixed(2)}. Ingresaste $${amount.toFixed(2)}`,
         life: 3000
       });
       return;

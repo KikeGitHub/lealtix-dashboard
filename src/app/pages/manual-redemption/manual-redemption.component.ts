@@ -15,14 +15,14 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 // Services
-import { RedemptionService } from '@/redeem/services/redemption.service';
+import { RedemptionService } from '@/pages/redeem/services/redemption.service';
 import { AuthService } from '@/auth/auth.service';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 // Models
-import { CouponValidationResponse } from '@/redeem/models/coupon-validation.model';
-import { RedemptionRequest, RedemptionChannel } from '@/redeem/models/redemption-request.model';
-import { RedemptionResponse } from '@/redeem/models/redemption-response.model';
+import { CouponValidationResponse } from '@/pages/redeem/models/coupon-validation.model';
+import { RedemptionRequest, RedemptionChannel } from '@/pages/redeem/models/redemption-request.model';
+import { RedemptionResponse } from '@/pages/redeem/models/redemption-response.model';
 import { ProductService } from '@/pages/products-menu/service/product.service';
 import { CampaignService } from '@/pages/campaigns/services/campaign.service';
 import { TenantService } from '@/pages/admin-page/service/tenant.service';

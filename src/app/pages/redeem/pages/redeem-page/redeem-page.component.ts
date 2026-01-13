@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -18,8 +18,8 @@ import { RedemptionService } from '../../services/redemption.service';
 import { CouponValidationResponse, CouponStatus } from '../../models/coupon-validation.model';
 import { RedemptionRequest, RedemptionChannel } from '../../models/redemption-request.model';
 import { RedemptionResponse } from '../../models/redemption-response.model';
-import { AuthService } from '../../../auth/auth.service';
-import { TenantService } from '../../../pages/admin-page/service/tenant.service';
+import { AuthService } from '@/auth/auth.service';
+import { TenantService } from '@/pages/admin-page/service/tenant.service';
 
 type PageState = 'loading' | 'valid' | 'invalid' | 'redeemed' | 'expired' | 'not-found' | 'redeeming' | 'success' | 'error';
 
@@ -71,7 +71,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private redemptionService: RedemptionService,
-    private authService: AuthService,
+    @Inject(AuthService) private authService: AuthService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private tenantService: TenantService
@@ -137,7 +137,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
           // Validar cupón después de determinar el tipo de usuario
           this.validateCoupon();
         },
-        error: (error) => {
+        error: (error: any) => {
           console.warn('No tenant found for email:', this.email);
           // Si hay error obteniendo tenant, es cliente
           this.isStaffView = false;
@@ -176,7 +176,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
     validationObservable
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: (response: CouponValidationResponse) => {
           this.validationData = response;
 
           if (response.valid) {
@@ -189,7 +189,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
             this.pageState = 'not-found';
           }
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Error validating coupon:', error);
           this.pageState = 'error';
           this.errorMessage = error.message || 'Error al validar el cupón';
@@ -291,7 +291,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
     this.redemptionService.redeemCouponByQr(this.qrToken, request, this.tenantId ?? 0)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: (response: RedemptionResponse) => {
           this.redemptionData = response;
           this.isRedeeming = false;
 
@@ -314,7 +314,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
             });
           }
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Error redeeming coupon:', error);
           this.isRedeeming = false;
           this.pageState = 'error';

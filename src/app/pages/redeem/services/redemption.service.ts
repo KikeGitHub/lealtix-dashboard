@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { CouponValidationResponse } from '../models/coupon-validation.model';
 import { RedemptionRequest } from '../models/redemption-request.model';
 import { RedemptionResponse } from '../models/redemption-response.model';
-import { AuthService } from '../../auth/auth.service';
+import { AuthService } from '@/auth/auth.service';
 import { environment } from '@/pages/commons/environment';
 
 @Injectable({

@@ -13,13 +13,13 @@ import { ChipModule } from 'primeng/chip';
 import { DividerModule } from 'primeng/divider';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { CreateCampaignRequest, UpdateCampaignRequest, CampaignResponse } from '@/models/campaign.model';
+import { CampaignResponse } from '@/models/campaign.model';
 import { CampaignTemplate } from '@/models/campaign-template.model';
 import { PromoType, CampaignStatus } from '@/models/enums';
-import { CampaignService } from '../../services/campaign.service';
 import { CampaignTemplateService } from '../../services/campaign-template.service';
 import { DateRangeValidator } from '../../utils/date-range.validator';
 
@@ -41,7 +41,8 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
     ChipModule,
     DividerModule,
     InputGroupModule,
-    InputGroupAddonModule
+    InputGroupAddonModule,
+    TooltipModule
   ],
   template: `
     <p-dialog
@@ -98,9 +99,20 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
 
               <div class="space-y-4">
                 <div>
-                  <label for="title" class="block font-medium mb-2">
-                    Título <span class="text-red-500">*</span>
-                  </label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="title" class="block font-medium">
+                      Título <span class="text-red-500">*</span>
+                    </label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Un mensaje claro y emocional que resalte la propuesta de valor."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo título"
+                    ></button>
+                  </div>
                   <input
                     id="title"
                     type="text"
@@ -128,7 +140,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                 </div>
 
                 <div>
-                  <label for="subtitle" class="block font-medium mb-2">Subtítulo</label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="subtitle" class="block font-medium">Subtítulo</label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Añade un contexto breve que apoye al título sin repetirlo."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo subtítulo"
+                    ></button>
+                  </div>
                   <input
                     id="subtitle"
                     type="text"
@@ -140,7 +163,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                 </div>
 
                 <div>
-                  <label for="description" class="block font-medium mb-2">Descripción</label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="description" class="block font-medium">Descripción</label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Explica el beneficio, duración y cómo se entrega la promoción."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo descripción"
+                    ></button>
+                  </div>
                   <textarea
                     id="description"
                     pTextarea
@@ -159,7 +193,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
 
               <div class="space-y-4">
                 <div>
-                  <label for="promoType" class="block font-medium mb-2">Tipo de Promoción</label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="promoType" class="block font-medium">Tipo de Promoción</label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Elige cómo quieres premiar a tu cliente: porcentaje, monto fijo o regalo."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo tipo de promoción"
+                    ></button>
+                  </div>
                   <p-select
                     id="promoType"
                     formControlName="promoType"
@@ -173,9 +218,20 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                 </div>
 
                 <div *ngIf="shouldShowPromoValue()">
-                  <label for="promoValue" class="block font-medium mb-2">
-                    {{ getPromoValueLabel() }}
-                  </label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="promoValue" class="block font-medium">
+                      {{ getPromoValueLabel() }}
+                    </label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Cantidad o porcentaje que se aplicará en la promoción."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo valor de promoción"
+                    ></button>
+                  </div>
                   <div class="p-inputgroup">
                     <span class="p-inputgroup-addon" *ngIf="getPromoValuePrefix()">
                       {{ getPromoValuePrefix() }}
@@ -187,6 +243,8 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       formControlName="promoValue"
                       class="w-full"
                       [placeholder]="getPromoValuePlaceholder()"
+                      pTooltip="Cantidad o porcentaje que se aplicará en la promoción."
+                      tooltipPosition="top"
                     />
                     <span class="p-inputgroup-addon" *ngIf="getPromoValueSuffix()">
                       {{ getPromoValueSuffix() }}
@@ -202,7 +260,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                 </div>
 
                 <div>
-                  <label for="callToAction" class="block font-medium mb-2">Call to Action</label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="callToAction" class="block font-medium">Call to Action</label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Texto breve que indique la acción que deseas que haga tu cliente."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo call to action"
+                    ></button>
+                  </div>
                   <input
                     id="callToAction"
                     type="text"
@@ -221,9 +290,20 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
 
               <div class="space-y-4">
                 <div>
-                  <label for="startDate" class="block font-medium mb-2">
-                    Fecha de inicio <span class="text-red-500">*</span>
-                  </label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="startDate" class="block font-medium">
+                      Fecha de inicio <span class="text-red-500">*</span>
+                    </label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Fecha en la que la campaña comenzará a ser visible."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo fecha de inicio"
+                    ></button>
+                  </div>
                   <input
                     id="startDate"
                     type="date"
@@ -242,7 +322,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                 </div>
 
                 <div>
-                  <label for="endDate" class="block font-medium mb-2">Fecha de fin</label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="endDate" class="block font-medium">Fecha de fin</label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Si la campaña termina en una fecha específica, indícala aquí."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo fecha de fin"
+                    ></button>
+                  </div>
                   <input
                     id="endDate"
                     type="date"
@@ -275,7 +366,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
 
               <div class="space-y-4">
                 <div>
-                  <label for="channels" class="block font-medium mb-2">Canales</label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="channels" class="block font-medium">Canales</label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Sepáralos por comas y piensa en dónde interactúa tu audiencia."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo canales"
+                    ></button>
+                  </div>
                   <input
                     id="channels"
                     type="text"
@@ -295,7 +397,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                 </div>
 
                 <div>
-                  <label for="segmentation" class="block font-medium mb-2">Segmentación</label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="segmentation" class="block font-medium">Segmentación</label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Describe el perfil al que dedicas esta campaña."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo segmentación"
+                    ></button>
+                  </div>
                   <input
                     id="segmentation"
                     type="text"
@@ -313,7 +426,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
               <h4 class="text-lg font-semibold mb-3">Imagen</h4>
 
               <div>
-                <label for="imageUrl" class="block font-medium mb-2">URL de Imagen</label>
+                <div class="flex items-center gap-2 mb-2">
+                  <label for="imageUrl" class="block font-medium">URL de Imagen</label>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-info-circle"
+                    class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                    pTooltip="Enlaza una imagen representativa para apoyar la campaña."
+                    tooltipPosition="top"
+                    aria-label="Descripción del campo URL de imagen"
+                  ></button>
+                </div>
                 <input
                   id="imageUrl"
                   type="text"
@@ -341,7 +465,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
 
               <div class="space-y-4">
                 <div>
-                  <label for="status" class="block font-medium mb-2">Estado de la Campaña</label>
+                  <div class="flex items-center gap-2 mb-2">
+                    <label for="status" class="block font-medium">Estado de la Campaña</label>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-info-circle"
+                      class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                      pTooltip="Define si la campaña está activa o en borrador según necesites."
+                      tooltipPosition="top"
+                      aria-label="Descripción del campo estado"
+                    ></button>
+                  </div>
                   <p-select
                     id="status"
                     formControlName="status"
@@ -363,7 +498,18 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                   binary="true"
                   inputId="isAutomatic">
                 </p-checkbox>
-                <label for="isAutomatic" class="mb-0">Campaña automática</label>
+                <div class="flex align-items-center gap-1">
+                  <label for="isAutomatic" class="mb-0">Campaña automática</label>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-info-circle"
+                    class="p-button-rounded p-button-sm p-button-text text-primary-600"
+                    pTooltip="Actívala para que la plataforma envíe la campaña sin intervención manual."
+                    tooltipPosition="top"
+                    aria-label="Descripción del campo campaña automática"
+                  ></button>
+                </div>
               </div>
               <small class="block text-500 mt-1">
                 La campaña se ejecutará automáticamente según las reglas definidas

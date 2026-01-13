@@ -3,3 +3,49 @@
 @use './layout/layout.scss';
 @use 'primeicons/primeicons.css';
 @use './demo/demo.scss';
+
+/* Info button/icon unified styling */
+.info-button {
+	color: #F59E0B !important; /* soft orange */
+	opacity: 0.95;
+	padding: 0.15rem 0.35rem; /* fixed small padding */
+}
+
+.info-button:hover,
+.info-button:focus {
+	color: #D97706 !important; /* slightly darker orange on hover */
+}
+
+/* Generic info icon color across the app */
+i.pi.pi-info-circle {
+	color: #F59E0B; /* soft orange */
+	opacity: 0.95;
+}
+
+/* Align info icon to the right within label blocks */
+.field > label.font-semibold,
+label.font-semibold {
+	display: flex;
+	align-items: center;
+}
+
+.field > label.font-semibold .pi.pi-info-circle,
+label.font-semibold .pi.pi-info-circle {
+	margin-left: auto; /* push icon to right */
+	padding-left: 0.35rem; /* fixed spacing from label */
+}
+
+/* Logout button emphasis in sidebar */
+.logout-button {
+  font-weight: 700 !important; /* bold */
+  color: var(--text-color) !important;
+}
+
+/* Ensure sidebar footer styling doesn't get hidden */
+.sidebar-footer {
+	padding: 1rem;
+	border-top: 1px solid var(--surface-border);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}

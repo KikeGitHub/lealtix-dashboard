@@ -84,6 +84,13 @@ export class CategoriesMenuComponent implements OnInit {
     draggedCategory: Category | null = null;
     showFirstCategoryCongrats: boolean = false;
     firstCategoryId: number | null = null;
+    showCategoryReminderDialog: boolean = false;
+    categoryReminderProps = {
+        title: 'Organiza tu menú con una categoría',
+        description:
+            'Para poder crear productos primero necesitas una categoría. Crea una categoría para que tu menú pueda empezar a cobrar vida y asignarle productos.',
+        buttonText: 'Entendido'
+    };
 
     categories = signal<Category[]>([]);
     category!: Category;
@@ -154,9 +161,10 @@ export class CategoriesMenuComponent implements OnInit {
         this.startLoading();
         this.categoryService.getCategoriesByTenantId(this.tenantId).subscribe({
             next: (data) => {
-                // Validar si hay objeto y es un array
-                if (data && data.object && Array.isArray(data.object)) {
-                    const mapped = data.object.map((item: any) => ({
+                const payload = data?.object;
+                const hasCategories = Array.isArray(payload) && payload.length > 0;
+                if (hasCategories) {
+                    const mapped = payload.map((item: any) => ({
                         id: item.categoryId,
                         name: item.categoryName,
                         description: item.categoryDescription || '',
@@ -164,24 +172,29 @@ export class CategoriesMenuComponent implements OnInit {
                         tenantId: item.tenantId,
                         displayOrder: item.displayOrder ?? 0
                     }));
-                    // Ordenar por displayOrder
                     mapped.sort((a: Category, b: Category) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
                     this.categories.set(mapped);
+                    this.showCategoryReminderDialog = false;
                     console.log('Loaded categories:', mapped);
                 } else {
-                    // Si no hay categorías o la respuesta es inválida, limpiar la tabla
-                    this.categories.set([]);
-                    console.log('No categories found or invalid response');
+                    this.promptCategoryCreation();
                 }
             },
             error: (err) => {
                 console.error('Failed to load categories', err);
-                this.categories.set([]);
+                this.promptCategoryCreation();
             },
             complete: () => {
                 this.stopLoading();
             }
         });
+    }
+
+    private promptCategoryCreation(): void {
+        this.categories.set([]);
+        if (this.tenantId > 0) {
+            this.showCategoryReminderDialog = true;
+        }
     }
 
     onGlobalFilter(table: Table, event: Event) {
@@ -274,6 +287,11 @@ export class CategoriesMenuComponent implements OnInit {
     hideDialog() {
         this.categoryDialog = false;
         this.submitted = false;
+    }
+
+    handleCategoryReminderAcknowledged(): void {
+        this.showCategoryReminderDialog = false;
+        this.openNew();
     }
 
     deleteCategory(category: Category) {

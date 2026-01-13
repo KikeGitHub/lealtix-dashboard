@@ -8,6 +8,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-category-dialog',
@@ -18,6 +19,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
         FormsModule,
         DialogModule,
         ButtonModule,
+        TooltipModule,
         InputTextModule,
         TextareaModule,
         MessageModule,
@@ -30,21 +32,28 @@ import { InputNumberModule } from 'primeng/inputnumber';
             <div class="p-4">
                 <form [formGroup]="categoryForm" class="space-y-4">
                     <div>
-                        <label for="name" class="block font-medium mb-2">Nombre</label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="name" class="block font-medium">Nombre</label>
+                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Escribe un nombre claro y corto para la categoría (ej. Desayunos, Bebidas). Este nombre será visible para los clientes." tooltipPosition="top"></button>
+                        </div>
                         <input type="text" pInputText id="name" formControlName="name" required autofocus class="w-full" />
                         <p-message *ngIf="categoryForm.get('name')?.invalid && (categoryForm.get('name')?.touched || submitted)"
                             severity="error" variant="text" size="small">Nombre es requerido.</p-message>
                     </div>
 
                     <div>
-                        <label for="description" class="block font-medium mb-2">Descripción</label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="description" class="block font-medium">Descripción</label>
+                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Describe brevemente la categoría y qué tipos de productos incluye. Ayuda a los clientes a entender lo que van a encontrar." tooltipPosition="top"></button>
+                        </div>
                         <textarea id="description" pTextarea formControlName="description" rows="4" class="w-full"></textarea>
                         <p-message *ngIf="categoryForm.get('description')?.invalid && (categoryForm.get('description')?.touched || submitted)"
                             severity="error" variant="text" size="small">Descripción es requerida.</p-message>
                     </div>
-                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3">
                         <p-checkbox formControlName="active" binary="true" inputId="active"></p-checkbox>
                         <label for="active" class="mb-0">Activo</label>
+                        <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Marca como activo para que la categoría esté disponible en el menú. Desactívala si no quieres mostrarla temporalmente." tooltipPosition="top"></button>
                     </div>
                 </form>
             </div>

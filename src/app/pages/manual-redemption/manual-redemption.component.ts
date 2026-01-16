@@ -58,7 +58,7 @@ export class ManualRedemptionComponent implements OnInit {
   pageState: PageState = 'idle';
   couponCode: string = '';
   tenantId: number = 1;
-  originalAmount: number = 0;
+  originalAmount: number | undefined = undefined;
   minRedemptionAmount: number = 0;
 
   // Data
@@ -122,9 +122,9 @@ export class ManualRedemptionComponent implements OnInit {
           });
         } else if (response.valid) {
           this.pageState = 'valid';
-          // Guardar el monto mínimo de redención
+          // Guardar el monto mínimo de redención (no prellenar el input)
           this.minRedemptionAmount = response.minRedemptionAmount || 0;
-          this.originalAmount = this.minRedemptionAmount;
+          this.originalAmount = undefined;
           this.messageService.add({
             severity: 'success',
             summary: 'Cupón válido',
@@ -159,13 +159,15 @@ export class ManualRedemptionComponent implements OnInit {
    * Redime el cupón validado
    */
   onRedeemCoupon(): void {
+
+    debugger;
     if (!this.validationData || !this.validationData.valid) {
       return;
     }
 
     // Convertir explícitamente a números para evitar comparaciones incorrectas
     const amount = Number(this.originalAmount);
-    const minAmount = Number(this.minRedemptionAmount);
+    const minAmount = Number(this.validationData.minPurchaseAmount || 0);
 
     // Validar que el monto sea válido
     if (isNaN(amount) || amount <= 0) {
@@ -190,7 +192,7 @@ export class ManualRedemptionComponent implements OnInit {
     }
 
     this.confirmationService.confirm({
-      message: `¿Confirma la redención del cupón para ${this.validationData.customerName} por un monto de $${this.originalAmount.toFixed(2)}?`,
+      message: `¿Confirma la redención del cupón para ${this.validationData?.customerName ?? 'el cliente'} por un monto de $${(this.originalAmount ?? 0).toFixed(2)}?`,
       header: 'Confirmar Redención',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, redimir',
@@ -263,6 +265,7 @@ export class ManualRedemptionComponent implements OnInit {
     this.validationData = null;
     this.redemptionData = null;
     this.errorMessage = '';
+    this.originalAmount = undefined;
   }
 
   /**

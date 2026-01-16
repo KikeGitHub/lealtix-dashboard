@@ -28,21 +28,11 @@
         ariaLabel="Vista previa ampliada"
       ></p-button>
       <p-button
-        *ngIf="!isEditMode()"
-        label="Guardar como Borrador"
-        icon="pi pi-save"
-        severity="secondary"
-        [outlined]="true"
+        [label]="getActionButtonLabel()"
+        [icon]="getActionButtonIcon()"
         [loading]="saving()"
-        (onClick)="saveDraft()"
-        ariaLabel="Guardar borrador"
-      ></p-button>
-      <p-button
-        [label]="isEditMode() ? 'Actualizar Campaña' : 'Activar promoción'"
-        icon="pi pi-check"
-        [loading]="saving()"
-        (onClick)="save()"
-        [ariaLabel]="isEditMode() ? 'Actualizar campaña' : 'Activar promoción'"
+        (onClick)="saveOrUpdate()"
+        [ariaLabel]="getActionButtonLabel()"
       ></p-button>
     </div>
   </div>
@@ -97,28 +87,7 @@
                 <small class="text-500">Agrega contexto o urgencia a tu campaña (opcional)</small>
               </div>
 
-              <div class="field">
-                <label for="description" class="font-semibold">
-                  Descripción *
-                  <i class="pi pi-info-circle ml-2 text-500"
-                     pTooltip="Explica los detalles de tu promoción. Sé claro sobre qué recibirán tus clientes."
-                     tooltipPosition="right"></i>
-                </label>
-                <textarea
-                  pTextarea
-                  id="description"
-                  formControlName="description"
-                  rows="4"
-                  placeholder="Describe tu campaña..."
-                  class="w-full"
-                ></textarea>
-                <small class="p-error" *ngIf="campaignForm.get('description')?.touched && campaignForm.get('description')?.hasError('required')">
-                  La descripción es requerida
-                </small>
-                <small class="text-500" *ngIf="!campaignForm.get('description')?.hasError('required')">
-                  Incluye términos y condiciones, restricciones o pasos para obtener la promoción
-                </small>
-              </div>
+              <!-- Campo 'Descripción' movido: la descripción principal se manejará desde Configuración del Beneficio para evitar confusiones -->
             </div>
 
             <p-divider></p-divider>
@@ -276,8 +245,8 @@
                    tooltipPosition="right"></i>
               </h3>
 
-              <!-- Status field - prominent position -->
-              <div class="field" #statusSelect>
+              <!-- Status field - only visible in edit mode -->
+              <div class="field" #statusSelect *ngIf="isEditMode()">
                 <label for="status" class="font-semibold">
                   Estado de la Campaña
                   <i class="pi pi-info-circle ml-2 text-500"
@@ -297,6 +266,22 @@
                   <span class="font-medium text-orange-600">Borrador:</span> En edición |
                   <span class="font-medium text-green-600">Activa:</span> Visible para clientes
                 </small>
+              </div>
+
+              <!-- Informative message for new campaigns -->
+              <div class="field" *ngIf="!isEditMode()">
+                <div class="p-3 border-round bg-orange-50 border-1 border-orange-200">
+                  <div class="flex align-items-start gap-2">
+                    <i class="pi pi-info-circle text-orange-600 mt-1"></i>
+                    <div>
+                      <p class="m-0 font-semibold text-orange-900">Campaña se guardará como Borrador</p>
+                      <p class="m-0 mt-1 text-sm text-orange-800">
+                        La campaña se creará en estado <strong>DRAFT</strong> para que puedas revisarla.
+                        Después podrás activarla editándola y cambiando su estado.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="field">
@@ -345,24 +330,26 @@
                 </small>
               </div>
 
-              <div class="field">
-                <div class="flex align-items-center">
-                  <p-checkbox
-                    formControlName="isAutomatic"
-                    [binary]="true"
-                    inputId="isAutomatic"
-                  ></p-checkbox>
-                  <label for="isAutomatic" class="ml-2 font-semibold">
-                    Activación Automática
-                    <i class="pi pi-info-circle ml-2 text-500"
-                       pTooltip="Si lo activas, la campaña se enviará automáticamente en la fecha de inicio sin necesidad de intervención manual"
-                       tooltipPosition="right"></i>
-                  </label>
-                </div>
-                <small class="text-500">
-                  Recomendado: Si activas esta opción, la campaña se enviará automáticamente en la fecha de inicio programada
-                </small>
-              </div>
+              <!-- Activación Automática: campo removido del formulario. Default en backend = true -->
+            </div>
+
+            <!-- Botones de acción al final del formulario -->
+            <p-divider></p-divider>
+            <div class="flex justify-content-end gap-2 mt-4">
+              <p-button
+                label="Vista Previa"
+                icon="pi pi-eye"
+                [outlined]="true"
+                (onClick)="openPreview()"
+                ariaLabel="Vista previa ampliada"
+              ></p-button>
+              <p-button
+                [label]="getActionButtonLabel()"
+                [icon]="getActionButtonIcon()"
+                [loading]="saving()"
+                (onClick)="saveOrUpdate()"
+                [ariaLabel]="getActionButtonLabel()"
+              ></p-button>
             </div>
           </form>
         </p-card>
@@ -454,6 +441,7 @@
   [clientName]="clientName()"
   [clientLogo]="clientLogo()"
   [clientSlug]="clientSlug()"
+  [rewardDescription]="currentReward()?.description"
 ></app-campaign-preview-dialog>
 
 <p-toast></p-toast>

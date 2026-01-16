@@ -442,43 +442,64 @@ export class CreateCampaignComponent implements OnInit {
       });
   }
 
-  save(): void {
-    if (this.campaignForm.invalid) {
-      this.campaignForm.markAllAsTouched();
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Formulario inválido',
-        detail: 'Por favor, completa todos los campos requeridos'
-      });
-      return;
-    }
-
+  /**
+   * Método principal para guardar o actualizar campaña
+   * - Modo creación: siempre guarda como DRAFT
+   * - Modo edición: actualiza la campaña con el estado seleccionado
+   */
+  saveOrUpdate(): void {
     if (this.isEditMode()) {
+      // Modo edición: validar formulario completo
+      if (this.campaignForm.invalid) {
+        this.campaignForm.markAllAsTouched();
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Formulario inválido',
+          detail: 'Por favor, completa todos los campos requeridos'
+        });
+        return;
+      }
       this.updateCampaignWithReward();
     } else {
-      this.saveCampaignWithReward(false);
+      // Modo creación: validación mínima, siempre guardar como DRAFT
+      const titleControl = this.campaignForm.get('title');
+
+      if (!titleControl?.value || titleControl.value.trim().length < 3) {
+        titleControl?.markAsTouched();
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Título requerido',
+          detail: 'Ingresa al menos un título para crear la campaña (mínimo 3 caracteres)'
+        });
+        return;
+      }
+
+      // Asegurar que el estado sea DRAFT
+      this.campaignForm.patchValue({ status: 'DRAFT' }, { emitEvent: false });
+      this.saveCampaignWithReward(true);
     }
   }
 
-  saveDraft(): void {
-    // Para borradores, solo validamos que tenga un título mínimo
-    const titleControl = this.campaignForm.get('title');
-
-    if (!titleControl?.value || titleControl.value.trim().length < 3) {
-      titleControl?.markAsTouched();
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Título requerido',
-        detail: 'Ingresa al menos un título para guardar el borrador (mínimo 3 caracteres)'
-      });
-      return;
-    }
-
+  /**
+   * Obtiene el label del botón de acción según el contexto
+   */
+  getActionButtonLabel(): string {
     if (this.isEditMode()) {
-      this.updateCampaignWithReward();
-    } else {
-      this.saveCampaignWithReward(true);
+      const status = this.campaignForm.get('status')?.value;
+      return status === 'ACTIVE' ? 'Actualizar y Activar' : 'Guardar Cambios';
     }
+    return 'Crear Campaña';
+  }
+
+  /**
+   * Obtiene el icono del botón de acción según el contexto
+   */
+  getActionButtonIcon(): string {
+    if (this.isEditMode()) {
+      const status = this.campaignForm.get('status')?.value;
+      return status === 'ACTIVE' ? 'pi pi-check-circle' : 'pi pi-save';
+    }
+    return 'pi pi-plus-circle';
   }
 
   private updateCampaignWithReward(): void {
@@ -539,7 +560,8 @@ export class CreateCampaignComponent implements OnInit {
       channels: formValue.channels,
       segmentation: formValue.segmentation,
       isAutomatic: formValue.isAutomatic,
-      isDraft: isDraft
+      isDraft: isDraft,
+      status: isDraft ? 'DRAFT' : 'ACTIVE'
     };
 
     const saveObservable = isDraft
@@ -748,7 +770,8 @@ export class CreateCampaignComponent implements OnInit {
       channels: formValue.channels,
       segmentation: formValue.segmentation,
       isAutomatic: formValue.isAutomatic,
-      isDraft: isDraft
+      isDraft: isDraft,
+      status: isDraft ? 'DRAFT' : 'ACTIVE'
     };
 
     // Usar el método apropiado según si es borrador o campaña final
@@ -868,7 +891,8 @@ export class CreateCampaignComponent implements OnInit {
       channels: formValue.channels,
       segmentation: formValue.segmentation,
       isAutomatic: formValue.isAutomatic,
-      isDraft: true // Save as draft
+      isDraft: true, // Save as draft
+      status: 'DRAFT'
     };
 
     // First save the campaign as draft

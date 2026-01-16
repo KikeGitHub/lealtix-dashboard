@@ -16,6 +16,7 @@ export interface CreateCampaignRequest {
   segmentation?: string;
   isAutomatic?: boolean;
   isDraft?: boolean;
+  status?: string;
 }
 
 export interface UpdateCampaignRequest {

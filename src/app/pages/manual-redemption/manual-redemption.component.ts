@@ -159,8 +159,6 @@ export class ManualRedemptionComponent implements OnInit {
    * Redime el cupón validado
    */
   onRedeemCoupon(): void {
-
-    debugger;
     if (!this.validationData || !this.validationData.valid) {
       return;
     }

@@ -40,6 +40,7 @@ export class RewardFormComponent implements OnInit, OnChanges {
 
   rewardForm!: FormGroup;
   rewardTypes = [
+    { label: 'Ninguno (solo promoción)', value: RewardType.NONE },
     { label: 'Descuento porcentual', value: RewardType.PERCENT_DISCOUNT },
     { label: 'Monto fijo', value: RewardType.FIXED_AMOUNT },
     { label: 'Producto gratis', value: RewardType.FREE_PRODUCT },
@@ -116,7 +117,7 @@ export class RewardFormComponent implements OnInit, OnChanges {
       productId: [null],
       buyQuantity: [null],
       freeQuantity: [null],
-      description: [''],
+      description: ['', Validators.required],
       minPurchaseAmount: [null],
       usageLimit: [null]
     });
@@ -144,30 +145,37 @@ export class RewardFormComponent implements OnInit, OnChanges {
   private updateValidators(rewardType: RewardType): void {
     // Limpiar todos los validadores
     Object.keys(this.rewardForm.controls).forEach(key => {
-      if (key !== 'rewardType') {
+      // Keep description validator globally required; do not clear it here
+      if (key !== 'rewardType' && key !== 'description') {
         this.rewardForm.get(key)?.clearValidators();
         this.rewardForm.get(key)?.setValue(null);
       }
     });
 
-    // Aplicar validadores según el tipo de reward
-    switch (rewardType) {
-      case RewardType.PERCENT_DISCOUNT:
-        this.rewardForm.get('numericValue')?.setValidators([Validators.required, Validators.min(0), Validators.max(100)]);
-        break;
-      case RewardType.FIXED_AMOUNT:
-        this.rewardForm.get('numericValue')?.setValidators([Validators.required, Validators.min(0)]);
-        break;
-      case RewardType.FREE_PRODUCT:
-        this.rewardForm.get('productId')?.setValidators([Validators.required]);
-        break;
-      case RewardType.BUY_X_GET_Y:
-        this.rewardForm.get('buyQuantity')?.setValidators([Validators.required, Validators.min(1)]);
-        this.rewardForm.get('freeQuantity')?.setValidators([Validators.required, Validators.min(1)]);
-        break;
-      case RewardType.CUSTOM:
-        this.rewardForm.get('description')?.setValidators([Validators.required]);
-        break;
+    // Si es NONE, limpiar también la descripción
+    if (rewardType === RewardType.NONE) {
+      this.rewardForm.get('description')?.clearValidators();
+      this.rewardForm.get('description')?.setValue('Sin beneficio - Solo promoción');
+    } else {
+      // Aplicar validadores según el tipo de reward
+      switch (rewardType) {
+        case RewardType.PERCENT_DISCOUNT:
+          this.rewardForm.get('numericValue')?.setValidators([Validators.required, Validators.min(0), Validators.max(100)]);
+          break;
+        case RewardType.FIXED_AMOUNT:
+          this.rewardForm.get('numericValue')?.setValidators([Validators.required, Validators.min(0)]);
+          break;
+        case RewardType.FREE_PRODUCT:
+          this.rewardForm.get('productId')?.setValidators([Validators.required]);
+          break;
+        case RewardType.BUY_X_GET_Y:
+          this.rewardForm.get('buyQuantity')?.setValidators([Validators.required, Validators.min(1)]);
+          this.rewardForm.get('freeQuantity')?.setValidators([Validators.required, Validators.min(1)]);
+          break;
+        case RewardType.CUSTOM:
+          this.rewardForm.get('description')?.setValidators([Validators.required]);
+          break;
+      }
     }
 
     // Actualizar el estado de validación
@@ -209,6 +217,11 @@ export class RewardFormComponent implements OnInit, OnChanges {
 
   // Public method to get reward data for parent component
   public getRewardData(): CreateRewardRequest | null {
+    // Si el tipo es NONE, no hay reward data
+    if (this.rewardForm.get('rewardType')?.value === RewardType.NONE) {
+      return null;
+    }
+
     if (this.rewardForm.valid) {
       return this.buildRequest();
     }
@@ -217,6 +230,10 @@ export class RewardFormComponent implements OnInit, OnChanges {
 
   // Public method to check if reward form has valid data
   public hasValidRewardData(): boolean {
+    // Si el tipo es NONE, no hay reward data
+    if (this.rewardForm.get('rewardType')?.value === RewardType.NONE) {
+      return false;
+    }
     return this.rewardForm.valid && this.rewardForm.get('rewardType')?.value !== null;
   }
 
@@ -334,6 +351,7 @@ this.isSubmitting = true;
     if (formValue.description) {
       request.description = formValue.description;
     }
+
     if (formValue.minPurchaseAmount) {
       request.minPurchaseAmount = formValue.minPurchaseAmount;
     }

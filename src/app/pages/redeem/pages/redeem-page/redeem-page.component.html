@@ -58,7 +58,7 @@
             <i class="pi pi-gift"></i>
             <div class="benefit-content">
               <span class="benefit-label">Beneficio</span>
-              <h3 class="benefit-text">{{ validationData?.benefit }}</h3>
+              <h3 class="benefit-text">{{ validationData?.benefit || validationData?.rewardDescription }}</h3>
             </div>
           </div>
 
@@ -83,24 +83,34 @@
             <div class="info-content">
               <span class="info-label">Tipo de Descuento</span>
               <span class="info-value">
-                <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
-                  {{ validationData?.couponValue }}% de descuento
+                <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT' || validationData?.rewardType === 'PERCENT_DISCOUNT'">
+                  {{ validationData?.couponValue || validationData?.numericValue }}% de descuento
                 </span>
-                <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
-                  ${{ validationData?.couponValue }} de descuento
+                <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT' || validationData?.rewardType === 'FIXED_AMOUNT'">
+                  ${{ validationData?.couponValue || validationData?.numericValue }} de descuento
                 </span>
-                <span *ngIf="validationData?.couponType === 'FREE_ITEM'">
+                <span *ngIf="validationData?.couponType === 'FREE_ITEM' || validationData?.rewardType === 'FREE_ITEM'">
                   Artículo gratis
                 </span>
               </span>
             </div>
           </div>
 
-          <div class="info-row" *ngIf="validationData?.minRedemptionAmount">
-            <i class="pi pi-money-bill icon"></i>
+          <div class="info-row" *ngIf="rewardData?.minPurchaseAmount || validationData?.minRedemptionAmount || validationData?.minPurchaseAmount">
+            <i class="pi pi-shopping-cart icon"></i>
             <div class="info-content">
               <span class="info-label">Compra Mínima</span>
-              <span class="info-value">${{ validationData?.minRedemptionAmount?.toFixed(2) }}</span>
+              <span class="info-value">
+                ${{ (rewardData?.minPurchaseAmount || validationData?.minPurchaseAmount || validationData?.minRedemptionAmount || 0).toFixed(2) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="info-row" *ngIf="rewardData?.usageLimit || validationData?.usageLimit">
+            <i class="pi pi-replay icon"></i>
+            <div class="info-content">
+              <span class="info-label">Límite de Uso</span>
+              <span class="info-value">{{ rewardData?.usageCount || validationData?.usageCount || 0 }} / {{ rewardData?.usageLimit || validationData?.usageLimit }}</span>
             </div>
           </div>
 
@@ -456,34 +466,48 @@
         locale="es-MX"
         [minFractionDigits]="2"
         [maxFractionDigits]="2"
-        [min]="minRedemptionAmount"
         placeholder="0.00"
         styleClass="w-full"
         inputStyleClass="w-full">
       </p-inputNumber>
+      <small class="text-red-600 mt-2 block" *ngIf="originalAmount > 0 && originalAmount < minRedemptionAmount">
+        <i class="pi pi-exclamation-triangle"></i>
+        El monto debe ser al menos ${{ minRedemptionAmount.toFixed(2) }} para usar este cupón
+      </small>
     </div>
 
-    <div class="preview-info" *ngIf="originalAmount >= minRedemptionAmount && validationData?.couponType && validationData?.couponValue">
+    <div class="preview-info" *ngIf="originalAmount >= minRedemptionAmount && rewardData">
       <p-divider></p-divider>
       <div class="preview-row">
-        <span class="preview-label">Descuento estimado:</span>
-        <span class="preview-value discount-preview">
-          <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
-            -${{ (originalAmount * (validationData?.couponValue || 0) / 100).toFixed(2) }}
+        <span class="preview-label">Tipo de descuento:</span>
+        <span class="preview-value">
+          <span *ngIf="rewardData.rewardType === 'PERCENT_DISCOUNT'">
+            {{ rewardData.numericValue }}% de descuento
           </span>
-          <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
-            -${{ (validationData?.couponValue || 0).toFixed(2) }}
+          <span *ngIf="rewardData.rewardType === 'FIXED_AMOUNT'">
+            ${{ rewardData.numericValue.toFixed(2) }} de descuento fijo
+          </span>
+        </span>
+      </div>
+      <div class="preview-row">
+        <span class="preview-label">Descuento aplicado:</span>
+        <span class="preview-value discount-preview">
+          <span *ngIf="rewardData.rewardType === 'PERCENT_DISCOUNT'">
+            -${{ (originalAmount * rewardData.numericValue / 100).toFixed(2) }}
+          </span>
+          <span *ngIf="rewardData.rewardType === 'FIXED_AMOUNT'">
+            -${{ Math.min(rewardData.numericValue, originalAmount).toFixed(2) }}
           </span>
         </span>
       </div>
       <div class="preview-row final">
-        <span class="preview-label">Total a pagar:</span>
+        <span class="preview-label"><strong>Total a pagar:</strong></span>
         <span class="preview-value final-preview">
-          <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
-            ${{ (originalAmount - (originalAmount * (validationData?.couponValue || 0) / 100)).toFixed(2) }}
+          <span *ngIf="rewardData.rewardType === 'PERCENT_DISCOUNT'">
+            <strong>${{ (originalAmount - (originalAmount * rewardData.numericValue / 100)).toFixed(2) }}</strong>
           </span>
-          <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
-            ${{ (originalAmount - (validationData?.couponValue || 0)).toFixed(2) }}
+          <span *ngIf="rewardData.rewardType === 'FIXED_AMOUNT'">
+            <strong>${{ (originalAmount - Math.min(rewardData.numericValue, originalAmount)).toFixed(2) }}</strong>
           </span>
         </span>
       </div>

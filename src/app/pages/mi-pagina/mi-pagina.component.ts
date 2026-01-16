@@ -267,10 +267,20 @@ export class MiPaginaComponent implements OnInit {
    * Obtiene la URL base de la aplicación
    */
   private getBaseUrl(): string {
-    const baseUrl = environment.production
-      ? 'https://lealtix.com.mx/landing-page'
-      : 'http://localhost:4200/landing-page';
-    return baseUrl;
+    const cfg = environment as { landingPageBaseUrl?: string };
+
+    // 1) If explicit config exists, use it (trim trailing slash).
+    if (cfg.landingPageBaseUrl && cfg.landingPageBaseUrl.trim() !== '') {
+      return cfg.landingPageBaseUrl.replace(/\/+$/g, '');
+    }
+
+    // 2) Otherwise build from the current origin at runtime (avoids hardcoding localhost/prod).
+    if (typeof window !== 'undefined' && window.location && window.location.origin) {
+      return `${window.location.origin}/landing-page`;
+    }
+
+    // 3) Final fallback (shouldn't normally hit in browser environments).
+    return 'https://lealtix.com.mx/landing-page';
   }
 
   /**

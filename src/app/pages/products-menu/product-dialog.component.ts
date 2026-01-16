@@ -10,18 +10,22 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-product-dialog',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FormsModule, DialogModule, ButtonModule, FileUploadModule, InputTextModule, TextareaModule, InputNumberModule, MessageModule, CheckboxModule, SelectModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, DialogModule, ButtonModule, FileUploadModule, InputTextModule, TextareaModule, InputNumberModule, MessageModule, CheckboxModule, SelectModule, TooltipModule],
     template: `
     <p-dialog [(visible)]="visible" [style]="{ width: '450px' }" header="Detalle de Producto" [modal]="true" (onHide)="onHide()">
         <ng-template #content>
             <div class="p-4">
                 <!-- Categories Row -->
                 <div class="mb-4">
-                    <label class="block font-semibold mb-2">Categoria</label>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block font-semibold">Categoria</label>
+                        <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Selecciona la categoría donde quieres ubicar este producto. Si aún no existe, debes crear una nueva categoría." tooltipPosition="top"></button>
+                    </div>
                     <div class="flex items-center gap-3">
                         <div class="flex-1">
                             <p-select [(ngModel)]="product.categoryId" (ngModelChange)="categoryChange.emit($event)"
@@ -41,14 +45,20 @@ import { SelectModule } from 'primeng/select';
                     <input type="hidden" formControlName="img_url" />
 
                     <div>
-                        <label for="name" class="block font-medium mb-2">Nombre</label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="name" class="block font-medium">Nombre</label>
+                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Nombre corto y claro del producto (ej. Café Americano). Será mostrado a tus clientes." tooltipPosition="top"></button>
+                        </div>
                         <input type="text" pInputText id="name" formControlName="name" required autofocus class="w-full" />
                         <p-message *ngIf="productForm.get('name')?.invalid && (productForm.get('name')?.touched || submitted)"
                             severity="error" variant="text" size="small">Nombre es requerido.</p-message>
                     </div>
 
                     <div>
-                        <label for="description" class="block font-medium mb-2">Descripción</label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="description" class="block font-medium">Descripción</label>
+                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Describe brevemente el producto: ingredientes, tamaño o notas importantes. Esto ayuda a tus clientes a elegir." tooltipPosition="top"></button>
+                        </div>
                         <textarea id="description" pTextarea formControlName="description" rows="3" class="w-full"></textarea>
                         <p-message *ngIf="productForm.get('description')?.invalid && (productForm.get('description')?.touched || submitted)"
                             severity="error" variant="text" size="small">Descripción es requerida.</p-message>
@@ -58,7 +68,10 @@ import { SelectModule } from 'primeng/select';
                         <!-- Price + Active checkbox row -->
                         <div class="w-full flex items-start gap-4">
                             <div class="flex-1">
-                                <label for="price" class="block font-medium mb-2">Precio</label>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label for="price" class="block font-medium">Precio</label>
+                                    <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Ingresa el precio en pesos mexicanos. Si el producto tiene variaciones, define el precio base aquí." tooltipPosition="top"></button>
+                                </div>
                                 <p-inputnumber id="price" formControlName="price" mode="currency" currency="MXN" locale="en-US" class="w-40" />
                                 <p-message *ngIf="productForm?.get('price')?.invalid && (productForm.get('price')?.touched || submitted)"
                                     severity="error" variant="text" size="small">Precio es requerido.</p-message>
@@ -67,15 +80,24 @@ import { SelectModule } from 'primeng/select';
                             <div class="flex-none flex items-center mt-6 gap-2">
                                 <label for="isActive" class="block font-medium mb-2">Activo</label>
                                 <p-checkbox formControlName="isActive" binary="true" inputId="isActive" (onChange)="onActiveChange($event.checked)"></p-checkbox>
+                                <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Activa para mostrar el producto en el menú. Desactiva si quieres ocultarlo temporalmente." tooltipPosition="top"></button>
                             </div>
                         </div>
 
                         <!-- Imagen (URL o subir) -->
                         <div class="w-full">
-                            <label class="block font-medium mb-2">Imagen (URL o subir)</label>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block font-medium">Imagen (URL o subir)</label>
+                                <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Sube una imagen clara del producto o pega la URL. Recomendado: formato PNG/JPG, máximo 2MB. La imagen ayuda a que los clientes reconozcan el producto." tooltipPosition="top"></button>
+                            </div>
                             <div class="flex items-center gap-3">
                                 <p-fileUpload mode="basic" name="productImage" accept="image/*" maxFileSize="2000000"
-                                    (onSelect)="onProductFileSelect.emit($event)"></p-fileUpload>
+                                    chooseLabel="Seleccionar imagen" chooseIcon="pi pi-upload"
+                                    (onSelect)="onProductFileSelect.emit($event)">
+                                    <ng-template pTemplate="empty">
+                                        <span>No hay archivo seleccionado</span>
+                                    </ng-template>
+                                </p-fileUpload>
                                 <div *ngIf="productImagePreview || productForm.get('img_url')?.value" class="flex items-center">
                                     <img [src]="productImagePreview || productForm.get('img_url')?.value" alt="Product image preview"
                                         class="rounded shadow border border-gray-200" style="max-width:100px; max-height:64px; object-fit:contain;" />

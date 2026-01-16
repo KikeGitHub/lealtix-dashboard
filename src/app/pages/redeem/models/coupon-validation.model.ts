@@ -30,6 +30,14 @@ export interface CouponValidationResponse {
   minRedemptionAmount?: number | null;
   couponType?: string | null;
   couponValue?: number | null;
+
+  // Información del reward (desde promotion_reward)
+  minPurchaseAmount?: number | null;
+  usageLimit?: number | null;
+  usageCount?: number | null;
+  rewardType?: string | null;
+  numericValue?: number | null;
+  rewardDescription?: string | null;
 }
 
 export enum CouponStatus {

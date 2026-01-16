@@ -67,7 +67,7 @@ export class LoginComponent {
                         if (this.returnUrl) {
                             this.router.navigateByUrl(this.returnUrl);
                         } else {
-                            this.router.navigate(['/dashboard/kpis']);
+                            this.router.navigate(['/dashboard/adminPage']);
                         }
                         return;
                     } else if (res.code === 401) {

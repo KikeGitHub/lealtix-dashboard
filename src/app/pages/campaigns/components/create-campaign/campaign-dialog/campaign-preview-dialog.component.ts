@@ -34,6 +34,7 @@ export class CampaignPreviewDialogComponent {
   @Input() clientName: string | null = null;
   @Input() clientLogo: string | null = null;
   @Input() clientSlug: string | null = null;
+  @Input() rewardDescription?: string | null = null;
 
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() close = new EventEmitter<void>();
@@ -179,10 +180,16 @@ export class CampaignPreviewDialogComponent {
 
       const imageBase64 = canvas.toDataURL('image/png', 1.0);
 
+      // Preferir la descripción del reward si está disponible
+      const previewToSend = {
+        ...this.previewData,
+        description: this.rewardDescription ?? this.previewData.description
+      };
+
       // TODO: Implement backend endpoint
       // await this.campaignService.sendPreviewEmail({
       //   imageBase64,
-      //   previewData: this.previewData
+      //   previewData: previewToSend
       // }).toPromise();
 
       this.messageService.add({
@@ -191,7 +198,7 @@ export class CampaignPreviewDialogComponent {
         detail: 'El envío por email estará disponible próximamente'
       });
 
-      console.log('Image ready to send:', imageBase64.substring(0, 100) + '...');
+      console.log('Image ready to send (using reward description if available):', imageBase64.substring(0, 100) + '...');
     } catch (error) {
       console.error('Error sending email:', error);
       this.messageService.add({

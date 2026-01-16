@@ -5,7 +5,9 @@
     width: 20rem;
     height: calc(100vh - 8rem);
     z-index: 999;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     user-select: none;
     top: 6rem;
     left: 2rem;
@@ -44,6 +46,12 @@
                 transform: rotate(-180deg);
             }
         }
+    }
+
+    /* Make menu scrollable while keeping footer visible */
+    .layout-menu-wrapper {
+        flex: 1 1 auto;
+        overflow-y: auto;
     }
 
     li.active-menuitem {

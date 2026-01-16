@@ -14,10 +14,11 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { CreateCampaignRequest, UpdateCampaignRequest, CampaignResponse } from '@/models/campaign.model';
 import { CampaignTemplate } from '@/models/campaign-template.model';
-import { PromoType, CampaignStatus } from '@/models/enums';
+import { PromoType, CampaignStatus, RewardType } from '@/models/enums';
 import { CampaignService } from '../../services/campaign.service';
 import { CampaignTemplateService } from '../../services/campaign-template.service';
 import { DateRangeValidator } from '../../utils/date-range.validator';
+import { CreateRewardRequest } from '../../models/reward.model';
 
 
 @Component({
@@ -175,6 +176,22 @@ export class CampaignFormComponent implements OnInit {
       .subscribe({
         next: (campaign) => {
           this.populateFormWithCampaign(campaign);
+
+          // Cargar también el reward para obtener la descripción
+          this.campaignService.getRewardByCampaign(campaignId)
+            .pipe(takeUntilDestroyed())
+            .subscribe({
+              next: (reward) => {
+                console.log('🔍 REWARD LOADED:', reward);
+                // Actualizar el formulario con la descripción del reward
+                this.campaignForm.patchValue({
+                  description: reward.description
+                });
+              },
+              error: (error) => {
+                console.log('ℹ️ No se encontró reward para la campaña');
+              }
+            });
         },
         error: (error) => {
           console.error('Error loading campaign:', error);
@@ -191,7 +208,7 @@ export class CampaignFormComponent implements OnInit {
     this.campaignForm.patchValue({
       title: campaign.title,
       subtitle: campaign.subtitle,
-      description: campaign.description,
+      description: '', // La descripción se cargará desde el reward
       promoType: campaign.promoType,
       promoValue: campaign.promoValue,
       callToAction: campaign.callToAction,
@@ -315,6 +332,9 @@ export class CampaignFormComponent implements OnInit {
       return;
     }
 
+    console.log('📝 FORM VALUE ON SUBMIT:', this.campaignForm.value);
+    console.log('📝 DESCRIPTION VALUE:', this.campaignForm.get('description')?.value);
+
     this.saving.set(true);
 
     if (this.isEditMode()) {
@@ -332,7 +352,7 @@ export class CampaignFormComponent implements OnInit {
       businessId: 1, // TODO: Get from auth service
       title: formValue.title,
       subtitle: formValue.subtitle,
-      description: formValue.description,
+      // description se guarda en promotion_reward, no aquí
       promoType: formValue.promoType,
       promoValue: formValue.promoValue,
       callToAction: formValue.callToAction,
@@ -348,12 +368,17 @@ export class CampaignFormComponent implements OnInit {
       .pipe(takeUntilDestroyed())
       .subscribe({
         next: (campaign) => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Campaña creada exitosamente'
-          });
-          this.router.navigate(['/dashboard/campaigns', campaign.id]);
+          // Después de crear la campaña, crear el reward con la descripción
+          if (formValue.description) {
+            this.createRewardForCampaign(campaign.id, formValue.description, formValue.promoType, formValue.promoValue);
+          } else {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Campaña creada exitosamente'
+            });
+            this.router.navigate(['/dashboard/campaigns', campaign.id]);
+          }
         },
         error: (error) => {
           console.error('Error creating campaign:', error);
@@ -367,13 +392,129 @@ export class CampaignFormComponent implements OnInit {
       });
   }
 
+  private createRewardForCampaign(campaignId: number, description: string, promoType: string, promoValue: string): void {
+    const rewardRequest: CreateRewardRequest = {
+      rewardType: this.mapPromoTypeToRewardType(promoType),
+      numericValue: promoValue ? parseFloat(promoValue) : 0,
+      productId: 0,
+      buyQuantity: 0,
+      freeQuantity: 0,
+      customConfig: '',
+      description: description,
+      minPurchaseAmount: 0,
+      usageLimit: 0
+    };
+
+    console.log('🔍 CREATE REWARD REQUEST:', {
+      campaignId,
+      rewardRequest,
+      description,
+      promoType,
+      promoValue
+    });
+
+    this.campaignService.createReward(campaignId, rewardRequest)
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Campaña y beneficio creados exitosamente'
+          });
+          this.router.navigate(['/dashboard/campaigns', campaignId]);
+        },
+        error: (error) => {
+          console.error('Error creating reward:', error);
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Campaña creada',
+            detail: 'Campaña creada pero hubo un error al guardar el beneficio'
+          });
+          this.router.navigate(['/dashboard/campaigns', campaignId]);
+        }
+      });
+  }
+
+  private updateRewardForCampaign(campaignId: number, description: string, promoType: string, promoValue: string): void {
+    // Primero obtener el reward existente
+    this.campaignService.getRewardByCampaign(campaignId)
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (reward) => {
+          // Actualizar el reward existente
+          const rewardRequest: CreateRewardRequest = {
+            rewardType: this.mapPromoTypeToRewardType(promoType),
+            numericValue: promoValue ? parseFloat(promoValue) : (reward.numericValue ?? 0),
+            productId: reward.productId ?? 0,
+            buyQuantity: reward.buyQuantity ?? 0,
+            freeQuantity: reward.freeQuantity ?? 0,
+            customConfig: reward.customConfig ?? '',
+            description: description,
+            minPurchaseAmount: reward.minPurchaseAmount ?? 0,
+            usageLimit: reward.usageLimit ?? 0
+          };
+
+          console.log('🔍 UPDATE REWARD REQUEST:', {
+            rewardId: reward.id,
+            campaignId,
+            rewardRequest,
+            description,
+            promoType,
+            promoValue
+          });
+
+          this.campaignService.updateReward(reward.id, rewardRequest)
+            .pipe(takeUntilDestroyed())
+            .subscribe({
+              next: () => {
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Éxito',
+                  detail: 'Campaña y beneficio actualizados exitosamente'
+                });
+                this.router.navigate(['/dashboard/campaigns', campaignId]);
+              },
+              error: (error) => {
+                console.error('Error updating reward:', error);
+                this.messageService.add({
+                  severity: 'warn',
+                  summary: 'Campaña actualizada',
+                  detail: 'Campaña actualizada pero hubo un error al actualizar el beneficio'
+                });
+                this.router.navigate(['/dashboard/campaigns', campaignId]);
+              }
+            });
+        },
+        error: () => {
+          // Si no existe reward, crear uno nuevo
+          this.createRewardForCampaign(campaignId, description, promoType, promoValue);
+        }
+      });
+  }
+
+  private mapPromoTypeToRewardType(promoType: string): RewardType {
+    switch (promoType) {
+      case PromoType.DISCOUNT:
+        return RewardType.PERCENT_DISCOUNT;
+      case PromoType.AMOUNT:
+        return RewardType.FIXED_AMOUNT;
+      case PromoType.FREE_ITEM:
+        return RewardType.FREE_PRODUCT;
+      case PromoType.BOGO:
+        return RewardType.BUY_X_GET_Y;
+      default:
+        return RewardType.CUSTOM;
+    }
+  }
+
   private updateCampaign(): void {
     const formValue = this.campaignForm.value;
 
     const request: UpdateCampaignRequest = {
       title: formValue.title,
       subtitle: formValue.subtitle,
-      description: formValue.description,
+      // description se guarda en promotion_reward, no aquí
       promoType: formValue.promoType,
       promoValue: formValue.promoValue,
       callToAction: formValue.callToAction,
@@ -390,12 +531,17 @@ export class CampaignFormComponent implements OnInit {
       .pipe(takeUntilDestroyed())
       .subscribe({
         next: (campaign) => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Campaña actualizada exitosamente'
-          });
-          this.router.navigate(['/dashboard/campaigns', campaign.id]);
+          // Después de actualizar la campaña, actualizar el reward con la descripción
+          if (formValue.description) {
+            this.updateRewardForCampaign(this.campaignId!, formValue.description, formValue.promoType, formValue.promoValue);
+          } else {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Campaña actualizada exitosamente'
+            });
+            this.router.navigate(['/dashboard/campaigns', campaign.id]);
+          }
         },
         error: (error) => {
           console.error('Error updating campaign:', error);

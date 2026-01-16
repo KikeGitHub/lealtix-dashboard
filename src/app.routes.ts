@@ -1,14 +1,12 @@
 import { Routes } from '@angular/router';
 import { AppLayout } from './app/layout/component/app.layout';
 import { DashboardComponent } from './app/pages/dashboard/dashboard.component';
-import { Documentation } from './app/pages/documentation/documentation';
 import { LandingEditorComponent } from '@/pages/admin-page/landing-editor.component';
 import { ProductMenuComponent } from '@/pages/products-menu/products-menu.component';
 import { LoginComponent } from '@/auth/login/login.component';
 import { Error } from '@/auth/error/error';
 import { AuthGuard } from './app/auth/auth.guard';
 import { CategoriesMenuComponent } from '@/pages/categories-menu/categories-menu.component';
-import { Landing } from '@/pages/landing/landing';
 
 // Campaign components
 import { CampaignListComponent } from '@/pages/campaigns/components/campaign-list/campaign-list.component';
@@ -40,7 +38,6 @@ export const appRoutes: Routes = [
                     { path: 'adminPage', component: LandingEditorComponent },
                     { path: 'categoriesMenu', component: CategoriesMenuComponent },
                     { path: 'adminMenu', component: ProductMenuComponent },
-                    { path: 'documentation', component: Documentation },
                     // Campaign routes
                     { path: 'campaigns', component: CampaignListComponent, title: 'Gestión de Campañas' },
                     { path: 'campaigns/create', component: CreateCampaignComponent, title: 'Crear Campaña' },
@@ -54,16 +51,10 @@ export const appRoutes: Routes = [
         ]
     },
 
-    // Landing page - public access for tenant landing pages
-    {
-        path: 'landing-page/:slug',
-        component: Landing
-    },
-
     // Redeem module - public access for coupon redemption
     {
         path: 'redeem',
-        loadChildren: () => import('./app/redeem/redeem.module').then(m => m.RedeemModule)
+        loadChildren: () => import('./app/pages/redeem/redeem.module').then(m => m.RedeemModule)
     },
 
     // Default: always go to login page

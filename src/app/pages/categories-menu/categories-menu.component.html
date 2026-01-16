@@ -28,9 +28,6 @@
             [disabled]="!selectedCategories || !selectedCategories.length" />
     </ng-template>
 
-    <ng-template #end>
-        <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
-    </ng-template>
 </p-toolbar>
 
 <!-- Global loading overlay -->
@@ -123,6 +120,30 @@
 ></app-category-dialog>
 
 <p-confirmdialog [style]="{ width: '450px' }" />
+
+<p-dialog
+    [(visible)]="showCategoryReminderDialog"
+    [modal]="true"
+    [closable]="false"
+    [style]="{ width: '28rem', textAlign: 'center', borderRadius: '1.25rem', overflow: 'hidden' }"
+    contentStyle="padding:2rem 1.75rem; border-radius:1.25rem;"
+    baseZIndex="2100"
+>
+    <div class="flex flex-col items-center gap-3 text-center">
+        <span class="text-4xl" aria-hidden="true">🏷️</span>
+        <h2 class="font-bold text-2xl text-primary-700">{{ categoryReminderProps.title }}</h2>
+        <p class="text-gray-700 line-height-3">
+            {{ categoryReminderProps.description }}
+        </p>
+        <button
+            pButton
+            type="button"
+            class="p-button-primary w-full mt-2"
+            [label]="categoryReminderProps.buttonText"
+            (click)="handleCategoryReminderAcknowledged()"
+        ></button>
+    </div>
+</p-dialog>
 
 <app-confetti></app-confetti>
 

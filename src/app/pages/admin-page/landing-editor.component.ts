@@ -21,11 +21,14 @@ import { ConfettiService } from '@/confetti/confetti.service';
 import { ConfettiComponent } from '@/confetti/confetti.component';
 import { ProductService } from '@/pages/products-menu/service/product.service';
 import { CampaignService } from '@/pages/campaigns/services/campaign.service';
+import { AuthService } from '@/auth/auth.service';
+import { TooltipModule } from 'primeng/tooltip';
+import { PanelModule } from 'primeng/panel';
 
 @Component({
     selector: 'app-landing-editor',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FileUploadModule, InputTextModule, TextareaModule, EditorModule, CardModule, ButtonModule, InputGroupModule, StepperModule, MessageModule, DialogModule, ConfettiComponent ],
+    imports: [CommonModule, ReactiveFormsModule, FileUploadModule, InputTextModule, TextareaModule, EditorModule, CardModule, ButtonModule, InputGroupModule, StepperModule, MessageModule, DialogModule, TooltipModule, PanelModule, ConfettiComponent ],
     templateUrl: './landing-editor.component.html',
     styleUrls: ['./landing-editor.component.scss']
 })
@@ -49,6 +52,12 @@ export class LandingEditorComponent implements OnInit {
     bannerMessage = signal<{ title: string; description: string; buttonText: string }>(
         { title: '', description: '', buttonText: '' }
     );
+    showSetupPrompt = false;
+    setupPromptText = {
+        title: 'Configuremos tu negocio',
+        description: 'Para activar tu página necesitamos los datos básicos de tu negocio. Completa esta configuración inicial para compartir tu sitio con tus clientes.'
+    };
+    setupPromptCta = 'Iniciar configuración';
 
 
     constructor(
@@ -59,7 +68,8 @@ export class LandingEditorComponent implements OnInit {
         private confettiService: ConfettiService,
         private router: Router,
         private productService: ProductService,
-        private campaignService: CampaignService
+        private campaignService: CampaignService,
+        private authService: AuthService
     ) {
         this.landingForm = this.fb.group({
             logo: [null, Validators.required],
@@ -70,7 +80,7 @@ export class LandingEditorComponent implements OnInit {
             address: ['', Validators.required],
             phone: ['', Validators.required],
             email: ['', [Validators.required, Validators.email]],
-            schedule: [''],
+            schedule: ['', Validators.required],
             facebook: [''],
             instagram: [''],
             tiktok: [''],
@@ -81,48 +91,82 @@ export class LandingEditorComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
-        if (userStr) {
-            try {
-                const userObj = JSON.parse(userStr);
-                if (userObj && userObj.userEmail) {
-                    this.email = String(userObj.userEmail || '').trim();
-                    this.userId = userObj.userId;
-                }
-            } catch (e) {
-                console.warn('Failed to parse stored usuario:', e);
-            }
+        const currentUser = this.authService.getCurrentUser();
+
+        if (!currentUser) {
+            console.warn('No se encontró información del usuario en storage.');
+            this.openSetupPrompt();
+            return;
         }
+
+        this.email = currentUser.email;
+        this.userId = currentUser.userId;
+
+        this.loadTenantInformation();
+    }
+
+    private loadTenantInformation(): void {
+        if (!this.email) {
+            this.openSetupPrompt();
+            return;
+        }
+
         this.tenantService.getTenantByEmail(this.email).subscribe({
-            next: (tenant: any) => {
-                if (tenant) {
-                    this.tenantId = tenant.object.id ?? 0;
-                    this.landingForm.patchValue({
-                        logo: tenant.object.logoUrl,
-                        businessName: tenant.object.nombreNegocio,
-                        slogan: tenant.object.slogan,
-                        history: tenant.object.history,
-                        vision: tenant.object.vision,
-                        slug: tenant.object.slug,
-                        address: tenant.object.direccion,
-                        phone: tenant.object.telefono,
-                        email: tenant.object.bussinessEmail,
-                        schedule: tenant.object.schedules,
-                        facebook: tenant.object.facebook,
-                        instagram: tenant.object.instagram,
-                        tiktok: tenant.object.tiktok,
-                        linkedin: tenant.object.linkedin,
-                        x: tenant.object.x
-                    });
+            next: (response: any) => {
+                const tenant = response?.object;
+                const notFound = response?.code === 404 || !tenant;
+
+                if (notFound) {
+                    this.openSetupPrompt();
+                    return;
                 }
-                if (this.tenantId > 0) {
-                    this.checkBannerConditions();
-                }
+
+                this.populateTenantForm(tenant);
             },
             error: (error) => {
-                console.error('No tenant found:');
+                console.error('No tenant found:', error);
+                if (error?.status === 404 || error?.error?.code === 404) {
+                    this.openSetupPrompt();
+                }
             }
         });
+    }
+
+    private populateTenantForm(tenantData: any): void {
+        if (!tenantData) {
+            return;
+        }
+
+        this.tenantId = tenantData.id ?? 0;
+        this.landingForm.patchValue({
+            logo: tenantData.logoUrl,
+            businessName: tenantData.nombreNegocio,
+            slogan: tenantData.slogan,
+            history: tenantData.history,
+            vision: tenantData.vision,
+            slug: tenantData.slug,
+            address: tenantData.direccion,
+            phone: tenantData.telefono,
+            email: tenantData.bussinessEmail,
+            schedule: tenantData.schedules,
+            facebook: tenantData.facebook,
+            instagram: tenantData.instagram,
+            tiktok: tenantData.tiktok,
+            linkedin: tenantData.linkedin,
+            x: tenantData.x
+        });
+
+        if (this.tenantId > 0) {
+            this.checkBannerConditions();
+        }
+    }
+
+    startConfiguration(): void {
+        this.showSetupPrompt = false;
+    }
+
+    private openSetupPrompt(): void {
+        this.showSetupPrompt = true;
     }
 
     nextStep() {
@@ -154,6 +198,21 @@ export class LandingEditorComponent implements OnInit {
             default:
                 return true;
         }
+    }
+
+    onStepChange(newValue: number | null | undefined): void {
+        const target = (newValue ?? 1) as number;
+
+        // If navigating forward, validate current step first
+        if (target > this.step) {
+            if (!this.isStepValid(this.step)) {
+                this.landingForm.markAllAsTouched();
+                return; // block navigation
+            }
+        }
+
+        // allow backward navigation or when valid
+        this.step = target;
     }
 
     createTenant(step: number) {

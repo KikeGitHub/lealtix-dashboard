@@ -14,6 +14,7 @@ export enum CampaignStatus {
 }
 
 export enum RewardType {
+  NONE = 'NONE',
   PERCENT_DISCOUNT = 'PERCENT_DISCOUNT',
   FIXED_AMOUNT = 'FIXED_AMOUNT',
   FREE_PRODUCT = 'FREE_PRODUCT',

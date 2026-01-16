@@ -1,7 +1,7 @@
 export interface RedemptionRequest {
   redeemedBy: string;
   channel: RedemptionChannel;
-  originalAmount: number;
+  originalAmount?: number;
   location?: string;
   metadata?: string;
   ipAddress?: string;

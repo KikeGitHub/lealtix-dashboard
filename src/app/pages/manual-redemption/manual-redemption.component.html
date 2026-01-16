@@ -229,20 +229,24 @@
             <p-inputNumber
               id="originalAmount"
               [(ngModel)]="originalAmount"
-              mode="currency"
-              currency="MXN"
+              mode="decimal"
+              prefix="$"
               locale="es-MX"
               [minFractionDigits]="2"
               [maxFractionDigits]="2"
-              [min]="minRedemptionAmount"
               placeholder="0.00"
               styleClass="w-full"
-              inputStyleClass="w-full text-lg">
+              inputStyleClass="w-full text-lg"
+              [disabled]="pageState !== 'valid'">
             </p-inputNumber>
+            <small class="text-red-600 mt-2 block font-semibold" *ngIf="originalAmount !== undefined && originalAmount !== null && originalAmount > 0 && originalAmount < minRedemptionAmount">
+              <i class="pi pi-exclamation-triangle"></i>
+              Este cupón requiere una compra mínima de ${{ minRedemptionAmount.toFixed(2) }}
+            </small>
           </div>
 
           <!-- Preview calculations -->
-          <div class="amount-preview" *ngIf="originalAmount >= minRedemptionAmount && validationData?.couponType && validationData?.couponValue">
+          <div class="amount-preview" *ngIf="originalAmount !== undefined && originalAmount !== null && originalAmount >= minRedemptionAmount && validationData?.couponType && validationData?.couponValue">
             <div class="preview-row">
               <span class="preview-label">Descuento:</span>
               <span class="preview-value discount">
@@ -258,10 +262,10 @@
               <span class="preview-label">Total a Pagar:</span>
               <span class="preview-value total">
                 <span *ngIf="validationData?.couponType === 'PERCENT_DISCOUNT'">
-                  ${{ (originalAmount - (originalAmount * (validationData?.couponValue || 0) / 100)).toFixed(2) }}
+                  ${{ ((originalAmount - (originalAmount * (validationData?.couponValue || 0) / 100))).toFixed(2) }}
                 </span>
                 <span *ngIf="validationData?.couponType === 'FIXED_AMOUNT'">
-                  ${{ (originalAmount - (validationData?.couponValue || 0)).toFixed(2) }}
+                  ${{ ((originalAmount - (validationData?.couponValue || 0))).toFixed(2) }}
                 </span>
               </span>
             </div>

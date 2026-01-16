@@ -134,14 +134,12 @@
         </small>
       </div>
 
-      <!-- Descripción (para CUSTOM y opcional para otros) -->
-      <div class="field" *ngIf="showDescription || selectedRewardType">
+      <!-- Descripción (requerida solo si NO es NONE) -->
+      <div class="field" *ngIf="selectedRewardType && selectedRewardType !== 'NONE'">
         <label for="description" class="font-semibold">
-          Descripción {{ showDescription ? '' : '(opcional)' }}
-          <span class="text-red-500" *ngIf="showDescription">*</span>
+          Descripción <span class="text-red-500">*</span>
           <i class="pi pi-info-circle ml-2 text-500"
-             [pTooltip]="showDescription ? 'Describe detalladamente el beneficio personalizado' : 'Agrega información adicional sobre el beneficio (opcional)'"
-             tooltipPosition="right"></i>
+             pTooltip="Describe claramente el beneficio que recibirán los clientes. Este campo es obligatorio." tooltipPosition="right"></i>
         </label>
         <textarea
           pTextarea
@@ -156,13 +154,29 @@
         <small class="p-error" *ngIf="rewardForm.get('description')?.invalid && rewardForm.get('description')?.touched">
           Este campo es requerido
         </small>
-        <small class="text-500 block mt-1" *ngIf="!rewardForm.get('description')?.invalid && showDescription">
+        <small class="text-500 block mt-1" *ngIf="!rewardForm.get('description')?.invalid">
           Explica claramente qué recibirá el cliente
         </small>
       </div>
 
-      <!-- Campos opcionales -->
-      <div class="field" *ngIf="selectedRewardType">
+      <!-- Mensaje informativo cuando se selecciona NONE -->
+      <div class="field" *ngIf="selectedRewardType === 'NONE'">
+        <div class="p-3 border-round bg-blue-50 border-1 border-blue-200">
+          <div class="flex align-items-start gap-2">
+            <i class="pi pi-info-circle text-blue-600 mt-1"></i>
+            <div>
+              <p class="m-0 font-semibold text-blue-900">Campaña sin beneficio económico</p>
+              <p class="m-0 mt-1 text-sm text-blue-800">
+                Esta campaña será solo promocional (por ejemplo: lanzamiento de nuevo producto, anuncio de evento, etc.).
+                No se asignará ningún descuento o beneficio económico a los clientes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos opcionales (solo si NO es NONE) -->
+      <div class="field" *ngIf="selectedRewardType && selectedRewardType !== 'NONE'">
         <label for="minPurchaseAmount" class="font-semibold">
           Monto mínimo de compra (opcional)
           <i class="pi pi-info-circle ml-2 text-500"
@@ -182,7 +196,7 @@
         </small>
       </div>
 
-      <div class="field" *ngIf="selectedRewardType">
+      <div class="field" *ngIf="selectedRewardType && selectedRewardType !== 'NONE'">
         <label for="usageLimit" class="font-semibold">
           Límite de uso (opcional)
           <i class="pi pi-info-circle ml-2 text-500"

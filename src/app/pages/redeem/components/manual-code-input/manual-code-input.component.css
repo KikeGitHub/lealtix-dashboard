@@ -1,0 +1,198 @@
+.manual-input-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+::ng-deep .input-card {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  text-align: center;
+  color: white;
+}
+
+.card-header i {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.input-content {
+  padding: 2rem;
+}
+
+.description {
+  color: #6b7280;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.code-input {
+  width: 100%;
+  height: 48px;
+  font-size: 1rem;
+  padding: 0 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.code-input:focus {
+  border-color: #667eea;
+  outline: none;
+}
+
+.button-group {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+::ng-deep .validate-button {
+  height: 48px;
+}
+
+::ng-deep .error-message {
+  margin-top: 1rem;
+}
+
+/* Result Section */
+.result-section {
+  margin-top: 1.5rem;
+  animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #059669;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.result-title i {
+  font-size: 1.5rem;
+}
+
+.reward-info {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.reward-description {
+  color: #4b5563;
+  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+  font-style: italic;
+}
+
+.calculation-details {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.detail-label {
+  color: #6b7280;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: #374151;
+}
+
+.discount-row {
+  color: #059669;
+}
+
+.discount-value {
+  color: #059669;
+  font-weight: 700;
+}
+
+.total-row {
+  font-size: 1.15rem;
+  padding-top: 0.75rem;
+}
+
+.total-value {
+  color: #667eea;
+  font-size: 1.25rem;
+}
+
+.usage-info {
+  margin-top: 1rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.usage-info i {
+  margin-right: 0.25rem;
+}
+
+.action-buttons {
+  margin-top: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .input-content {
+    padding: 1.5rem;
+  }
+
+  .card-header {
+    padding: 1.5rem;
+  }
+
+  .card-header h2 {
+    font-size: 1.25rem;
+  }
+}

@@ -25,8 +25,13 @@
 <div class="flex flex-col md:flex-row gap-8">
   <div class="w-full">
     <div class="card flex flex-col gap-6 bg-white rounded-xl shadow-md p-6">
-      <div class="w-full overflow-x-auto">
-  <p-stepper [value]="step" (valueChange)="onStepChange($event)" orientation="vertical" class="mb-4 min-w-[180px] md:min-w-0">
+      <div class="w-full overflow-x-auto stepper-wrapper">
+        <p-stepper
+          [value]="step"
+          (valueChange)="onStepChange($event)"
+          orientation="vertical"
+          [class.mobile-stepper]="isMobile"
+          class="responsive-stepper mb-4">
           <p-step-list>
             <p-step [value]="1">Datos Generales</p-step>
             <p-step [value]="2">Historia y Filosofía</p-step>
@@ -58,7 +63,7 @@
               mode="basic"
               name="logo"
               accept="image/*"
-              maxFileSize="1000000"
+              maxFileSize="3145728"
               (onSelect)="onFileSelect($event)"
               chooseLabel="Seleccionar logo"
               chooseIcon="pi pi-upload"

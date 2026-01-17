@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, OnInit, signal } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, signal, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -36,6 +36,7 @@ export class LandingEditorComponent implements OnInit {
     private logoObjectUrl: string | null = null;
     email: string = '';
     step: number = 1;
+    isMobile: boolean = false;
     landingForm: FormGroup;
     socialPlatforms = [
         { name: 'Facebook', icon: 'pi pi-facebook', control: 'facebook' },
@@ -91,6 +92,7 @@ export class LandingEditorComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.updateIsMobile();
         const currentUser = this.authService.getCurrentUser();
 
         if (!currentUser) {
@@ -213,6 +215,11 @@ export class LandingEditorComponent implements OnInit {
 
         // allow backward navigation or when valid
         this.step = target;
+    }
+
+    @HostListener('window:resize')
+    updateIsMobile(): void {
+        this.isMobile = window.innerWidth < 768;
     }
 
     createTenant(step: number) {

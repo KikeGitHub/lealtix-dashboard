@@ -81,3 +81,100 @@
   line-height: 1.6;
   white-space: pre-line;
 }
+
+// Responsive Stepper Styles
+.stepper-wrapper {
+  -webkit-overflow-scrolling: touch;
+}
+
+.responsive-stepper {
+  ::ng-deep .p-step {
+    transition: all 0.2s ease;
+  }
+
+  // Mobile: simular orientación horizontal
+  &.mobile-stepper {
+    ::ng-deep .p-stepper-panels {
+      margin-top: 1rem;
+    }
+
+    ::ng-deep .p-step-list {
+      display: flex;
+      flex-direction: row;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 0.5rem;
+    }
+
+    ::ng-deep .p-stepper-separator {
+      flex: 0 0 auto;
+      width: 1.5rem;
+      height: auto;
+      margin: 0 0.25rem;
+    }
+
+    ::ng-deep .p-step {
+      flex: 0 0 auto;
+      min-width: 70px;
+      text-align: center;
+    }
+
+    ::ng-deep .p-step-header {
+      flex-direction: column;
+      padding: 0.5rem;
+    }
+
+    ::ng-deep .p-step-number {
+      width: 2rem;
+      height: 2rem;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    ::ng-deep .p-step-title {
+      font-size: 0.65rem;
+      line-height: 1.2;
+      max-width: 70px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: normal;
+      word-wrap: break-word;
+    }
+  }
+
+  // General mobile styles
+  @media (max-width: 767px) {
+    ::ng-deep .p-stepper-header {
+      padding: 0.5rem 0.25rem;
+    }
+
+    ::ng-deep .p-step {
+      font-size: 0.75rem;
+    }
+
+    ::ng-deep .p-step-number {
+      width: 2rem;
+      height: 2rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  // Very small screens - more compact
+  @media (max-width: 480px) {
+    &.mobile-stepper {
+      ::ng-deep .p-step-title {
+        display: none;
+      }
+
+      ::ng-deep .p-step {
+        min-width: 50px;
+      }
+
+      ::ng-deep .p-step-number {
+        width: 1.75rem;
+        height: 1.75rem;
+        font-size: 0.8rem;
+      }
+    }
+  }
+}

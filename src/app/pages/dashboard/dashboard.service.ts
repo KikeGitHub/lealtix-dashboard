@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { environment } from '@/pages/commons/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import {
@@ -10,9 +11,25 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  private base = 'http://localhost:8080/api/dashboard';
+  private get base(): string {
+    return `${this.getApiBaseUrl().replace(/\/+$/g, '')}/dashboard`;
+  }
 
   constructor(private http: HttpClient) {}
+
+  private getApiBaseUrl(): string {
+    const cfg = environment as { apiUrl?: string };
+
+    if (cfg.apiUrl && cfg.apiUrl.trim() !== '') {
+      return cfg.apiUrl.replace(/\/+$/g, '');
+    }
+
+    if (typeof window !== 'undefined' && window.location && window.location.origin) {
+      return `${window.location.origin}/api`;
+    }
+
+    return 'https://lealtix-service.onrender.com/api';
+  }
 
   private params(tenantId: number, from: string, to: string): HttpParams {
     return new HttpParams()

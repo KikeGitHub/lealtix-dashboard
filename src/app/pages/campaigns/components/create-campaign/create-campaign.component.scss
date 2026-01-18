@@ -114,6 +114,23 @@
         }
       }
 
+      // Highlight style for the 'Beneficio Actual' box
+      .benefit-highlight {
+        background: #e6f4ff; /* light blue */
+        text-align: center;
+        border: 1px solid rgba(29, 78, 216, 0.08); /* subtle blue border */
+
+        // center the inner flex contents (icon + text)
+        &.flex, .flex {
+          justify-content: center !important;
+          align-items: center !important;
+        }
+
+        p {
+          margin: 0;
+        }
+      }
+
       // Improve spacing specifically for two-column groups like "Detalles de la Promoción" and "Período de Vigencia"
       .grid {
         display: flex;

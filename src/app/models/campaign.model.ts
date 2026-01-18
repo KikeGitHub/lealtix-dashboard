@@ -19,6 +19,21 @@ export interface CreateCampaignRequest {
   status?: string;
 }
 
+/**
+ * Configures reward settings for a campaign
+ */
+export interface ConfigureRewardRequest {
+  rewardType: 'PERCENT_DISCOUNT' | 'FIXED_AMOUNT' | 'FREE_PRODUCT' | 'BUY_X_GET_Y' | 'CUSTOM' | 'NONE';
+  numericValue?: number;
+  productId?: number;
+  buyQuantity?: number;
+  freeQuantity?: number;
+  customConfig?: string;
+  description?: string;
+  minPurchaseAmount?: number;
+  usageLimit?: number;
+}
+
 export interface UpdateCampaignRequest {
   title?: string;
   subtitle?: string;
@@ -34,6 +49,7 @@ export interface UpdateCampaignRequest {
   segmentation?: string;
   isAutomatic?: boolean;
   isDraft?: boolean;
+  reward?: ConfigureRewardRequest;
 }
 
 export interface CampaignResponse {

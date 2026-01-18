@@ -173,6 +173,36 @@
     }
   }
 
+  /* Align label and Copy button inline and make them responsive */
+  .url-input-wrapper {
+    .p-inputgroup {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .url-label {
+      display: block; /* keep block semantics but allow flex growth */
+      flex: 1 1 auto;
+      min-width: 0; /* allow truncation/wrapping inside flex */
+      padding: .5rem .75rem !important;
+      margin: 0;
+      word-break: break-all;
+      overflow-wrap: anywhere;
+      background-color: #f8f9fa; /* preserves light-mode look (dark mode handled globally) */
+      border-radius: .375rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+
+    /* ensure button stays inline and not cut */
+    .p-button {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      min-width: 88px;
+    }
+  }
+
   // Input readonly styling
   .p-inputtext[readonly] {
     cursor: text;

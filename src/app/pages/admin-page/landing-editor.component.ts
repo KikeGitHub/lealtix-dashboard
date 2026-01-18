@@ -173,15 +173,23 @@ export class LandingEditorComponent implements OnInit {
 
     nextStep() {
         if (this.isStepValid(this.step)) {
+            debugger;
+            const currentStep = this.step;
+            // persist current step to backend before advancing
+            this.createTenant(currentStep);
             this.step++;
-            this.createTenant(this.step);
+            // ensure on mobile the stepper shows the active step
+            setTimeout(() => this.scrollActiveStepIntoView(), 0);
         } else {
             this.landingForm.markAllAsTouched();
         }
     }
 
     prevStep() {
-        if (this.step > 1) this.step--;
+        if (this.step > 1) {
+            this.step--;
+            setTimeout(() => this.scrollActiveStepIntoView(), 0);
+        }
     }
 
     isStepValid(step: number): boolean {
@@ -215,6 +223,49 @@ export class LandingEditorComponent implements OnInit {
 
         // allow backward navigation or when valid
         this.step = target;
+        // scroll active step into view on mobile
+        setTimeout(() => this.scrollActiveStepIntoView(), 0);
+    }
+
+    /**
+     * Scrolls the active p-step into view when the stepper is in mobile (horizontal) mode.
+     * This does not change PrimeNG classes — only ensures the active step is visible and focused.
+     */
+    private scrollActiveStepIntoView(): void {
+        if (!this.isMobile) return;
+
+        try {
+            const stepList = document.querySelectorAll('.responsive-stepper .p-step-list .p-step');
+            if (!stepList || stepList.length === 0) return;
+
+            const index = Math.max(0, Math.min(stepList.length - 1, this.step - 1));
+            const el = stepList[index] as HTMLElement | null;
+            if (!el) return;
+
+            // Try to center the element within the horizontal scroll container
+            const container = document.querySelector('.responsive-stepper .p-step-list') as HTMLElement | null;
+            if (container) {
+                const elRect = el.getBoundingClientRect();
+                const contRect = container.getBoundingClientRect();
+                const relativeLeft = elRect.left - contRect.left + container.scrollLeft;
+                const targetScroll = Math.max(0, Math.min(container.scrollWidth - container.clientWidth, Math.round(relativeLeft - (container.clientWidth - elRect.width) / 2)));
+                container.scrollTo({ left: targetScroll, behavior: 'smooth' });
+            } else {
+                // fallback
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+
+            // focus the header if available for accessibility
+            const header = el.querySelector('.p-step-header') as HTMLElement | null;
+            if (header && typeof header.focus === 'function') {
+                header.focus();
+            } else if (typeof el.focus === 'function') {
+                el.focus();
+            }
+        } catch (e) {
+            // silent fail — do not affect functionality
+            console.debug('[landing-editor] scrollActiveStepIntoView failed', e);
+        }
     }
 
     @HostListener('window:resize')
@@ -225,12 +276,13 @@ export class LandingEditorComponent implements OnInit {
     createTenant(step: number) {
         // Build a payload from the form once
         const form = this.landingForm.value;
+        const logoFile = this.landingForm.get('logo')?.value;
+
+        // Build payload using backend field names (e.g. nombreNegocio, logoUrl)
         const tenantData: Tenant = {
-            ...form,
             id: this.tenantId,
             userId: this.userId,
-            logo: form.logo,
-            businessName: form.businessName,
+            nombreNegocio: form.businessName,
             slogan: form.slogan,
             history: form.history,
             vision: form.vision,
@@ -245,7 +297,10 @@ export class LandingEditorComponent implements OnInit {
             x: form.x
         } as Tenant;
 
-        const logoFile = this.landingForm.get('logo')?.value;
+        // If logo is already a URL (loaded from tenant), set logoUrl
+        if (typeof form.logo === 'string' && form.logo) {
+            (tenantData as any).logoUrl = form.logo;
+        }
 
         const doCreate = () => {
             // ensure tenantData.id is up-to-date
@@ -253,18 +308,62 @@ export class LandingEditorComponent implements OnInit {
             this.postCreateTenant(tenantData);
         };
 
-        // If we're in the image upload step and there is a file, upload first then create
-        if (step === 2 && logoFile) {
+        // If logo is a File/Blob, upload it first and attach returned data to payload
+        const isFileLogo = !!logoFile && (logoFile instanceof File || logoFile instanceof Blob);
+        if (isFileLogo) {
             const email = this.email;
             const nombreNegocio = form.businessName;
             const slogan = form.slogan;
-            this.imageService.uploadImage(logoFile, 'logo', email, nombreNegocio, slogan).subscribe({
-                next: (tenantId: number) => {
-                    this.tenantId = tenantId;
+            this.imageService.uploadImage(logoFile as File, 'logo', email, nombreNegocio, slogan).subscribe({
+                next: (res: any) => {
+                    // backend may return: a numeric id, a plain URL string, or a JSON string/object with url/logoUrl
+                    try {
+                        debugger;
+                        let logoUrl: string | undefined;
+                        // If response is an object already
+                        if (res && typeof res === 'object') {
+                            logoUrl = res.logoUrl || res.url || (res.object && (res.object.logoUrl || res.object.url));
+                            if (!logoUrl && res.id) {
+                                this.tenantId = res.id;
+                                tenantData.id = res.id;
+                            }
+                        } else if (typeof res === 'string') {
+                            // try parse JSON string
+                            try {
+                                const parsedJson = JSON.parse(res);
+                                if (parsedJson) {
+                                    logoUrl = parsedJson.logoUrl || parsedJson.url || (parsedJson.object && (parsedJson.object.logoUrl || parsedJson.object.url));
+                                    if (!logoUrl && parsedJson.id) {
+                                        this.tenantId = parsedJson.id;
+                                        tenantData.id = parsedJson.id;
+                                    }
+                                }
+                            } catch (e) {
+                                // not JSON — could be plain url or numeric id in text
+                                if (/^https?:\/\//.test(res)) {
+                                    logoUrl = res;
+                                } else {
+                                    const n = Number(res);
+                                    if (!isNaN(n) && n > 0) {
+                                        this.tenantId = n;
+                                        tenantData.id = n;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (logoUrl) {
+                            (tenantData as any).logoUrl = logoUrl;
+                        }
+                    } catch (e) {
+                        console.warn('[landing-editor] uploadImage response parse failed', e);
+                    }
                     doCreate();
                 },
                 error: (error) => {
                     console.error('Error uploading image:', error);
+                    // still try to create without logo
+                    doCreate();
                 }
             });
         } else {
@@ -276,6 +375,25 @@ export class LandingEditorComponent implements OnInit {
         this.tenantService.createTenant(tenantData).subscribe({
             next: (response) => {
                 console.log('Tenant created successfully:', response);
+                // If backend returns created/updated tenant id, keep it for future updates
+                try {
+                    const created = response?.object || response;
+                    if (created && created.id) {
+                        this.tenantId = created.id;
+                    }
+                    // If backend returns a logoUrl, update the form so UI and subsequent saves include it
+                    const returnedLogo = created?.logoUrl || created?.logo || created?.object?.logoUrl || created?.object?.logo;
+                    if (returnedLogo) {
+                        this.landingForm.patchValue({ logo: returnedLogo });
+                        // clear any local object URL since now we have a remote URL
+                        if (this.logoObjectUrl) {
+                            URL.revokeObjectURL(this.logoObjectUrl);
+                            this.logoObjectUrl = null;
+                        }
+                    }
+                } catch (e) {
+                    // ignore parsing errors
+                }
             },
             error: (error) => {
                 console.error('Error creating tenant:', error);

@@ -13,6 +13,8 @@ import { DividerModule } from 'primeng/divider';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { CreateCampaignRequest, UpdateCampaignRequest, CampaignResponse } from '@/models/campaign.model';
+import { ConfigureRewardRequest } from '@/models/update-campaign-request';
+import { RewardResponse } from '../../models/reward.model';
 import { CampaignTemplate } from '@/models/campaign-template.model';
 import { PromoType, CampaignStatus, RewardType } from '@/models/enums';
 import { CampaignService } from '../../services/campaign.service';
@@ -71,6 +73,8 @@ export class CampaignFormComponent implements OnInit {
   minDate = new Date();
 
   campaignId?: number;
+  // Reward associated to the campaign (when editing)
+  existingReward?: RewardResponse | null = null;
 
   promoTypeOptions = [
     { label: 'Descuento porcentual', value: PromoType.DISCOUNT },
@@ -183,6 +187,8 @@ export class CampaignFormComponent implements OnInit {
             .subscribe({
               next: (reward) => {
                 console.log('🔍 REWARD LOADED:', reward);
+                // Guardar reward para incluirlo en el payload al actualizar
+                this.existingReward = reward;
                 // Actualizar el formulario con la descripción del reward
                 this.campaignForm.patchValue({
                   description: reward.description
@@ -510,11 +516,9 @@ export class CampaignFormComponent implements OnInit {
 
   private updateCampaign(): void {
     const formValue = this.campaignForm.value;
-
-    const request: UpdateCampaignRequest = {
+    const request: UpdateCampaignRequest & { reward?: ConfigureRewardRequest | null } = {
       title: formValue.title,
       subtitle: formValue.subtitle,
-      // description se guarda en promotion_reward, no aquí
       promoType: formValue.promoType,
       promoValue: formValue.promoValue,
       callToAction: formValue.callToAction,
@@ -527,29 +531,42 @@ export class CampaignFormComponent implements OnInit {
       isAutomatic: formValue.isAutomatic
     };
 
-    this.campaignService.update(this.campaignId!, request)
+    // Construir reward si existe o si hay descripción en el formulario
+    const description = formValue.description || this.existingReward?.description;
+    if (this.existingReward || description) {
+      const rewardPayload: ConfigureRewardRequest = {
+        rewardType: this.existingReward?.rewardType || 'CUSTOM',
+        description: description || undefined,
+        numericValue: this.existingReward?.numericValue ?? undefined,
+        productId: this.existingReward?.productId ?? undefined,
+        buyQuantity: this.existingReward?.buyQuantity ?? undefined,
+        freeQuantity: this.existingReward?.freeQuantity ?? undefined,
+        customConfig: this.existingReward?.customConfig ?? undefined,
+        minPurchaseAmount: this.existingReward?.minPurchaseAmount ?? undefined,
+        usageLimit: this.existingReward?.usageLimit ?? undefined
+      };
+
+      if (formValue.description) rewardPayload.description = formValue.description;
+
+      request.reward = rewardPayload;
+    }
+
+    // Enviar usando updateCampaign para incluir reward anidado
+    this.campaignService.updateCampaign(this.campaignId!, request as any)
       .pipe(takeUntilDestroyed())
       .subscribe({
         next: (campaign) => {
-          // Después de actualizar la campaña, actualizar el reward con la descripción
-          if (formValue.description) {
-            this.updateRewardForCampaign(this.campaignId!, formValue.description, formValue.promoType, formValue.promoValue);
-          } else {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: 'Campaña actualizada exitosamente'
-            });
-            this.router.navigate(['/dashboard/campaigns', campaign.id]);
-          }
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Campaña actualizada exitosamente'
+          });
+          this.router.navigate(['/dashboard/campaigns', campaign.id]);
         },
         error: (error) => {
           console.error('Error updating campaign:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo actualizar la campaña'
-          });
+          const msg = error?.error?.message || 'No se pudo actualizar la campaña';
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: msg });
           this.saving.set(false);
         }
       });

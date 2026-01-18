@@ -66,24 +66,23 @@
       <!-- ID de Producto (para FREE_PRODUCT) -->
       <div class="field" *ngIf="showProductId">
         <label for="productId" class="font-semibold">
-          ID del producto <span class="text-red-500">*</span>
+          Producto a regalar <span class="text-red-500">*</span>
           <i class="pi pi-info-circle ml-2 text-500"
-             pTooltip="Ingresa el ID del producto que se regalará. Puedes encontrar el ID en tu catálogo de productos."
+             pTooltip="Selecciona la categoría y luego el producto que se regalará."
              tooltipPosition="right"></i>
         </label>
-        <p-inputnumber
-          id="productId"
-          formControlName="productId"
-          class="w-full"
-          [min]="1"
-          [useGrouping]="false"
-          [styleClass]="rewardForm.get('productId')?.invalid && rewardForm.get('productId')?.touched ? 'ng-invalid ng-dirty' : ''"
-        ></p-inputnumber>
+        <p-treeSelect
+          [options]="productTree"
+          selectionMode="single"
+          placeholder="Selecciona categoría → producto"
+          [ngModel]="selectedProductKey"
+          [ngModelOptions]="{standalone: true}"
+          (ngModelChange)="onProductTreeSelect($event)"
+          [style]="{ width: '100%' }"
+          [filter]="true"
+        ></p-treeSelect>
         <small class="p-error" *ngIf="rewardForm.get('productId')?.invalid && rewardForm.get('productId')?.touched">
-          Este campo es requerido
-        </small>
-        <small class="text-500 block mt-1" *ngIf="!rewardForm.get('productId')?.invalid">
-          Ve a la sección de Productos para encontrar el ID
+          Debes seleccionar un producto
         </small>
       </div>
 
@@ -136,23 +135,32 @@
 
       <!-- Descripción (requerida solo si NO es NONE) -->
       <div class="field" *ngIf="selectedRewardType && selectedRewardType !== 'NONE'">
-        <label for="description" class="font-semibold">
-          Descripción <span class="text-red-500">*</span>
-          <i class="pi pi-info-circle ml-2 text-500"
-             pTooltip="Describe claramente el beneficio que recibirán los clientes. Este campo es obligatorio." tooltipPosition="right"></i>
-        </label>
+        <div class="flex justify-content-between align-items-center mb-2">
+          <label for="description" class="font-semibold">
+            Descripción <span class="text-red-500">*</span>
+            <i class="pi pi-info-circle ml-2 text-500"
+               pTooltip="Describe claramente el beneficio que recibirán los clientes. Máximo 500 caracteres." tooltipPosition="right"></i>
+          </label>
+          <small class="text-500">
+            {{ (rewardForm.get('description')?.value || '').length }}/500
+          </small>
+        </div>
         <textarea
           pTextarea
           id="description"
           formControlName="description"
           rows="3"
           class="w-full"
-          placeholder="Descripción del beneficio"
+          placeholder="Descripción del beneficio (máximo 500 caracteres)"
           [class.ng-invalid]="rewardForm.get('description')?.invalid && rewardForm.get('description')?.touched"
           [class.ng-dirty]="rewardForm.get('description')?.invalid && rewardForm.get('description')?.touched"
+          maxlength="500"
         ></textarea>
-        <small class="p-error" *ngIf="rewardForm.get('description')?.invalid && rewardForm.get('description')?.touched">
+        <small class="p-error" *ngIf="rewardForm.get('description')?.hasError('required') && rewardForm.get('description')?.touched">
           Este campo es requerido
+        </small>
+        <small class="p-error" *ngIf="rewardForm.get('description')?.hasError('maxlength') && rewardForm.get('description')?.touched">
+          La descripción no puede exceder 500 caracteres
         </small>
         <small class="text-500 block mt-1" *ngIf="!rewardForm.get('description')?.invalid">
           Explica claramente qué recibirá el cliente

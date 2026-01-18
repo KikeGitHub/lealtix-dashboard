@@ -241,24 +241,27 @@ Sábados y Domingos de 9:00 a 18:00 Hrs."
 
         <!-- Paso 4: Redes Sociales -->
         <div *ngSwitchCase="4" class="flex flex-col gap-4">
-          <div class="flex flex-col gap-2" *ngFor="let social of socialPlatforms">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" [for]="social.control">{{social.name}}</label>
-              <button
-                pButton
-                type="button"
-                icon="pi pi-info-circle"
-                class="p-button-sm p-button-text p-button-plain info-button"
-                [pTooltip]="'Comparte el enlace directo a tu perfil en ' + social.name"
-                tooltipPosition="top"
-                [attr.aria-label]="'Ayuda para ' + social.name"
-              ></button>
+          <ng-container *ngFor="let social of socialPlatforms">
+            <!-- Temporalmente ocultamos LinkedIn -->
+            <div class="flex flex-col gap-2" *ngIf="social.control !== 'linkedin'">
+              <div class="flex items-center gap-2">
+                <label class="font-semibold text-gray-800" [for]="social.control">{{social.name}}</label>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-info-circle"
+                  class="p-button-sm p-button-text p-button-plain info-button"
+                  [pTooltip]="'Comparte el enlace directo a tu perfil en ' + social.name"
+                  tooltipPosition="top"
+                  [attr.aria-label]="'Ayuda para ' + social.name"
+                ></button>
+              </div>
+              <div class="p-inputgroup">
+                <span class="p-inputgroup-addon bg-gray-100 rounded-l mr-4"><i [class]="social.icon"></i></span>
+                <input pInputText [id]="social.control" [formControlName]="social.control" placeholder="{{social.name}}" class="rounded-r border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" />
+              </div>
             </div>
-            <div class="p-inputgroup">
-              <span class="p-inputgroup-addon bg-gray-100 rounded-l mr-4"><i [class]="social.icon"></i></span>
-              <input pInputText [id]="social.control" [formControlName]="social.control" placeholder="{{social.name}}" class="rounded-r border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" />
-            </div>
-          </div>
+          </ng-container>
         </div>
 
         <!-- Paso 5: Vista Previa -->

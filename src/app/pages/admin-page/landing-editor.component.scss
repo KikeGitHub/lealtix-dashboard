@@ -103,38 +103,39 @@
       flex-direction: row;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: 0.5rem;
+      padding-bottom: 0.4rem;
     }
 
+    /* tighter separators and reduced gaps so more steps fit without manual scroll */
     ::ng-deep .p-stepper-separator {
       flex: 0 0 auto;
-      width: 1.5rem;
+      width: 0.9rem;
       height: auto;
-      margin: 0 0.25rem;
+      margin: 0 0.125rem;
     }
 
     ::ng-deep .p-step {
       flex: 0 0 auto;
-      min-width: 70px;
+      min-width: 52px; /* smaller to fit more steps */
       text-align: center;
     }
 
     ::ng-deep .p-step-header {
       flex-direction: column;
-      padding: 0.5rem;
+      padding: 0.25rem 0.35rem; /* reduced padding */
     }
 
     ::ng-deep .p-step-number {
-      width: 2rem;
-      height: 2rem;
-      font-size: 0.875rem;
-      margin-bottom: 0.25rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      font-size: 0.82rem;
+      margin-bottom: 0.18rem;
     }
 
     ::ng-deep .p-step-title {
-      font-size: 0.65rem;
-      line-height: 1.2;
-      max-width: 70px;
+      font-size: 0.6rem;
+      line-height: 1.05;
+      max-width: 56px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: normal;

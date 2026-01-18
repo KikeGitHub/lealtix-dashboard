@@ -49,3 +49,33 @@ label.font-semibold .pi.pi-info-circle {
 	justify-content: center;
 	align-items: center;
 }
+
+/* Dark mode: match the topbar moon icon color (primary) so info buttons remain visible */
+:root[class*='app-dark'] .info-button,
+.app-dark .info-button {
+	color: var(--primary-color, #F59E0B) !important;
+	opacity: 1 !important;
+}
+
+:root[class*='app-dark'] .info-button:hover,
+.app-dark .info-button:hover,
+:root[class*='app-dark'] .info-button:focus,
+.app-dark .info-button:focus {
+	color: color-mix(in srgb, var(--primary-color, #F59E0B) 80%, black 20%) !important;
+}
+
+/* Dark mode for standalone info icons */
+:root[class*='app-dark'] i.pi.pi-info-circle,
+.app-dark i.pi.pi-info-circle {
+	color: var(--primary-color, #F59E0B);
+	opacity: 1;
+}
+
+/* Ensure landing URL label text is visible in dark mode for Mi Página component only */
+:root[class*='app-dark'] app-mi-pagina .url-label,
+.app-dark app-mi-pagina .url-label {
+	color: #ffffff !important;
+	/* override inline light background on the label in dark mode */
+	background-color: var(--surface-ground, #0b1220) !important;
+	border-color: rgba(255,255,255,0.06) !important;
+}

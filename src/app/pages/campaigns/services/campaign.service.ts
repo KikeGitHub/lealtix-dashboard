@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 import { CreateCampaignRequest, UpdateCampaignRequest, CampaignResponse, CampaignValidationResult, CampaignWithValidation } from '@/models/campaign.model';
 import { GenericResponse } from '@/models/generic-response.model';
 import { CreateRewardRequest, RewardResponse } from '../models/reward.model';
+import { UpdateCampaignRequest as NewUpdateCampaignRequest, ConfigureRewardRequest } from '@/models/update-campaign-request';
+import { CampaignResponse as NewCampaignResponse } from '@/models/campaign-response';
 import { ApiResponseMapper } from './api-response.mapper';
 import { environment } from '@/pages/commons/environment';
 
@@ -38,6 +41,138 @@ export class CampaignService {
           }
         })
       );
+  }
+
+  /**
+   * Actualiza una campaña existente con campo de reward anidado
+   * PUT /api/campaigns/{id}
+   *
+   * - Serializa fechas a formato YYYY-MM-DD
+   * - Valida campos de reward según su tipo
+   * - Mapea la respuesta GenericResponse.data a CampaignResponse
+   */
+  updateCampaign(id: number, payload: NewUpdateCampaignRequest): Observable<NewCampaignResponse> {
+    const url = `${this.baseUrl}/${id}`;
+
+    // Helper para serializar fechas
+    const serializeDate = (date: any): string | null => {
+      if (!date) return null;
+      if (typeof date === 'string') {
+        return date.length === 10 ? date : date.split('T')[0];
+      }
+      if (date instanceof Date) {
+        return date.toISOString().slice(0, 10);
+      }
+      if (date && typeof date.toISOString === 'function') {
+        return date.toISOString().slice(0, 10);
+      }
+      return null;
+    };
+
+    // Normalizar y serializar fechas a YYYY-MM-DD
+    const body = {
+      ...payload,
+      startDate: serializeDate(payload.startDate),
+      endDate: serializeDate(payload.endDate),
+      channels: payload.channels || [],
+      segmentation: payload.segmentation || []
+    };
+
+    return this.http.put<any>(url, body).pipe(
+      map((resp: any) => {
+        // Validar respuesta
+        if (!resp) {
+          throw new Error('Respuesta inválida del servidor');
+        }
+
+        // Manejar ambos formatos: data o object
+        const data = resp.data || resp.object;
+        if (!data) {
+          throw new Error('Respuesta sin datos');
+        }
+
+        // Retornar solo el objeto data
+        if (resp.code === 200 || resp.code === 201) {
+          return data as NewCampaignResponse;
+        } else {
+          throw new Error(resp.message || 'Error actualizando campaña');
+        }
+      }),
+      tap({
+        next: (response: NewCampaignResponse) => {
+          console.log('Campaña actualizada exitosamente:', response);
+        },
+        error: (error: any) => {
+          console.error('Error al actualizar campaña:', error);
+        }
+      }),
+      catchError(error => {
+        console.error('Error en updateCampaign:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Valida un ConfigureRewardRequest según su tipo
+   * Retorna un objeto con isValid y un mensaje de error si aplica
+   */
+  validateRewardConfig(reward: ConfigureRewardRequest): { isValid: boolean; errorMessage?: string } {
+    if (!reward || !reward.rewardType) {
+      return { isValid: false, errorMessage: 'Tipo de reward requerido' };
+    }
+
+    // Si es NONE, no requiere validación adicional
+    if (reward.rewardType === 'NONE') {
+      return { isValid: true };
+    }
+
+    // Validar description para tipos que lo requieren
+    if (!reward.description || reward.description.trim().length === 0) {
+      return { isValid: false, errorMessage: 'Descripción del beneficio requerida' };
+    }
+
+    if (reward.description.length > 500) {
+      return { isValid: false, errorMessage: 'Descripción no puede exceder 500 caracteres' };
+    }
+
+    // Validar según tipo
+    switch (reward.rewardType) {
+      case 'PERCENT_DISCOUNT':
+        if (!reward.numericValue || reward.numericValue <= 0 || reward.numericValue > 100) {
+          return { isValid: false, errorMessage: 'Descuento debe estar entre 1 y 100%' };
+        }
+        break;
+
+      case 'FIXED_AMOUNT':
+        if (!reward.numericValue || reward.numericValue <= 0) {
+          return { isValid: false, errorMessage: 'Monto fijo debe ser mayor a 0' };
+        }
+        break;
+
+      case 'FREE_PRODUCT':
+        if (!reward.productId || reward.productId <= 0) {
+          return { isValid: false, errorMessage: 'Producto requerido para regalo' };
+        }
+        break;
+
+      case 'BUY_X_GET_Y':
+        if (!reward.buyQuantity || reward.buyQuantity <= 0) {
+          return { isValid: false, errorMessage: 'Cantidad a comprar debe ser mayor a 0' };
+        }
+        if (!reward.freeQuantity || reward.freeQuantity <= 0) {
+          return { isValid: false, errorMessage: 'Cantidad gratis debe ser mayor a 0' };
+        }
+        break;
+
+      case 'CUSTOM':
+        if (!reward.customConfig || reward.customConfig.trim().length === 0) {
+          return { isValid: false, errorMessage: 'Configuración personalizada requerida' };
+        }
+        break;
+    }
+
+    return { isValid: true };
   }
 
   /**

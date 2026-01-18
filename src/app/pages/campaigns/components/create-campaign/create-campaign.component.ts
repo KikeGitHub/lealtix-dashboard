@@ -28,6 +28,7 @@ import { CreateCampaignRequest } from '@/models/campaign.model';
 import { PromoType } from '@/models/enums';
 import { CampaignFormModel, TemplateField, CampaignPreviewData } from '../../models/create-campaign.models';
 import { RewardResponse, CreateRewardRequest } from '../../models/reward.model';
+import { ConfigureRewardRequest } from '@/models/update-campaign-request';
 import { CampaignService } from '../../services/campaign.service';
 import { CampaignTemplateService } from '../../services/campaign-template.service';
 import { CampaignPreviewDialogComponent } from './campaign-dialog/campaign-preview-dialog.component';
@@ -503,42 +504,99 @@ export class CreateCampaignComponent implements OnInit {
   }
 
   private updateCampaignWithReward(): void {
-    this.updateCampaign();
+    debugger;
+    this.saving.set(true);
+    const campaignId = this.campaignId();
 
-    // Si hay datos válidos de reward, guardarlos también
-    if (this.rewardFormComp?.hasValidRewardData()) {
-      const rewardData = this.rewardFormComp.getRewardData();
-      const currentCampaignId = this.campaignId();
+    if (!campaignId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se encontró el ID de la campaña'
+      });
+      this.saving.set(false);
+      return;
+    }
 
-      if (rewardData && currentCampaignId) {
-        const existingReward = this.currentReward();
-        if (existingReward?.id) {
-          // Actualizar reward existente
-          this.campaignService.updateReward(existingReward.id, rewardData)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-              next: (reward) => {
-                this.currentReward.set(reward);
-              },
-              error: (err) => {
-                console.error('Error updating reward:', err);
-              }
-            });
-        } else {
-          // Crear nuevo reward
-          this.campaignService.createReward(currentCampaignId, rewardData)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-              next: (reward) => {
-                this.currentReward.set(reward);
-              },
-              error: (err) => {
-                console.error('Error creating reward:', err);
-              }
-            });
+    const formValue = this.campaignForm.value;
+    const updateRequest = {
+      title: formValue.title,
+      subtitle: formValue.subtitle,
+      description: formValue.description,
+      imageUrl: this.uploadedImageUrl() || formValue.imageUrl,
+      promoType: formValue.promoType,
+      promoValue: formValue.promoValue,
+      startDate: this.formatDateForBackend(formValue.startDate),
+      endDate: this.formatDateForBackend(formValue.endDate),
+      callToAction: formValue.callToAction || 'Obtener promoción',
+      channels: formValue.channels,
+      segmentation: formValue.segmentation,
+      isAutomatic: formValue.isAutomatic,
+      status: formValue.status
+    };
+
+    // Incluir reward directamente en el payload si hay datos en el formulario o existe uno previo
+    const rewardFromForm = this.rewardFormComp?.getConfigureRewardRequest?.();
+    const existingReward = this.currentReward();
+
+
+    if (rewardFromForm) {
+      // Also include the UI key if present (selectedProductKey) to ensure product selection is preserved
+      const selectedKey = (this.rewardFormComp as any)?.selectedProductKey;
+      const descFromForm = (this.rewardFormComp as any)?.rewardForm?.get('description')?.value;
+      const rewardPayload: any = { ...rewardFromForm };
+      if (selectedKey !== undefined && selectedKey !== null) {
+        rewardPayload.selectedProductKey = selectedKey;
+        // if productId missing, try to coerce from selectedKey
+        if (!rewardPayload.productId) {
+          const asNum = Number(selectedKey);
+          if (!isNaN(asNum)) rewardPayload.productId = asNum;
         }
       }
+      if (descFromForm) {
+        rewardPayload.description = descFromForm;
+      }
+      (updateRequest as any).reward = rewardPayload as any;
+    } else if (existingReward) {
+      const rewardPayload: any = {
+        rewardType: existingReward.rewardType,
+        numericValue: existingReward.numericValue,
+        productId: existingReward.productId,
+        buyQuantity: existingReward.buyQuantity,
+        freeQuantity: existingReward.freeQuantity,
+        customConfig: existingReward.customConfig,
+        description: existingReward.description,
+        minPurchaseAmount: existingReward.minPurchaseAmount,
+        usageLimit: existingReward.usageLimit
+      };
+      (updateRequest as any).reward = rewardPayload;
     }
+
+    // Usar el endpoint que acepta reward embebido en el payload
+    this.campaignService.updateCampaign(campaignId, updateRequest as any)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          console.log('[Campaign] Campaña actualizada:', response);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Campaña actualizada correctamente'
+          });
+          // Si el backend procesó la actualización correctamente, confirmar al usuario
+          this.saving.set(false);
+          this.campaignSaved.set(true);
+        },
+        error: (err) => {
+          console.error('[Campaign] Error actualizando campaña:', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al actualizar la campaña'
+          });
+          this.saving.set(false);
+        }
+      });
   }
 
   private saveCampaignWithReward(isDraft: boolean): void {
@@ -693,7 +751,27 @@ export class CreateCampaignComponent implements OnInit {
       status: formValue.status // Usar el estado seleccionado
     };
 
-    this.campaignService.update(campaignId, updateRequest)
+    // Incluir reward en el payload si existe en el formulario o ya existe en la campaña
+    const rewardFromForm = this.rewardFormComp?.getConfigureRewardRequest?.();
+    const existingReward = this.currentReward();
+    if (rewardFromForm) {
+      (updateRequest as any).reward = rewardFromForm as ConfigureRewardRequest;
+    } else if (existingReward) {
+      const rewardPayload: ConfigureRewardRequest = {
+        rewardType: existingReward.rewardType as any,
+        numericValue: existingReward.numericValue,
+        productId: existingReward.productId,
+        buyQuantity: existingReward.buyQuantity,
+        freeQuantity: existingReward.freeQuantity,
+        customConfig: existingReward.customConfig,
+        description: existingReward.description,
+        minPurchaseAmount: existingReward.minPurchaseAmount,
+        usageLimit: existingReward.usageLimit
+      };
+      (updateRequest as any).reward = rewardPayload;
+    }
+
+    this.campaignService.updateCampaign(campaignId, updateRequest as any)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {

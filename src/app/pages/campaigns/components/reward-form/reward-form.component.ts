@@ -1,15 +1,20 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { Select } from 'primeng/select';
+import { TreeSelect } from 'primeng/treeselect';
 import { InputNumber } from 'primeng/inputnumber';
 import { Textarea } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
 import { Message } from 'primeng/message';
 import { RewardType } from '@/models/enums';
 import { CreateRewardRequest, RewardResponse } from '../../models/reward.model';
+import { ConfigureRewardRequest } from '@/models/update-campaign-request';
 import { CampaignService } from '../../services/campaign.service';
+import { CatalogService } from '../../services/catalog.service';
+import { TreeNode } from 'primeng/api';
 
 @Component({
   selector: 'app-reward-form',
@@ -18,6 +23,8 @@ import { CampaignService } from '../../services/campaign.service';
     CommonModule,
     ReactiveFormsModule,
     Select,
+    TreeSelect,
+    FormsModule,
     InputNumber,
     Textarea,
     TooltipModule,
@@ -29,6 +36,7 @@ import { CampaignService } from '../../services/campaign.service';
 export class RewardFormComponent implements OnInit, OnChanges {
   @Input() campaignId?: number;
   @Input() existingReward?: RewardResponse;
+  @Input() tenantId?: number;
   @Output() saved = new EventEmitter<RewardResponse>();
   @Output() cancelled = new EventEmitter<void>();
   @Output() pending = new EventEmitter<CreateRewardRequest>();
@@ -36,16 +44,24 @@ export class RewardFormComponent implements OnInit, OnChanges {
 
   private fb = inject(FormBuilder);
   private campaignService = inject(CampaignService);
+  private catalogService = inject(CatalogService);
   private messageService = inject(MessageService);
 
   rewardForm!: FormGroup;
+  // Product/category tree for TreeSelect
+  productTree: TreeNode[] = [];
+  selectedProductKey: any = null;
+  isLoadingProducts = false;
+  private lastLoadedTenantId: number | null = null;
+  private isUpdatingValidators = false;
   rewardTypes = [
     { label: 'Ninguno (solo promoción)', value: RewardType.NONE },
     { label: 'Descuento porcentual', value: RewardType.PERCENT_DISCOUNT },
     { label: 'Monto fijo', value: RewardType.FIXED_AMOUNT },
-    { label: 'Producto gratis', value: RewardType.FREE_PRODUCT },
-    { label: 'Compra X lleva Y', value: RewardType.BUY_X_GET_Y },
-    { label: 'Personalizado', value: RewardType.CUSTOM }
+    // { label: 'Producto gratis', value: RewardType.FREE_PRODUCT }, // TODO: Fix TreeSelect integration
+    // Temporarily removed: BUY_X_GET_Y and CUSTOM
+    // { label: 'Compra X lleva Y', value: RewardType.BUY_X_GET_Y },
+    // { label: 'Personalizado', value: RewardType.CUSTOM }
   ];
 
   isSubmitting = false;
@@ -82,6 +98,103 @@ export class RewardFormComponent implements OnInit, OnChanges {
     if (this.existingReward) {
       this.loadExistingReward(this.existingReward);
     }
+    // Solo cargar si tenantId está disponible y es válido
+    if (this.tenantId && Number(this.tenantId) > 0) {
+      this.loadProductTree(this.tenantId);
+    }
+  }
+
+  /**
+   * Load product tree from backend using CatalogService.
+   * Falls back to mock data if tenantId not provided or request fails.
+   * Prevents duplicate loads for the same tenantId.
+   */
+  private loadProductTree(tenantId?: number): void {
+    // Prevenir cargas duplicadas para el mismo tenantId
+    if (this.isLoadingProducts || this.lastLoadedTenantId === tenantId) {
+      console.debug('[reward-form] Product tree already loaded or loading for tenantId:', tenantId);
+      return;
+    }
+
+    if (tenantId && Number(tenantId) > 0) {
+      this.isLoadingProducts = true;
+      this.lastLoadedTenantId = tenantId;
+      this.catalogService.getCategoriesWithProducts(tenantId).subscribe({
+        next: (categories) => {
+          this.productTree = this.catalogService.mapToTreeNodes(categories);
+          this.isLoadingProducts = false;
+          console.debug('[reward-form] product tree loaded successfully', this.productTree);
+        },
+        error: (err) => {
+          this.isLoadingProducts = false;
+          console.warn('[reward-form] Failed to load product tree from backend, using mock data', err);
+          this.loadMockProductTree();
+        }
+      });
+    } else {
+      this.loadMockProductTree();
+    }
+  }
+
+  // Load simulated categories + products
+  private loadMockProductTree(): void {
+    // Example structure: categories with children products; keys are product IDs
+    // Categories are NOT selectable; only products can be selected
+    this.productTree = [
+    {
+      label: 'Bebidas',
+      key: 'cat-1',
+      selectable: false,
+      children: [
+        { label: 'Café Americano', key: '101', selectable: true },
+        { label: 'Latte', key: '102', selectable: true },
+        { label: 'Cappuccino', key: '103', selectable: true }
+      ]
+    },
+    {
+      label: 'Postres',
+      key: 'cat-2',
+      selectable: false,
+      children: [
+        { label: 'Tarta de Chocolate', key: '201', selectable: true },
+        { label: 'Cheesecake', key: '202', selectable: true }
+      ]
+    },
+    {
+      label: 'Bocadillos',
+      key: 'cat-3',
+      selectable: false,
+      children: [
+        { label: 'Sándwich Club', key: '301', selectable: true },
+        { label: 'Wrap de Pollo', key: '302', selectable: true }
+      ]
+    }
+  ];
+  }
+
+  // Handle selection from TreeSelect: store numeric productId in the form
+  onProductTreeSelect(event: any): void {
+    let val = event;
+    if (event && typeof event === 'object') {
+      val = event.value !== undefined ? event.value : event;
+    }
+
+    // Some TreeSelect payloads provide the node object with `key`, others the raw key value
+    const rawKey = (val && typeof val === 'object' && val.key !== undefined) ? val.key : val;
+
+    // Ensure numeric conversion (handles "55" -> 55)
+    const productId = typeof rawKey === 'number' ? rawKey : Number(rawKey);
+
+    if (!isNaN(productId) && productId > 0) {
+      this.rewardForm.get('productId')?.setValue(productId);
+      // selectionMode="single" expects scalar model value
+      this.selectedProductKey = String(productId);
+      console.log('[RewardForm] Product selected - ID:', productId, 'selectedProductKey:', this.selectedProductKey);
+    } else {
+      this.rewardForm.get('productId')?.setValue(null);
+      this.selectedProductKey = null;
+      console.warn('[RewardForm] Invalid product ID received:', rawKey);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -108,6 +221,9 @@ export class RewardFormComponent implements OnInit, OnChanges {
       minPurchaseAmount: reward.minPurchaseAmount,
       usageLimit: reward.usageLimit
     });
+    if (reward.productId) {
+      this.selectedProductKey = reward.productId.toString();
+    }
   }
 
   private initForm(): void {
@@ -117,21 +233,29 @@ export class RewardFormComponent implements OnInit, OnChanges {
       productId: [null],
       buyQuantity: [null],
       freeQuantity: [null],
-      description: ['', Validators.required],
+      description: ['', [Validators.required, Validators.maxLength(500)]],
       minPurchaseAmount: [null],
-      usageLimit: [null]
+      usageLimit: [1]
     });
   }
 
   private setupFormListeners(): void {
     this.rewardForm.get('rewardType')?.valueChanges.subscribe((type: RewardType) => {
+      console.log('[RewardForm] rewardType changed ->', type, 'typeof:', typeof type);
       this.updateValidators(type);
       this.emitRewardDataIfValid();
+
+      // When FREE_PRODUCT is selected, load the product tree from backend
+      if (type === RewardType.FREE_PRODUCT || String(type) === RewardType.FREE_PRODUCT) {
+        this.loadProductTree(this.tenantId);
+      }
     });
 
-    // Emit changes on any form value change
+    // Emit changes on any form value change (skip if updating validators to avoid infinite loop)
     this.rewardForm.valueChanges.subscribe(() => {
-      this.emitRewardDataIfValid();
+      if (!this.isUpdatingValidators) {
+        this.emitRewardDataIfValid();
+      }
     });
   }
 
@@ -143,45 +267,56 @@ export class RewardFormComponent implements OnInit, OnChanges {
   }
 
   private updateValidators(rewardType: RewardType): void {
-    // Limpiar todos los validadores
-    Object.keys(this.rewardForm.controls).forEach(key => {
-      // Keep description validator globally required; do not clear it here
-      if (key !== 'rewardType' && key !== 'description') {
-        this.rewardForm.get(key)?.clearValidators();
-        this.rewardForm.get(key)?.setValue(null);
-      }
-    });
-
-    // Si es NONE, limpiar también la descripción
-    if (rewardType === RewardType.NONE) {
-      this.rewardForm.get('description')?.clearValidators();
-      this.rewardForm.get('description')?.setValue('Sin beneficio - Solo promoción');
-    } else {
-      // Aplicar validadores según el tipo de reward
-      switch (rewardType) {
-        case RewardType.PERCENT_DISCOUNT:
-          this.rewardForm.get('numericValue')?.setValidators([Validators.required, Validators.min(0), Validators.max(100)]);
-          break;
-        case RewardType.FIXED_AMOUNT:
-          this.rewardForm.get('numericValue')?.setValidators([Validators.required, Validators.min(0)]);
-          break;
-        case RewardType.FREE_PRODUCT:
-          this.rewardForm.get('productId')?.setValidators([Validators.required]);
-          break;
-        case RewardType.BUY_X_GET_Y:
-          this.rewardForm.get('buyQuantity')?.setValidators([Validators.required, Validators.min(1)]);
-          this.rewardForm.get('freeQuantity')?.setValidators([Validators.required, Validators.min(1)]);
-          break;
-        case RewardType.CUSTOM:
-          this.rewardForm.get('description')?.setValidators([Validators.required]);
-          break;
-      }
+    // Prevenir actualizaciones en cascada
+    if (this.isUpdatingValidators) {
+      return;
     }
 
-    // Actualizar el estado de validación
-    Object.keys(this.rewardForm.controls).forEach(key => {
-      this.rewardForm.get(key)?.updateValueAndValidity();
-    });
+    this.isUpdatingValidators = true;
+
+    try {
+      // Limpiar todos los validadores
+      Object.keys(this.rewardForm.controls).forEach(key => {
+        // Keep description validator globally required; do not clear it here
+        if (key !== 'rewardType' && key !== 'description') {
+          this.rewardForm.get(key)?.clearValidators();
+          this.rewardForm.get(key)?.setValue(null, { emitEvent: false });
+        }
+      });
+
+      // Si es NONE, limpiar también la descripción
+      if (rewardType === RewardType.NONE) {
+        this.rewardForm.get('description')?.clearValidators();
+        this.rewardForm.get('description')?.setValue('Sin beneficio - Solo promoción', { emitEvent: false });
+      } else {
+        // Aplicar validadores según el tipo de reward
+        switch (rewardType) {
+          case RewardType.PERCENT_DISCOUNT:
+            this.rewardForm.get('numericValue')?.setValidators([Validators.required, Validators.min(0), Validators.max(100)]);
+            break;
+          case RewardType.FIXED_AMOUNT:
+            this.rewardForm.get('numericValue')?.setValidators([Validators.required, Validators.min(0)]);
+            break;
+          case RewardType.FREE_PRODUCT:
+            this.rewardForm.get('productId')?.setValidators([Validators.required]);
+            break;
+          case RewardType.BUY_X_GET_Y:
+            this.rewardForm.get('buyQuantity')?.setValidators([Validators.required, Validators.min(1)]);
+            this.rewardForm.get('freeQuantity')?.setValidators([Validators.required, Validators.min(1)]);
+            break;
+          case RewardType.CUSTOM:
+            this.rewardForm.get('description')?.setValidators([Validators.required]);
+            break;
+        }
+      }
+
+      // Actualizar el estado de validación sin emitir eventos
+      Object.keys(this.rewardForm.controls).forEach(key => {
+        this.rewardForm.get(key)?.updateValueAndValidity({ emitEvent: false });
+      });
+    } finally {
+      this.isUpdatingValidators = false;
+    }
   }
 
   get selectedRewardType(): RewardType | null {
@@ -332,26 +467,43 @@ this.isSubmitting = true;
       rewardType: formValue.rewardType
     };
 
-    // Agregar campos opcionales solo si tienen valor
-    if (formValue.numericValue !== null && formValue.numericValue !== undefined) {
-      request.numericValue = formValue.numericValue;
-    }
-    if (formValue.productId) {
-      request.productId = formValue.productId;
-    }
-    if (formValue.buyQuantity) {
-      request.buyQuantity = formValue.buyQuantity;
-    }
-    if (formValue.freeQuantity) {
-      request.freeQuantity = formValue.freeQuantity;
-    }
-    if (formValue.customConfig) {
-      request.customConfig = formValue.customConfig;
-    }
-    if (formValue.description) {
+    // Siempre incluir descripción si el tipo no es NONE
+    if (formValue.rewardType !== RewardType.NONE && formValue.description) {
       request.description = formValue.description;
     }
 
+    // Agregar campos según el tipo de reward
+    switch (formValue.rewardType) {
+      case RewardType.PERCENT_DISCOUNT:
+      case RewardType.FIXED_AMOUNT:
+        if (formValue.numericValue !== null && formValue.numericValue !== undefined) {
+          request.numericValue = formValue.numericValue;
+        }
+        break;
+
+      case RewardType.FREE_PRODUCT:
+        if (formValue.productId) {
+          request.productId = formValue.productId;
+        }
+        break;
+
+      case RewardType.BUY_X_GET_Y:
+        if (formValue.buyQuantity) {
+          request.buyQuantity = formValue.buyQuantity;
+        }
+        if (formValue.freeQuantity) {
+          request.freeQuantity = formValue.freeQuantity;
+        }
+        break;
+
+      case RewardType.CUSTOM:
+        if (formValue.customConfig) {
+          request.customConfig = formValue.customConfig;
+        }
+        break;
+    }
+
+    // Agregar campos opcionales comunes
     if (formValue.minPurchaseAmount) {
       request.minPurchaseAmount = formValue.minPurchaseAmount;
     }
@@ -360,6 +512,99 @@ this.isSubmitting = true;
     }
 
     return request;
+  }
+
+  /**
+   * Construye un ConfigureRewardRequest para uso en UpdateCampaignRequest
+   * Este método valida y retorna null si el reward es inválido
+   *
+   * VALIDACIÓN POR TIPO DE REWARD:
+   * - NONE: No se envía reward (null)
+   * - PERCENT_DISCOUNT: numericValue (0-100), description*, minPurchaseAmount, usageLimit
+   * - FIXED_AMOUNT: numericValue (monto), description*, minPurchaseAmount, usageLimit
+   * - FREE_PRODUCT: productId (número), description*, minPurchaseAmount, usageLimit
+   * - BUY_X_GET_Y: buyQuantity, freeQuantity, description*, minPurchaseAmount, usageLimit
+   * - CUSTOM: customConfig, description*, minPurchaseAmount, usageLimit
+   *
+   * (*) description es requerido para todos excepto NONE
+   */
+  public getConfigureRewardRequest(): ConfigureRewardRequest | null {
+    const formValue = this.rewardForm.value;
+
+    // Si es NONE o el form es inválido, retornar null
+    if (formValue.rewardType === RewardType.NONE || this.rewardForm.invalid) {
+      console.log('[RewardForm] getConfigureRewardRequest: returning null - rewardType:', formValue.rewardType, 'isValid:', this.rewardForm.valid);
+      return null;
+    }
+
+    // Base config con campos comunes (description, minPurchaseAmount, usageLimit)
+    const config: ConfigureRewardRequest = {
+      rewardType: formValue.rewardType,
+      description: formValue.description || undefined,
+      minPurchaseAmount: formValue.minPurchaseAmount || undefined,
+      usageLimit: formValue.usageLimit || undefined
+    };
+
+    // Agregar campos específicos según el tipo
+    switch (formValue.rewardType) {
+      case RewardType.PERCENT_DISCOUNT:
+      case 'PERCENT_DISCOUNT':
+        // Validar que numericValue sea un número válido entre 0 y 100
+        if (formValue.numericValue !== null && formValue.numericValue !== undefined) {
+          config.numericValue = Number(formValue.numericValue);
+          console.log('[RewardForm] PERCENT_DISCOUNT - numericValue:', config.numericValue);
+        }
+        break;
+
+      case RewardType.FIXED_AMOUNT:
+      case 'FIXED_AMOUNT':
+        // Validar que numericValue sea un número válido > 0
+        if (formValue.numericValue !== null && formValue.numericValue !== undefined) {
+          config.numericValue = Number(formValue.numericValue);
+          console.log('[RewardForm] FIXED_AMOUNT - numericValue:', config.numericValue);
+        }
+        break;
+
+      case RewardType.FREE_PRODUCT:
+      case 'FREE_PRODUCT':
+        // Validar que productId sea un número válido > 0
+        if (formValue.productId) {
+          // Asegurar que productId sea numérico
+          const productId = typeof formValue.productId === 'number'
+            ? formValue.productId
+            : Number(formValue.productId);
+
+          if (!isNaN(productId) && productId > 0) {
+            config.productId = productId;
+            console.log('[RewardForm] FREE_PRODUCT - productId:', config.productId, 'selectedProductKey:', this.selectedProductKey);
+          } else {
+            console.warn('[RewardForm] FREE_PRODUCT - Invalid productId:', formValue.productId);
+          }
+        }
+        break;
+
+      case RewardType.BUY_X_GET_Y:
+      case 'BUY_X_GET_Y':
+        if (formValue.buyQuantity) {
+          config.buyQuantity = Number(formValue.buyQuantity);
+        }
+        if (formValue.freeQuantity) {
+          config.freeQuantity = Number(formValue.freeQuantity);
+        }
+        console.log('[RewardForm] BUY_X_GET_Y - buyQuantity:', config.buyQuantity, 'freeQuantity:', config.freeQuantity);
+        break;
+
+      case RewardType.CUSTOM:
+      case 'CUSTOM':
+        if (formValue.customConfig) {
+          config.customConfig = formValue.customConfig;
+        }
+        console.log('[RewardForm] CUSTOM - customConfig:', config.customConfig);
+        break;
+    }
+
+    console.log('[RewardForm] Final ConfigureRewardRequest:', config);
+    return config;
   }
 
   onCancel(): void {

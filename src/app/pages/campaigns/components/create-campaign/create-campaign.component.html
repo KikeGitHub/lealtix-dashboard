@@ -126,6 +126,7 @@
                 </div>
               </div>
 
+              <!--
               <div class="field">
                 <label for="imageUrl" class="font-semibold">
                   O ingresa una URL de imagen
@@ -142,6 +143,7 @@
                 />
                 <small class="text-500">Alternativamente, pega la URL directa de tu imagen</small>
               </div>
+              -->
             </div>
 
             <p-divider></p-divider>
@@ -157,7 +159,7 @@
 
               <!-- Resumen del beneficio actual -->
               <div class="field mb-4" *ngIf="isEditMode()">
-                <div class="flex align-items-center justify-content-between p-3 border-round surface-border" style="border: 1px solid var(--surface-border)">
+                <div class="flex align-items-center justify-content-between p-3 border-round surface-border benefit-highlight" style="border: 1px solid var(--surface-border)">
                   <div class="flex align-items-center gap-3">
                     <i class="pi pi-gift text-3xl text-primary"></i>
                     <div>
@@ -175,6 +177,7 @@
               <app-reward-form #rewardFormComp
                 [campaignId]="campaignId() ?? undefined"
                 [existingReward]="currentReward() ?? undefined"
+                [tenantId]="tenantId ?? undefined"
                 (saved)="onRewardSaved($event)"
                 (pending)="onPendingReward($event)"
               ></app-reward-form>

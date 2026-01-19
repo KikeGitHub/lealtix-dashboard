@@ -24,11 +24,12 @@ import { CampaignService } from '@/pages/campaigns/services/campaign.service';
 import { AuthService } from '@/auth/auth.service';
 import { TooltipModule } from 'primeng/tooltip';
 import { PanelModule } from 'primeng/panel';
+import { TouchTooltipDirective } from '@/shared/directives/touch-tooltip.directive';
 
 @Component({
     selector: 'app-landing-editor',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FileUploadModule, InputTextModule, TextareaModule, EditorModule, CardModule, ButtonModule, InputGroupModule, StepperModule, MessageModule, DialogModule, TooltipModule, PanelModule, ConfettiComponent ],
+    imports: [CommonModule, ReactiveFormsModule, FileUploadModule, InputTextModule, TextareaModule, EditorModule, CardModule, ButtonModule, InputGroupModule, StepperModule, MessageModule, DialogModule, TooltipModule, PanelModule, ConfettiComponent, TouchTooltipDirective ],
     templateUrl: './landing-editor.component.html',
     styleUrls: ['./landing-editor.component.scss']
 })

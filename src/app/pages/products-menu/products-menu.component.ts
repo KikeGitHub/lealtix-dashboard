@@ -100,6 +100,9 @@ export class ProductMenuComponent implements OnInit {
         { title: '', description: '', buttonText: '' }
     );
 
+    // Flag set when navigation originated from the side menu (or query param)
+    cameFromMenu: boolean = false;
+
     products = signal<Product[]>([]);
 
     newCategory: { name?: string; description?: string; tenantId?: string; active: boolean } = {
@@ -149,6 +152,10 @@ export class ProductMenuComponent implements OnInit {
     }
 
     ngOnInit() {
+        // detect navigation coming from the lateral menu or a query param
+        const nav = this.router.getCurrentNavigation?.();
+        this.cameFromMenu = Boolean((nav && (nav.extras as any)?.state?.fromMenu) || this.route.snapshot.queryParams['fromMenu'] === 'true');
+
         const userStr = sessionStorage.getItem('usuario') ?? localStorage.getItem('usuario');
         if (userStr) {
             try {
@@ -320,6 +327,12 @@ export class ProductMenuComponent implements OnInit {
             next: (data) => {
                 // Preserve original image URLs (do not modify Cloudinary URLs here)
                 this.products.set(data.object || []);
+                // If we arrived from the side menu and there are no products, open the product creation modal.
+                // Avoid showing when the welcome banner or the first-product congrats dialog is active.
+                const hasProducts = (this.products()?.length ?? 0) > 0;
+                if (!hasProducts && this.cameFromMenu && !this.showWelcomeBanner() && !this.showFirstProductCongrats) {
+                    this.openNew();
+                }
             },
             error: (err) => {
                 console.error('Failed to load products', err);
@@ -763,6 +776,24 @@ export class ProductMenuComponent implements OnInit {
         }
     }
 
+    /**
+     * Retorna la base URL para la landing page usando la configuración de `environment`
+     * Reutiliza la misma lógica que `MiPaginaComponent.getBaseUrl()` para evitar hardcode.
+     */
+    private getBaseUrl(): string {
+        const cfg = environment as { landingPageBaseUrl?: string };
+
+        if (cfg.landingPageBaseUrl && cfg.landingPageBaseUrl.trim() !== '') {
+            return cfg.landingPageBaseUrl.replace(/\/+$/g, '');
+        }
+
+        if (typeof window !== 'undefined' && window.location && window.location.origin) {
+            return `${window.location.origin}/landing-page`;
+        }
+
+        return 'https://lealtix.com.mx/landing-page';
+    }
+
     private navigateToLanding() {
         if (!this.tenantSlug) {
             this.messageService.add({
@@ -774,10 +805,7 @@ export class ProductMenuComponent implements OnInit {
             return;
         }
 
-        // Construir la URL de la landing page basándose en el entorno
-        const baseUrl = environment.production
-            ? 'https://lealtix.com.mx/landing-page'
-            : 'http://localhost:4200/landing-page';
+        const baseUrl = this.getBaseUrl();
         const landingUrl = `${baseUrl}/${this.tenantSlug}`;
         window.open(landingUrl, '_blank');
     }

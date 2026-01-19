@@ -16,6 +16,7 @@ import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TouchTooltipDirective } from '@/shared/directives/touch-tooltip.directive';
 
 import { CampaignResponse } from '@/models/campaign.model';
 import { CampaignTemplate } from '@/models/campaign-template.model';
@@ -42,7 +43,8 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
     DividerModule,
     InputGroupModule,
     InputGroupAddonModule,
-    TooltipModule
+    TooltipModule,
+    TouchTooltipDirective
   ],
   template: `
     <p-dialog
@@ -110,6 +112,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Un mensaje claro y emocional que resalte la propuesta de valor."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo título"
                     ></button>
                   </div>
@@ -149,6 +152,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Añade un contexto breve que apoye al título sin repetirlo."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo subtítulo"
                     ></button>
                   </div>
@@ -172,6 +176,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Explica el beneficio, duración y cómo se entrega la promoción."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo descripción"
                     ></button>
                   </div>
@@ -202,6 +207,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Elige cómo quieres premiar a tu cliente: porcentaje, monto fijo o regalo."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo tipo de promoción"
                     ></button>
                   </div>
@@ -229,6 +235,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Cantidad o porcentaje que se aplicará en la promoción."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo valor de promoción"
                     ></button>
                   </div>
@@ -269,6 +276,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Texto breve que indique la acción que deseas que haga tu cliente."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo call to action"
                     ></button>
                   </div>
@@ -301,6 +309,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Fecha en la que la campaña comenzará a ser visible."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo fecha de inicio"
                     ></button>
                   </div>
@@ -331,6 +340,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Si la campaña termina en una fecha específica, indícala aquí."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo fecha de fin"
                     ></button>
                   </div>
@@ -375,6 +385,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Sepáralos por comas y piensa en dónde interactúa tu audiencia."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo canales"
                     ></button>
                   </div>
@@ -406,6 +417,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                       class="p-button-rounded p-button-sm p-button-text text-primary-600"
                       pTooltip="Describe el perfil al que dedicas esta campaña."
                       tooltipPosition="top"
+                      appTouchTooltip
                       aria-label="Descripción del campo segmentación"
                     ></button>
                   </div>
@@ -435,6 +447,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                     class="p-button-rounded p-button-sm p-button-text text-primary-600"
                     pTooltip="Enlaza una imagen representativa para apoyar la campaña."
                     tooltipPosition="top"
+                    appTouchTooltip
                     aria-label="Descripción del campo URL de imagen"
                   ></button>
                 </div>
@@ -507,6 +520,7 @@ import { DateRangeValidator } from '../../utils/date-range.validator';
                     class="p-button-rounded p-button-sm p-button-text text-primary-600"
                     pTooltip="Actívala para que la plataforma envíe la campaña sin intervención manual."
                     tooltipPosition="top"
+                    appTouchTooltip
                     aria-label="Descripción del campo campaña automática"
                   ></button>
                 </div>

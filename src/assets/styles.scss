@@ -16,10 +16,14 @@
 	color: #D97706 !important; /* slightly darker orange on hover */
 }
 
-/* Generic info icon color across the app */
-i.pi.pi-info-circle {
-	color: #F59E0B; /* soft orange */
-	opacity: 0.95;
+/* Generic info icon color across the app - match PrimeNG look in both light/dark
+	 Target any element with the icon classes (span or i), and button icon variants */
+.pi.pi-info-circle,
+.p-button .pi.pi-info-circle,
+.p-button .p-button-icon.pi-info-circle,
+.p-button-icon.pi-info-circle {
+	color: #F59E0B !important; /* soft orange */
+	opacity: 1 !important;
 }
 
 /* Align info icon to the right within label blocks */
@@ -65,10 +69,14 @@ label.font-semibold .pi.pi-info-circle {
 }
 
 /* Dark mode for standalone info icons */
-:root[class*='app-dark'] i.pi.pi-info-circle,
-.app-dark i.pi.pi-info-circle {
-	color: var(--primary-color, #F59E0B);
-	opacity: 1;
+:root[class*='app-dark'] .pi.pi-info-circle,
+.app-dark .pi.pi-info-circle,
+:root[class*='app-dark'] .p-button .pi.pi-info-circle,
+.app-dark .p-button .pi.pi-info-circle,
+:root[class*='app-dark'] .p-button-icon.pi.pi-info-circle,
+.app-dark .p-button-icon.pi.pi-info-circle {
+	color: var(--primary-color, #F59E0B) !important;
+	opacity: 1 !important;
 }
 
 /* Ensure landing URL label text is visible in dark mode for Mi Página component only */
@@ -83,10 +91,13 @@ label.font-semibold .pi.pi-info-circle {
 /* Mobile / dark-mode safety: ensure info icons/buttons remain visible
 	 Some utility classes may override icon color on small screens; force visibility. */
 @media (max-width: 991px) {
-	:root[class*='app-dark'] i.pi.pi-info-circle,
-	.app-dark i.pi.pi-info-circle,
-	:root[class*='app-dark'] .info-button,
-	.app-dark .info-button,
+	/* mobile safety: ensure info icons are visible in dark mode */
+	:root[class*='app-dark'] .pi.pi-info-circle,
+	.app-dark .pi.pi-info-circle,
+	:root[class*='app-dark'] .p-button .pi.pi-info-circle,
+	.app-dark .p-button .pi.pi-info-circle,
+	:root[class*='app-dark'] .p-button-icon.pi.pi-info-circle,
+	.app-dark .p-button-icon.pi.pi-info-circle,
 	i.pi.pi-info-circle.text-500 {
 		color: var(--primary-color, #F59E0B) !important;
 		opacity: 1 !important;

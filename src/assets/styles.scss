@@ -79,3 +79,49 @@ label.font-semibold .pi.pi-info-circle {
 	background-color: var(--surface-ground, #0b1220) !important;
 	border-color: rgba(255,255,255,0.06) !important;
 }
+
+/* Mobile / dark-mode safety: ensure info icons/buttons remain visible
+	 Some utility classes may override icon color on small screens; force visibility. */
+@media (max-width: 991px) {
+	:root[class*='app-dark'] i.pi.pi-info-circle,
+	.app-dark i.pi.pi-info-circle,
+	:root[class*='app-dark'] .info-button,
+	.app-dark .info-button,
+	i.pi.pi-info-circle.text-500 {
+		color: var(--primary-color, #F59E0B) !important;
+		opacity: 1 !important;
+	}
+}
+
+/* Social icons: use brand colours and ensure contrast across themes */
+.p-inputgroup-addon i[class*='pi-'],
+.preview-label i[class*='pi-'],
+i[class*='pi-']._social-icon {
+	/* default: use text color variable for consistency */
+	color: var(--text-color, #111827) !important;
+	opacity: 1 !important;
+}
+
+/* Specific brand colours */
+i.pi-facebook { color: #1877F2 !important; }
+i.pi-instagram { color: #E1306C !important; }
+i.pi-twitter { color: #1DA1F2 !important; }
+i.pi-youtube { color: #FF0000 !important; }
+i.pi-whatsapp { color: #25D366 !important; }
+
+/* Dark-mode and mobile safety: force visibility for social icons */
+:root[class*='app-dark'] i.pi-facebook,
+.app-dark i.pi-facebook,
+:root[class*='app-dark'] i.pi-instagram,
+.app-dark i.pi-instagram,
+:root[class*='app-dark'] i.pi-twitter,
+.app-dark i.pi-twitter,
+:root[class*='app-dark'] i.pi-youtube,
+.app-dark i.pi-youtube,
+:root[class*='app-dark'] .p-inputgroup-addon i[class*='pi-'],
+.app-dark .p-inputgroup-addon i[class*='pi-'] {
+	opacity: 1 !important;
+}
+
+/* Backward compatibility: small input addon adjustments */
+.p-inputgroup-addon.bg-gray-100 { background-color: var(--surface-card, #fff) !important; }

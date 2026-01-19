@@ -24,7 +24,7 @@ import { TooltipModule } from 'primeng/tooltip';
                 <div class="mb-4">
                     <div class="flex items-center justify-between mb-2">
                         <label class="block font-semibold">Categoria</label>
-                        <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Selecciona la categoría donde quieres ubicar este producto. Si aún no existe, debes crear una nueva categoría." tooltipPosition="top"></button>
+                        <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm" pTooltip="Selecciona la categoría donde quieres ubicar este producto. Si aún no existe, debes crear una nueva categoría." tooltipPosition="top"></button>
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="flex-1">
@@ -47,7 +47,7 @@ import { TooltipModule } from 'primeng/tooltip';
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label for="name" class="block font-medium">Nombre</label>
-                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Nombre corto y claro del producto (ej. Café Americano). Será mostrado a tus clientes." tooltipPosition="top"></button>
+                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm" pTooltip="Nombre corto y claro del producto (ej. Café Americano). Será mostrado a tus clientes." tooltipPosition="top"></button>
                         </div>
                         <input type="text" pInputText id="name" formControlName="name" required autofocus class="w-full" />
                         <p-message *ngIf="productForm.get('name')?.invalid && (productForm.get('name')?.touched || submitted)"
@@ -57,7 +57,7 @@ import { TooltipModule } from 'primeng/tooltip';
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label for="description" class="block font-medium">Descripción</label>
-                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Describe brevemente el producto: ingredientes, tamaño o notas importantes. Esto ayuda a tus clientes a elegir." tooltipPosition="top"></button>
+                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm" pTooltip="Describe brevemente el producto: ingredientes, tamaño o notas importantes. Esto ayuda a tus clientes a elegir." tooltipPosition="top"></button>
                         </div>
                         <textarea id="description" pTextarea formControlName="description" rows="3" class="w-full"></textarea>
                         <p-message *ngIf="productForm.get('description')?.invalid && (productForm.get('description')?.touched || submitted)"
@@ -70,7 +70,7 @@ import { TooltipModule } from 'primeng/tooltip';
                             <div class="flex-1">
                                 <div class="flex items-center justify-between mb-2">
                                     <label for="price" class="block font-medium">Precio</label>
-                                    <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Ingresa el precio en pesos mexicanos. Si el producto tiene variaciones, define el precio base aquí." tooltipPosition="top"></button>
+                                    <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm" pTooltip="Ingresa el precio en pesos mexicanos. Si el producto tiene variaciones, define el precio base aquí." tooltipPosition="top"></button>
                                 </div>
                                 <p-inputnumber id="price" formControlName="price" mode="currency" currency="MXN" locale="en-US" class="w-40" />
                                 <p-message *ngIf="productForm?.get('price')?.invalid && (productForm.get('price')?.touched || submitted)"
@@ -80,7 +80,7 @@ import { TooltipModule } from 'primeng/tooltip';
                             <div class="flex-none flex items-center mt-6 gap-2">
                                 <label for="isActive" class="block font-medium mb-2">Activo</label>
                                 <p-checkbox formControlName="isActive" binary="true" inputId="isActive" (onChange)="onActiveChange($event.checked)"></p-checkbox>
-                                <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Activa para mostrar el producto en el menú. Desactiva si quieres ocultarlo temporalmente." tooltipPosition="top"></button>
+                                <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm" pTooltip="Activa para mostrar el producto en el menú. Desactiva si quieres ocultarlo temporalmente." tooltipPosition="top"></button>
                             </div>
                         </div>
 
@@ -88,7 +88,7 @@ import { TooltipModule } from 'primeng/tooltip';
                         <div class="w-full">
                             <div class="flex items-center justify-between mb-2">
                                 <label class="block font-medium">Imagen (URL o subir)</label>
-                                <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Sube una imagen clara del producto o pega la URL. Recomendado: formato PNG/JPG, máximo 2MB. La imagen ayuda a que los clientes reconozcan el producto." tooltipPosition="top"></button>
+                                <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm" pTooltip="Sube una imagen clara del producto o pega la URL. Recomendado: formato PNG/JPG, máximo 2MB. La imagen ayuda a que los clientes reconozcan el producto." tooltipPosition="top"></button>
                             </div>
                             <div class="flex items-center gap-3">
                                 <p-fileUpload mode="basic" name="productImage" accept="image/*" maxFileSize="2000000"

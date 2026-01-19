@@ -111,6 +111,14 @@ export class ProductMenuComponent implements OnInit {
     };
     campaignSetupPromptCta = 'Crear campaña';
 
+    // Modal para indicar que debe crear productos
+    showProductSetupPrompt: boolean = false;
+    productSetupPromptText = {
+        title: '¡Comienza configurando tu menú!',
+        description: 'Antes de crear promociones, necesitas agregar productos a tu catálogo. Los productos son la base de tus campañas.'
+    };
+    productSetupPromptCta = 'Crear mi primer producto';
+
     products = signal<Product[]>([]);
 
     newCategory: { name?: string; description?: string; tenantId?: string; active: boolean } = {
@@ -336,12 +344,8 @@ export class ProductMenuComponent implements OnInit {
             next: (data) => {
                 // Preserve original image URLs (do not modify Cloudinary URLs here)
                 this.products.set(data.object || []);
-                // If we arrived from the side menu and there are no products, open the product creation modal.
-                // Avoid showing when the welcome banner or the first-product congrats dialog is active.
-                const hasProducts = (this.products()?.length ?? 0) > 0;
-                if (!hasProducts && this.cameFromMenu && !this.showWelcomeBanner() && !this.showFirstProductCongrats) {
-                    this.openNew();
-                }
+                // Check if we should show the product setup prompt
+                this.checkProductSetupPrompt();
             },
             error: (err) => {
                 console.error('Failed to load products', err);
@@ -938,5 +942,28 @@ export class ProductMenuComponent implements OnInit {
     startCampaignConfiguration(): void {
         this.showCampaignSetupPrompt = false;
         this.router.navigate(['/dashboard/campaigns/create']);
+    }
+
+    /**
+     * Verifica si debe mostrar el modal de "crea productos".
+     * Se muestra cuando el usuario entra por primera vez y no hay productos.
+     */
+    private checkProductSetupPrompt(): void {
+        const productCount = this.products()?.length ?? 0;
+        const hasProducts = productCount > 0;
+
+        console.debug('[ProductPrompt][products-menu] hasProducts=', hasProducts);
+
+        // Mostrar modal solo si: NO hay productos y no está el banner de bienvenida activo ni el primer producto activo
+        if (!hasProducts && !this.showWelcomeBanner() && !this.showFirstProductCongrats) {
+            this.showProductSetupPrompt = true;
+        } else {
+            this.showProductSetupPrompt = false;
+        }
+    }
+
+    startProductConfiguration(): void {
+        this.showProductSetupPrompt = false;
+        this.openNew();
     }
 }

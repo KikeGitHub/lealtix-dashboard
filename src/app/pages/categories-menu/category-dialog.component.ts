@@ -34,7 +34,7 @@ import { TooltipModule } from 'primeng/tooltip';
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label for="name" class="block font-medium">Nombre</label>
-                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Escribe un nombre claro y corto para la categoría (ej. Desayunos, Bebidas). Este nombre será visible para los clientes." tooltipPosition="top"></button>
+                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm" pTooltip="Escribe un nombre claro y corto para la categoría (ej. Desayunos, Bebidas). Este nombre será visible para los clientes." tooltipPosition="top"></button>
                         </div>
                         <input type="text" pInputText id="name" formControlName="name" required autofocus class="w-full" />
                         <p-message *ngIf="categoryForm.get('name')?.invalid && (categoryForm.get('name')?.touched || submitted)"
@@ -44,7 +44,7 @@ import { TooltipModule } from 'primeng/tooltip';
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label for="description" class="block font-medium">Descripción</label>
-                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Describe brevemente la categoría y qué tipos de productos incluye. Ayuda a los clientes a entender lo que van a encontrar." tooltipPosition="top"></button>
+                            <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm" pTooltip="Describe brevemente la categoría y qué tipos de productos incluye. Ayuda a los clientes a entender lo que van a encontrar." tooltipPosition="top"></button>
                         </div>
                         <textarea id="description" pTextarea formControlName="description" rows="4" class="w-full"></textarea>
                         <p-message *ngIf="categoryForm.get('description')?.invalid && (categoryForm.get('description')?.touched || submitted)"
@@ -53,7 +53,7 @@ import { TooltipModule } from 'primeng/tooltip';
                         <div class="flex items-center gap-3">
                         <p-checkbox formControlName="active" binary="true" inputId="active"></p-checkbox>
                         <label for="active" class="mb-0">Activo</label>
-                        <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm info-button" pTooltip="Marca como activo para que la categoría esté disponible en el menú. Desactívala si no quieres mostrarla temporalmente." tooltipPosition="top"></button>
+                        <button pButton type="button" icon="pi pi-info-circle" class="p-button-text p-button-plain p-button-sm" pTooltip="Marca como activo para que la categoría esté disponible en el menú. Desactívala si no quieres mostrarla temporalmente." tooltipPosition="top"></button>
                     </div>
                 </form>
             </div>

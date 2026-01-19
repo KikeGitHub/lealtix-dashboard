@@ -103,6 +103,14 @@ export class ProductMenuComponent implements OnInit {
     // Flag set when navigation originated from the side menu (or query param)
     cameFromMenu: boolean = false;
 
+    // Modal para indicar que debe crear una campaña
+    showCampaignSetupPrompt: boolean = false;
+    campaignSetupPromptText = {
+        title: 'Completa tu configuración de promociones',
+        description: 'Has creado tus productos. Ahora configura tus campañas para comenzar a atraer clientes con promociones especiales.'
+    };
+    campaignSetupPromptCta = 'Crear campaña';
+
     products = signal<Product[]>([]);
 
     newCategory: { name?: string; description?: string; tenantId?: string; active: boolean } = {
@@ -169,6 +177,7 @@ export class ProductMenuComponent implements OnInit {
                             this.loadCategories();
                             this.loadProducts();
                             this.checkBannerConditions();
+                            this.checkCampaignSetupPrompt();
 
                             // Check for categoryId query param to auto-open product dialog
                             this.route.queryParams.subscribe(params => {
@@ -890,5 +899,44 @@ export class ProductMenuComponent implements OnInit {
             },
             error: () => { this.router.navigate(['/dashboard/campaigns/create'], { queryParams: { templateId: 1 } }); }
         });
+    }
+
+    /**
+     * Verifica si debe mostrar el modal de "crea una campaña".
+     * Se muestra cuando hay productos pero no hay campañas creadas.
+     */
+    private checkCampaignSetupPrompt(): void {
+        if (this.tenantId === 0) return;
+
+        // Obtener productos y campañas para decidir si mostrar el modal
+        forkJoin({
+            products: this.productService.getProductsByTenantId(this.tenantId),
+            campaigns: this.campaignService.getByBusiness(this.tenantId)
+        }).subscribe({
+            next: ({ products, campaigns }) => {
+                const productCount = Array.isArray(products) ? products.length : (products?.object?.length ?? 0);
+                const hasProducts = productCount > 0;
+                const campaignCount = (campaigns || []).length;
+                const hasCampaigns = campaignCount > 0;
+
+                console.debug('[CampaignPrompt][products-menu] hasProducts=', hasProducts, 'hasCampaigns=', hasCampaigns);
+
+                // Mostrar modal solo si: hay productos, NO hay campañas, y no está el banner de bienvenida activo
+                if (hasProducts && !hasCampaigns && !this.showWelcomeBanner()) {
+                    this.showCampaignSetupPrompt = true;
+                } else {
+                    this.showCampaignSetupPrompt = false;
+                }
+            },
+            error: (err) => {
+                console.warn('[CampaignPrompt][products-menu] error checking campaigns', err);
+                this.showCampaignSetupPrompt = false;
+            }
+        });
+    }
+
+    startCampaignConfiguration(): void {
+        this.showCampaignSetupPrompt = false;
+        this.router.navigate(['/dashboard/campaigns/create']);
     }
 }

@@ -32,7 +32,7 @@
           orientation="vertical"
           [class.mobile-stepper]="isMobile"
           class="responsive-stepper mb-4">
-          <p-step-list>
+          <p-step-list translate="no" class="notranslate">
             <p-step [value]="1">Datos Generales</p-step>
             <p-step [value]="2">Historia y Filosofía</p-step>
             <p-step [value]="3">Información de Contacto</p-step>
@@ -47,8 +47,8 @@
         <!-- Paso 1: Datos Generales -->
   <div *ngSwitchCase="1" class="flex flex-col gap-4">
           <div class="flex flex-col gap-2 mb-2">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" for="logo">Logo del negocio</label>
+              <div class="flex items-center gap-2">
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="logo">Logo del negocio</label>
               <button
                 pButton
                 type="button"
@@ -70,7 +70,7 @@
               chooseIcon="pi pi-upload"
               class="w-full logo-fileupload"
             ></p-fileUpload>
-            <small class="text-500 block mt-2" *ngIf="landingForm.get('logo')?.value && landingForm.get('logo')?.value.name">Archivo: {{ landingForm.get('logo')?.value.name }}</small>
+            <small translate="no" class="text-500 block mt-2 notranslate" *ngIf="landingForm.get('logo')?.value && landingForm.get('logo')?.value.name">Archivo: {{ landingForm.get('logo')?.value.name }}</small>
             <ng-container *ngIf="getLogoPreview()">
               <div class="logo-preview mt-3">
                 <div class="logo-preview__frame">
@@ -81,16 +81,16 @@
                   />
                 </div>
                 <div class="ml-3 text-sm text-gray-600">
-                  <div class="font-medium">Preview del logo</div>
-                  <div class="text-xs text-gray-500">Tu marca se mostrará asi en la pagina web.</div>
+                  <div translate="no" class="font-medium notranslate">Preview del logo</div>
+                  <div translate="no" class="text-xs text-gray-500 notranslate">Tu marca se mostrará asi en la pagina web.</div>
                 </div>
               </div>
             </ng-container>
             <p-message *ngIf="landingForm.get('logo')?.invalid && landingForm.get('logo')?.touched" severity="error" variant="text" size="small">El logo es requerido</p-message>
           </div>
           <div class="flex flex-col gap-2 mb-2">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" for="businessName">Nombre del negocio</label>
+              <div class="flex items-center gap-2">
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="businessName">Nombre del negocio</label>
               <button
                 pButton
                 type="button"
@@ -107,8 +107,8 @@
           </div>
 
           <div class="flex flex-col gap-2 mb-2">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" for="slogan">Eslogan o breve descripción</label>
+              <div class="flex items-center gap-2">
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="slogan">Eslogan o breve descripción</label>
               <button
                 pButton
                 type="button"
@@ -129,8 +129,8 @@
         <!-- Paso 2: Historia y Filosofía -->
         <div *ngSwitchCase="2" class="flex flex-col gap-4">
           <div class="flex flex-col gap-2 mb-2">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" for="history">Historia</label>
+              <div class="flex items-center gap-2">
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="history">Historia</label>
               <button
                 pButton
                 type="button"
@@ -150,8 +150,8 @@
             <p-message *ngIf="landingForm.get('history')?.invalid && landingForm.get('history')?.touched" severity="error" variant="text" size="small">La historia es requerida</p-message>
           </div>
           <div class="flex flex-col gap-2 mb-2">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" for="vision">Visión</label>
+              <div class="flex items-center gap-2">
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="vision">Visión</label>
               <button
                 pButton
                 type="button"
@@ -174,8 +174,8 @@
         <!-- Paso 3: Información de Contacto -->
         <div *ngSwitchCase="3" class="flex flex-col gap-4">
           <div class="flex flex-col gap-2 mb-2">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" for="address">Dirección</label>
+              <div class="flex items-center gap-2">
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="address">Dirección</label>
               <button
                 pButton
                 type="button"
@@ -191,8 +191,8 @@
             <p-message *ngIf="landingForm.get('address')?.invalid && landingForm.get('address')?.touched" severity="error" variant="text" size="small">La dirección es requerida</p-message>
           </div>
           <div class="flex flex-col gap-2 mb-2">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" for="phone">Teléfono</label>
+              <div class="flex items-center gap-2">
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="phone">Teléfono</label>
               <button
                 pButton
                 type="button"
@@ -208,8 +208,8 @@
             <p-message *ngIf="landingForm.get('phone')?.invalid && landingForm.get('phone')?.touched" severity="error" variant="text" size="small">El teléfono es requerido</p-message>
           </div>
           <div class="flex flex-col gap-2 mb-2">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" for="email">Bussines Email</label>
+              <div class="flex items-center gap-2">
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="email">Bussines Email</label>
               <button
                 pButton
                 type="button"
@@ -225,8 +225,8 @@
             <p-message *ngIf="landingForm.get('email')?.invalid && landingForm.get('email')?.touched" severity="error" variant="text" size="small">Email inválido o requerido</p-message>
           </div>
           <div class="flex flex-col gap-2">
-            <div class="flex items-center gap-2">
-              <label class="font-semibold text-gray-800" for="schedule">Horarios <span translate="no" class="text-red-500">*</span></label>
+              <div class="flex items-center gap-2">
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="schedule">Horarios <span translate="no" class="text-red-500">*</span></label>
               <button
                 pButton
                 type="button"
@@ -254,7 +254,7 @@ Sábados y Domingos de 9:00 a 18:00 Hrs."
             <!-- Temporalmente ocultamos LinkedIn -->
             <div class="flex flex-col gap-2" *ngIf="social.control !== 'linkedin'">
               <div class="flex items-center gap-2">
-                <label class="font-semibold text-gray-800" [for]="social.control">{{social.name}}</label>
+                <label translate="no" class="font-semibold text-gray-800 notranslate" [for]="social.control">{{social.name}}</label>
                 <button
                   pButton
                   type="button"
@@ -268,7 +268,7 @@ Sábados y Domingos de 9:00 a 18:00 Hrs."
               </div>
               <div class="p-inputgroup">
                 <span translate="no" class="p-inputgroup-addon bg-gray-100 rounded-l mr-4"><i [class]="social.icon"></i></span>
-                <input pInputText [id]="social.control" [formControlName]="social.control" placeholder="{{social.name}}" class="rounded-r border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" />
+                <input translate="no" class="notranslate rounded-r border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition text-gray-900" pInputText [id]="social.control" [formControlName]="social.control" placeholder="{{social.name}}" />
               </div>
             </div>
           </ng-container>
@@ -283,12 +283,12 @@ Sábados y Domingos de 9:00 a 18:00 Hrs."
                 <img [src]="getLogoPreview()" alt="Logo" class="preview-logo" />
               </div>
               <div class="preview-field">
-                <label class="preview-label">Nombre del Negocio</label>
-                <p class="preview-value">{{landingForm.value.businessName || '—'}}</p>
+                <label translate="no" class="preview-label notranslate">Nombre del Negocio</label>
+                <p translate="no" class="preview-value notranslate">{{landingForm.value.businessName || '—'}}</p>
               </div>
               <div class="preview-field">
-                <label class="preview-label">Eslogan</label>
-                <p class="preview-value">{{landingForm.value.slogan || '—'}}</p>
+                <label translate="no" class="preview-label notranslate">Eslogan</label>
+                <p translate="no" class="preview-value notranslate">{{landingForm.value.slogan || '—'}}</p>
               </div>
             </div>
           </p-panel>
@@ -297,7 +297,7 @@ Sábados y Domingos de 9:00 a 18:00 Hrs."
           <p-panel header="Historia y Filosofía" [toggleable]="false">
             <div class="preview-section">
               <div class="preview-field">
-                <label class="preview-label">Historia</label>
+                <label translate="no" class="preview-label notranslate">Historia</label>
                 <div *ngIf="landingForm.value.history; else historyPlaceholder">
                   <p class="preview-text" [innerHTML]="landingForm.value.history"></p>
                 </div>
@@ -306,7 +306,7 @@ Sábados y Domingos de 9:00 a 18:00 Hrs."
                 </ng-template>
               </div>
               <div class="preview-field">
-                <label class="preview-label">Visión</label>
+                <label translate="no" class="preview-label notranslate">Visión</label>
                 <div *ngIf="landingForm.value.vision; else visionPlaceholder">
                   <p class="preview-text" [innerHTML]="landingForm.value.vision"></p>
                 </div>
@@ -321,20 +321,20 @@ Sábados y Domingos de 9:00 a 18:00 Hrs."
           <p-panel header="Información de Contacto" [toggleable]="false">
             <div class="preview-section">
               <div class="preview-field">
-                <label class="preview-label">Dirección</label>
-                <p class="preview-value">{{landingForm.value.address || '—'}}</p>
+                <label translate="no" class="preview-label notranslate">Dirección</label>
+                <p translate="no" class="preview-value notranslate">{{landingForm.value.address || '—'}}</p>
               </div>
               <div class="preview-field">
-                <label class="preview-label">Teléfono</label>
-                <p class="preview-value">{{landingForm.value.phone || '—'}}</p>
+                <label translate="no" class="preview-label notranslate">Teléfono</label>
+                <p translate="no" class="preview-value notranslate">{{landingForm.value.phone || '—'}}</p>
               </div>
               <div class="preview-field">
-                <label class="preview-label">Email</label>
-                <p class="preview-value">{{landingForm.value.email || '—'}}</p>
+                <label translate="no" class="preview-label notranslate">Email</label>
+                <p translate="no" class="preview-value notranslate">{{landingForm.value.email || '—'}}</p>
               </div>
               <div class="preview-field">
-                <label class="preview-label">Horarios de Atención</label>
-                <p class="preview-value" style="white-space: pre-line;">{{landingForm.value.schedule || '—'}}</p>
+                <label translate="no" class="preview-label notranslate">Horarios de Atención</label>
+                <p translate="no" class="preview-value notranslate" style="white-space: pre-line;">{{landingForm.value.schedule || '—'}}</p>
               </div>
             </div>
           </p-panel>
@@ -343,10 +343,10 @@ Sábados y Domingos de 9:00 a 18:00 Hrs."
           <p-panel header="Redes Sociales" [toggleable]="false">
             <div class="preview-section">
               <div *ngFor="let social of socialPlatforms" class="preview-field">
-                <label class="preview-label">
+                <label translate="no" class="preview-label notranslate">
                   <i [class]="social.icon" class="mr-2"></i><span class="notranslate" translate="no">{{social.name}}</span>
                 </label>
-                <p class="preview-value" style="word-break: break-all;">{{landingForm.value[social.control] || '—'}}</p>
+                <p translate="no" class="preview-value notranslate" style="word-break: break-all;">{{landingForm.value[social.control] || '—'}}</p>
               </div>
             </div>
           </p-panel>

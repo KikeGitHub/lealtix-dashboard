@@ -432,6 +432,37 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
    * Ejecuta la redención del cupón
    */
   private redeemCoupon(): void {
+    // Validaciones previas: asegurar que el monto ingresado es válido
+    const amount = Number(this.originalAmount);
+    const minAmount = Number(this.minRedemptionAmount || this.validationData?.minPurchaseAmount || 0);
+
+    if (isNaN(amount) || amount <= 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Monto inválido',
+        detail: 'Por favor ingresa un monto de compra válido',
+        life: 4000
+      });
+      // Mantener la vista en estado válido y reabrir diálogo si corresponde
+      this.isRedeeming = false;
+      this.pageState = 'valid';
+      this.showAmountDialog = true;
+      return;
+    }
+
+    if (amount < minAmount) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Monto insuficiente',
+        detail: `Este cupón requiere una compra mínima de $${minAmount.toFixed(2)}`,
+        life: 4000
+      });
+      this.isRedeeming = false;
+      this.pageState = 'valid';
+      this.showAmountDialog = true;
+      return;
+    }
+
     this.isRedeeming = true;
     this.pageState = 'redeeming';
     // Obtener información del usuario actual usando el método genérico

@@ -323,6 +323,14 @@ export class RewardFormComponent implements OnInit, OnChanges {
     return this.rewardForm.get('rewardType')?.value;
   }
 
+  /**
+   * Método público para obtener el rewardType seleccionado actualmente
+   * Útil para obtener el valor incluso cuando es NONE (que no retorna reward data)
+   */
+  public getSelectedRewardType(): RewardType | null {
+    return this.rewardForm.get('rewardType')?.value;
+  }
+
   get showNumericValue(): boolean {
     return this.selectedRewardType === RewardType.PERCENT_DISCOUNT ||
            this.selectedRewardType === RewardType.FIXED_AMOUNT;

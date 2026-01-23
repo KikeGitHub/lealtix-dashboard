@@ -25,7 +25,7 @@ import { ToastModule } from 'primeng/toast';
 // Models and Services
 import { CampaignTemplate } from '@/models/campaign-template.model';
 import { CreateCampaignRequest } from '@/models/campaign.model';
-import { PromoType } from '@/models/enums';
+import { PromoType, RewardType } from '@/models/enums';
 import { CampaignFormModel, TemplateField, CampaignPreviewData } from '../../models/create-campaign.models';
 import { RewardResponse, CreateRewardRequest } from '../../models/reward.model';
 import { ConfigureRewardRequest } from '@/models/update-campaign-request';
@@ -316,7 +316,7 @@ export class CreateCampaignComponent implements OnInit {
     this.campaignForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
       subtitle: [''],
-      description: ['', Validators.required],
+      description: [''],
       imageUrl: [''],
       promoType: [''],
       promoValue: [''],
@@ -445,18 +445,27 @@ export class CreateCampaignComponent implements OnInit {
 
   /**
    * Método principal para guardar o actualizar campaña
-   * - Modo creación: siempre guarda como DRAFT
-   * - Modo edición: actualiza la campaña con el estado seleccionado
+   * - Modo creación: siempre guarda como DRAFT con validación mínima
+   * - Modo edición: actualiza la campaña con validación de campos esenciales (permite sin beneficio)
    */
   saveOrUpdate(): void {
     if (this.isEditMode()) {
-      // Modo edición: validar formulario completo
-      if (this.campaignForm.invalid) {
-        this.campaignForm.markAllAsTouched();
+      // Modo edición: validar únicamente campos esenciales para permitir "Sin beneficio (Solo promoción)"
+      const titleControl = this.campaignForm.get('title');
+      const startControl = this.campaignForm.get('startDate');
+      const endControl = this.campaignForm.get('endDate');
+
+      const titleValid = !!titleControl?.value && titleControl.value.trim().length >= 3;
+      const datesValid = !!startControl?.value && !!endControl?.value;
+
+      if (!titleValid || !datesValid) {
+        titleControl?.markAsTouched();
+        startControl?.markAsTouched();
+        endControl?.markAsTouched();
         this.messageService.add({
           severity: 'warn',
           summary: 'Formulario inválido',
-          detail: 'Por favor, completa todos los campos requeridos'
+          detail: 'Por favor, completa los campos requeridos (título y fechas)'
         });
         return;
       }
@@ -519,12 +528,26 @@ export class CreateCampaignComponent implements OnInit {
     }
 
     const formValue = this.campaignForm.value;
+
+    // Obtener el rewardType seleccionado actualmente usando el nuevo método
+    const selectedRewardType = this.rewardFormComp?.getSelectedRewardType?.();
+    const rewardFromForm = this.rewardFormComp?.getConfigureRewardRequest?.();
+    const existingReward = this.currentReward();
+
+    // Determinar promoType basado en el rewardType seleccionado
+    let promoType = formValue.promoType;
+
+    if (selectedRewardType === RewardType.NONE) {
+      // Si es "Ninguno (solo promoción)", enviar 'NONE' como promoType
+      promoType = 'NONE';
+    }
+
     const updateRequest = {
       title: formValue.title,
       subtitle: formValue.subtitle,
       description: formValue.description,
       imageUrl: this.uploadedImageUrl() || formValue.imageUrl,
-      promoType: formValue.promoType,
+      promoType: promoType,
       promoValue: formValue.promoValue,
       startDate: this.formatDateForBackend(formValue.startDate),
       endDate: this.formatDateForBackend(formValue.endDate),
@@ -535,19 +558,17 @@ export class CreateCampaignComponent implements OnInit {
       status: formValue.status
     };
 
-    // Incluir reward directamente en el payload si hay datos en el formulario o existe uno previo
-    const rewardFromForm = this.rewardFormComp?.getConfigureRewardRequest?.();
-    const existingReward = this.currentReward();
-
-
-    if (rewardFromForm) {
-      // Also include the UI key if present (selectedProductKey) to ensure product selection is preserved
+    // Incluir reward solo si no es NONE
+    if (selectedRewardType === RewardType.NONE) {
+      // No incluir reward en el payload cuando es NONE
+      console.log('[Campaign] Updating campaign with NONE reward type - no reward payload');
+    } else if (rewardFromForm) {
+      // Incluir reward directamente en el payload si hay datos en el formulario
       const selectedKey = (this.rewardFormComp as any)?.selectedProductKey;
       const descFromForm = (this.rewardFormComp as any)?.rewardForm?.get('description')?.value;
       const rewardPayload: any = { ...rewardFromForm };
       if (selectedKey !== undefined && selectedKey !== null) {
         rewardPayload.selectedProductKey = selectedKey;
-        // if productId missing, try to coerce from selectedKey
         if (!rewardPayload.productId) {
           const asNum = Number(selectedKey);
           if (!isNaN(asNum)) rewardPayload.productId = asNum;
@@ -558,6 +579,7 @@ export class CreateCampaignComponent implements OnInit {
       }
       (updateRequest as any).reward = rewardPayload as any;
     } else if (existingReward) {
+      // Si hay reward existente y no es NONE (primera condición lo descartó), incluirlo
       const rewardPayload: any = {
         rewardType: existingReward.rewardType,
         numericValue: existingReward.numericValue,
@@ -583,9 +605,13 @@ export class CreateCampaignComponent implements OnInit {
             summary: 'Éxito',
             detail: 'Campaña actualizada correctamente'
           });
-          // Si el backend procesó la actualización correctamente, confirmar al usuario
           this.saving.set(false);
           this.campaignSaved.set(true);
+
+          // Navegar de vuelta a la lista de campañas después de actualizar
+          setTimeout(() => {
+            this.router.navigate(['/dashboard/campaigns']);
+          }, 1500);
         },
         error: (err) => {
           console.error('[Campaign] Error actualizando campaña:', err);

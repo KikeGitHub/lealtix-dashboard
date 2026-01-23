@@ -461,8 +461,8 @@
       <p-inputNumber
         id="originalAmount"
         [(ngModel)]="originalAmount"
-        mode="currency"
-        currency="MXN"
+        mode="decimal"
+        prefix="$"
         locale="es-MX"
         [minFractionDigits]="2"
         [maxFractionDigits]="2"
@@ -470,13 +470,13 @@
         styleClass="w-full"
         inputStyleClass="w-full">
       </p-inputNumber>
-      <small class="text-red-600 mt-2 block" *ngIf="originalAmount > 0 && originalAmount < minRedemptionAmount">
+      <small class="text-red-600 mt-2 block" *ngIf="(originalAmount ?? 0) > 0 && (originalAmount ?? 0) < minRedemptionAmount">
         <i class="pi pi-exclamation-triangle"></i>
         El monto debe ser al menos ${{ minRedemptionAmount.toFixed(2) }} para usar este cupón
       </small>
     </div>
 
-    <div class="preview-info" *ngIf="originalAmount >= minRedemptionAmount && rewardData">
+    <div class="preview-info" *ngIf="(originalAmount ?? 0) >= minRedemptionAmount && rewardData">
       <p-divider></p-divider>
       <div class="preview-row">
         <span class="preview-label">Tipo de descuento:</span>
@@ -492,22 +492,22 @@
       <div class="preview-row">
         <span class="preview-label">Descuento aplicado:</span>
         <span class="preview-value discount-preview">
-          <span *ngIf="rewardData.rewardType === 'PERCENT_DISCOUNT'">
-            -${{ (originalAmount * rewardData.numericValue / 100).toFixed(2) }}
+            <span *ngIf="rewardData.rewardType === 'PERCENT_DISCOUNT'">
+            -${{ ((originalAmount ?? 0) * rewardData.numericValue / 100).toFixed(2) }}
           </span>
           <span *ngIf="rewardData.rewardType === 'FIXED_AMOUNT'">
-            -${{ Math.min(rewardData.numericValue, originalAmount).toFixed(2) }}
+            -${{ Math.min(rewardData.numericValue, (originalAmount ?? 0)).toFixed(2) }}
           </span>
         </span>
       </div>
       <div class="preview-row final">
         <span class="preview-label"><strong>Total a pagar:</strong></span>
         <span class="preview-value final-preview">
-          <span *ngIf="rewardData.rewardType === 'PERCENT_DISCOUNT'">
-            <strong>${{ (originalAmount - (originalAmount * rewardData.numericValue / 100)).toFixed(2) }}</strong>
+            <span *ngIf="rewardData.rewardType === 'PERCENT_DISCOUNT'">
+            <strong>${{ ((originalAmount ?? 0) - ((originalAmount ?? 0) * rewardData.numericValue / 100)).toFixed(2) }}</strong>
           </span>
           <span *ngIf="rewardData.rewardType === 'FIXED_AMOUNT'">
-            <strong>${{ (originalAmount - Math.min(rewardData.numericValue, originalAmount)).toFixed(2) }}</strong>
+            <strong>${{ ((originalAmount ?? 0) - Math.min(rewardData.numericValue, (originalAmount ?? 0))).toFixed(2) }}</strong>
           </span>
         </span>
       </div>

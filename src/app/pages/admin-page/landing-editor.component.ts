@@ -76,7 +76,7 @@ export class LandingEditorComponent implements OnInit {
         this.landingForm = this.fb.group({
             logo: [null],
             businessName: ['', Validators.required],
-            slogan: ['', Validators.required],
+            slogan: [''],
             history: ['', Validators.required],
             vision: ['', Validators.required],
             address: ['', Validators.required],

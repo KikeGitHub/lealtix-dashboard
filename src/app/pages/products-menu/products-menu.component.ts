@@ -160,7 +160,7 @@ export class ProductMenuComponent implements OnInit {
         this.productForm = this.fb.group({
             id: [null],
             name: ['', Validators.required],
-            description: ['', Validators.required],
+            description: [''],
             price: [null, Validators.required],
             img_url: [''],
             productImage: [null], // store actual File/Blob for upload
@@ -332,10 +332,10 @@ export class ProductMenuComponent implements OnInit {
 
         const filename = `lealtix_plantilla_menu_productos_${slug}.csv`;
 
-        // CSV content with proper headers
-        const csvContent = `Categoria,Descripcion categoria,Nombre Producto,Descripcion Producto,Precio,Estatus
-,,,,
-,,,,`;
+        // CSV content with proper headers (without 'Estatus')
+        const csvContent = `Categoria,Descripcion categoria,Nombre Producto,Descripcion Producto,Precio
+    ,,,,
+    ,,,,`;
 
         // Create CSV blob with UTF-8 BOM for Excel compatibility
         const BOM = '\uFEFF';
@@ -441,7 +441,7 @@ export class ProductMenuComponent implements OnInit {
             return;
         }
 
-        const expectedColumns = ['Categoria', 'Descripcion categoria', 'Nombre Producto', 'Descripcion Producto', 'Precio', 'Estatus'];
+        const expectedColumns = ['Categoria', 'Descripcion categoria', 'Nombre Producto', 'Descripcion Producto', 'Precio'];
 
         const firstRow = rows[0];
         if (!firstRow) {
@@ -575,6 +575,11 @@ export class ProductMenuComponent implements OnInit {
             this.stopLoading();
             return;
         }
+
+        // Ensure `isActive` is always true by default for each product
+        productsToCreate.forEach(p => {
+            p.isActive = true;
+        });
 
         const payload = {
             tenantId: this.tenantId,

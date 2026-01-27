@@ -219,25 +219,13 @@
 
         <div class="flex gap-2 flex-wrap">
           <a
-            routerLink="/dashboard/menu-print"
+            routerLink="/dashboard/menu-classic-print"
             class="p-button p-button-primary p-component"
             style="text-decoration: none;"
           >
             <i class="pi pi-print mr-2"></i>
             <span>Ver Menú para Imprimir</span>
           </a>
-
-          <button
-            type="button"
-            pButton
-            label="Exportar PDF Directo"
-            icon="pi pi-file-pdf"
-            severity="danger"
-            class="p-button-outlined"
-            (click)="navigateToMenuPrintAndExport()"
-            pTooltip="Exporta el menú a PDF automáticamente"
-            tooltipPosition="top"
-          ></button>
         </div>
 
         <small class="block" style="color: #94a3b8;">

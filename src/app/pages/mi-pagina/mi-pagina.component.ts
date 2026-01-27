@@ -290,15 +290,17 @@ export class MiPaginaComponent implements OnInit {
   /**
    * Navega a la vista de menú imprimible
    */
+
   navigateToMenuPrint(): void {
-    this.router.navigate(['/dashboard/menu-print']);
+    this.router.navigate(['/dashboard/menu-classic-print']);
   }
 
   /**
    * Navega a la vista de menú imprimible y activa la exportación automática
    */
+
   navigateToMenuPrintAndExport(): void {
-    this.router.navigate(['/dashboard/menu-print'], {
+    this.router.navigate(['/dashboard/menu-classic-print'], {
       state: { autoExport: true }
     });
   }

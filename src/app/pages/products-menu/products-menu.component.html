@@ -22,16 +22,105 @@
 </div>
 
 <p-toolbar styleClass="mb-6">
-    <ng-template #start>
-        <p-button label="Nuevo Producto" icon="pi pi-plus" severity="secondary" class="mr-2" styleClass="text-sm p-button-sm" (onClick)="openNew()" />
+    <ng-template pTemplate="start">
+        <p-button label="Nuevo Producto" icon="pi pi-plus" severity="secondary" class="mr-2" styleClass="text-sm p-button-sm" (onClick)="openNew()"></p-button>
         <p-button severity="secondary" label="Borrar" icon="pi pi-trash" outlined (onClick)="deleteSelectedProducts()"
-            [disabled]="!selectedProducts || !selectedProducts.length" />
+            [disabled]="!selectedProducts || !selectedProducts.length" styleClass="text-sm p-button-sm"></p-button>
     </ng-template>
-
-
+    <ng-template pTemplate="end">
+        <p-button label="Cargar Menú" icon="pi pi-file-excel" severity="secondary" styleClass="text-sm p-button-sm" (onClick)="uploadMenu()"></p-button>
+    </ng-template>
 </p-toolbar>
 
-<!-- Global loading overlay -->
+<p-dialog
+    [(visible)]="uploadDialogVisible"
+    [modal]="true"
+    [style]="{ width: '56rem' }"
+    [contentStyle]="{ 'padding': '0' }"
+    [dismissableMask]="true"
+    (onHide)="uploadDialogVisible = false">
+
+    <ng-template pTemplate="header">
+        <div class="flex align-items-center gap-3">
+            <i class="pi pi-upload text-2xl text-primary"></i>
+            <div>
+                <h2 class="m-0 text-xl font-semibold">Carga masiva de productos</h2>
+                <p class="text-sm text-600 m-0 mt-1">Descarga la plantilla, compĺétala y carga el archivo</p>
+            </div>
+        </div>
+    </ng-template>
+
+    <div class="p-5">
+        <!-- Paso 1: Descargar plantilla -->
+        <div class="surface-card border-round-lg p-4 mb-3 upload-step-card">
+            <div class="flex align-items-center gap-3 mb-3">
+                <div class="flex align-items-center justify-content-center border-circle bg-blue-100 flex-shrink-0"
+                     style="width:2.5rem;height:2.5rem;">
+                    <i class="pi pi-download text-lg text-blue-600"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold mb-1 text-900">1. Descarga la plantilla</h3>
+                    <p class="text-sm text-600 m-0">Formato oficial con las columnas necesarias</p>
+                </div>
+            </div>
+            <p-button
+                label="Descargar Plantilla"
+                icon="pi pi-download"
+                (onClick)="downloadMenuTemplate()"
+                severity="primary"
+                styleClass="w-full"></p-button>
+        </div>
+
+        <!-- Paso 2: Cargar archivo -->
+        <div class="surface-card border-round-lg p-4 upload-step-card">
+            <div class="flex align-items-center gap-3 mb-3">
+                <div class="flex align-items-center justify-content-center border-circle bg-green-100 flex-shrink-0"
+                     style="width:2.5rem;height:2.5rem;">
+                    <i class="pi pi-cloud-upload text-lg text-green-600"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold mb-1 text-900">2. Carga tu archivo</h3>
+                    <p class="text-sm text-600 m-0">Selecciona el archivo Excel que completaste</p>
+                </div>
+            </div>
+
+            <label class="p-button p-component p-button-outlined p-button-success w-full mb-3"
+                   for="menuExcelInput"
+                   style="cursor:pointer; justify-content:center;">
+                <span class="p-button-icon pi pi-upload"></span>
+                <span class="p-button-label ml-2">Seleccionar Archivo</span>
+            </label>
+            <input id="menuExcelInput" type="file" style="display:none;" accept=".xlsx,.csv" (change)="importProductsFromFile($event)">
+
+            <div class="mb-3" *ngIf="selectedTemplateFileName">
+                <div class="bg-green-50 border-1 border-green-300 border-round p-3">
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-check-circle text-green-600 text-xl"></i>
+                        <div class="flex-1">
+                            <div class="font-semibold text-900 text-sm">{{ selectedTemplateFileName }}</div>
+                            <div class="text-xs text-600">Listo para importar</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p-button
+                label="Importar Productos"
+                icon="pi pi-check"
+                severity="success"
+                [disabled]="!selectedTemplateFileName"
+                (onClick)="processImportedFile()"
+                styleClass="w-full"></p-button>
+
+            <div class="mt-3 text-xs text-600">
+                <div class="flex align-items-center gap-2 mb-1">
+                    <i class="pi pi-info-circle"></i>
+                    <span>Formatos aceptados: .xlsx, .csv</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</p-dialog>
 <div class="global-loading-overlay" *ngIf="loading">
     <div class="global-loading-backdrop"></div>
     <div class="global-loading-spinner">

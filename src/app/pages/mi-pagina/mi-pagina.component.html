@@ -199,6 +199,54 @@
     </p-card>
   </div>
 
+  <!-- Sección Menú Imprimible -->
+  <div class="mb-4" *ngIf="isPublished()">
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="px-3 pt-3 pb-2">
+          <h3 class="m-0 flex align-items-center gap-2 font-semibold">
+            <i class="pi pi-file-pdf text-primary"></i>
+            Menú Imprimible
+          </h3>
+        </div>
+      </ng-template>
+
+      <div class="flex flex-column gap-3">
+        <p class="m-0" style="color: #64748b;">
+          <i class="pi pi-info-circle mr-2"></i>
+          Genera una versión imprimible de tu menú completo con todos tus productos y categorías.
+        </p>
+
+        <div class="flex gap-2 flex-wrap">
+          <a
+            routerLink="/dashboard/menu-print"
+            class="p-button p-button-primary p-component"
+            style="text-decoration: none;"
+          >
+            <i class="pi pi-print mr-2"></i>
+            <span>Ver Menú para Imprimir</span>
+          </a>
+
+          <button
+            type="button"
+            pButton
+            label="Exportar PDF Directo"
+            icon="pi pi-file-pdf"
+            severity="danger"
+            class="p-button-outlined"
+            (click)="navigateToMenuPrintAndExport()"
+            pTooltip="Exporta el menú a PDF automáticamente"
+            tooltipPosition="top"
+          ></button>
+        </div>
+
+        <small class="block" style="color: #94a3b8;">
+          💡 <strong>Consejo:</strong> El menú imprimible incluye todas tus categorías y productos activos con sus imágenes, descripciones y precios.
+        </small>
+      </div>
+    </p-card>
+  </div>
+
   <!-- Información adicional -->
   <div class="grid" *ngIf="!isPublished()">
     <div class="col-12 mt-3">

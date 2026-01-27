@@ -117,7 +117,7 @@ export class CategoriesMenuComponent implements OnInit {
         this.categoryForm = this.fb.group({
             id: [null],
             name: ['', Validators.required],
-            description: ['', Validators.required],
+            description: [''],
             tenantId: [this.tenantId],
             active: [true],
             displayOrder: [null]

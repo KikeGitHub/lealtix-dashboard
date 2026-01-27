@@ -34,8 +34,11 @@
       <div class="header-container">
         <!-- Logo y nombre del negocio -->
         <div class="header-left">
-          <div class="logo-wrapper" *ngIf="tenantLogoUrl()">
-            <img [src]="tenantLogoUrl()" [alt]="tenantName()" class="business-logo">
+          <div class="logo-wrapper">
+            <img *ngIf="tenantLogoUrl(); else logoPlaceholder" [src]="tenantLogoUrl()" [alt]="tenantName()" class="business-logo">
+            <ng-template #logoPlaceholder>
+              <div class="logo-placeholder">{{ tenantInitials() }}</div>
+            </ng-template>
           </div>
           <div class="business-info">
             <h1 class="business-name">{{ tenantName() }}</h1>

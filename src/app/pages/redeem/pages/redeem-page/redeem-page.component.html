@@ -525,7 +525,7 @@
       label="Continuar"
       icon="pi pi-check"
       (onClick)="confirmRedemption()"
-      [disabled]="originalAmount < minRedemptionAmount">
+      [disabled]="(originalAmount ?? 0) < minRedemptionAmount">
     </p-button>
   </ng-template>
 </p-dialog>

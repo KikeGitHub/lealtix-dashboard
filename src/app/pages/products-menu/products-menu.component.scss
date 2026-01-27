@@ -66,3 +66,14 @@
   width: 64px;
   height: 64px;
 }
+
+/* Upload modal step cards styling */
+.upload-step-card {
+  border: 1px solid var(--surface-300);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--primary-300);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+}

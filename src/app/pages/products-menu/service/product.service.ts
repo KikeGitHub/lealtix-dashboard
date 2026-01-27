@@ -30,6 +30,8 @@ export class ProductService {
       private apiUrlCreateProduct = `${environment.apiUrl}/tenant-menu-products`;
       private apiUrlProductsByTenant = `${environment.apiUrl}/tenant-menu-products/tenant`;
       private apiURLDeleteProduct = `${environment.apiUrl}/tenant-menu-products`;
+      private apiUrlBulkProducts = `${environment.apiUrl}/tenant-menu-products/bulk`;
+      private apiUrlSearchCategory = `${environment.apiUrl}/tenant-menu-categories/search`;
 
 
     getCategoriesByTenantId(tenantId: number) {
@@ -50,6 +52,14 @@ export class ProductService {
 
     deleteProductById(productId: number) {
         return this.http.delete<any>(`${this.apiURLDeleteProduct}/${productId}`);
+    }
+
+    searchCategoryByName(tenantId: number, nombre: string) {
+        return this.http.get<any>(`${this.apiUrlSearchCategory}?tenantId=${tenantId}&nombre=${encodeURIComponent(nombre)}`);
+    }
+
+    bulkCreateProducts(payload: any) {
+        return this.http.post<any>(`${this.apiUrlBulkProducts}`, payload);
     }
 
     status: string[] = ['ACTIVO', 'INACTIVO'];

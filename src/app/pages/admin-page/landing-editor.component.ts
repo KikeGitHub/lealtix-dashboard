@@ -74,14 +74,14 @@ export class LandingEditorComponent implements OnInit {
         private authService: AuthService
     ) {
         this.landingForm = this.fb.group({
-            logo: [null, Validators.required],
+            logo: [null],
             businessName: ['', Validators.required],
             slogan: ['', Validators.required],
             history: ['', Validators.required],
             vision: ['', Validators.required],
             address: ['', Validators.required],
             phone: ['', Validators.required],
-            email: ['', [Validators.required, Validators.email]],
+            email: ['', [Validators.email]],
             schedule: ['', Validators.required],
             facebook: [''],
             instagram: [''],
@@ -90,6 +90,18 @@ export class LandingEditorComponent implements OnInit {
             x: ['']
         });
 
+    }
+
+    // Utility: detecta si un control tiene el validador 'required'
+    isRequired(controlName: string): boolean {
+        try {
+            const ctrl = this.landingForm.get(controlName);
+            if (!ctrl || !ctrl.validator) return false;
+            const res = ctrl.validator({} as any);
+            return !!(res && (res['required'] || res['requiredTrue']));
+        } catch (e) {
+            return false;
+        }
     }
 
     ngOnInit(): void {
@@ -413,6 +425,23 @@ export class LandingEditorComponent implements OnInit {
         if (file instanceof File || file instanceof Blob) {
             this.logoObjectUrl = URL.createObjectURL(file);
         }
+        setTimeout(() => this.cdr.detectChanges());
+    }
+
+    removeLogo(): void {
+        // Clear form value so backend will save as null
+        this.landingForm.patchValue({ logo: null });
+        // Revoke any local object URL
+        if (this.logoObjectUrl) {
+            try { URL.revokeObjectURL(this.logoObjectUrl); } catch (e) {}
+            this.logoObjectUrl = null;
+        }
+        // If the form previously contained a remote URL string, ensure it's cleared
+        // (landingForm.value.logo may be string)
+        if (this.landingForm.value && typeof this.landingForm.value.logo === 'string') {
+            this.landingForm.patchValue({ logo: null });
+        }
+        // Trigger change detection to update template
         setTimeout(() => this.cdr.detectChanges());
     }
 

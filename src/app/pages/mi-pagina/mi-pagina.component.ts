@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -21,6 +22,7 @@ import { forkJoin } from 'rxjs';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     CardModule,
     ButtonModule,
     InputTextModule,
@@ -51,7 +53,8 @@ export class MiPaginaComponent implements OnInit {
     private authService: AuthService,
     private tenantService: TenantService,
     private productService: ProductService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -73,6 +76,7 @@ export class MiPaginaComponent implements OnInit {
 
     this.tenantService.getTenantByEmail(user.userEmail).subscribe({
       next: (resp) => {
+        debugger;
         const tenant = resp?.object;
         const tenantId = tenant?.id;
         const tenantSlug = tenant?.slug;
@@ -281,6 +285,22 @@ export class MiPaginaComponent implements OnInit {
 
     // 3) Final fallback (shouldn't normally hit in browser environments).
     return 'https://lealtix.com.mx/landing-page';
+  }
+
+  /**
+   * Navega a la vista de menú imprimible
+   */
+  navigateToMenuPrint(): void {
+    this.router.navigate(['/dashboard/menu-print']);
+  }
+
+  /**
+   * Navega a la vista de menú imprimible y activa la exportación automática
+   */
+  navigateToMenuPrintAndExport(): void {
+    this.router.navigate(['/dashboard/menu-print'], {
+      state: { autoExport: true }
+    });
   }
 
   /**

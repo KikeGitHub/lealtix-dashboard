@@ -57,6 +57,19 @@ export class MenuClassicPrintComponent implements OnInit {
 
   qrSize = 10;
 
+  /** Devuelve las iniciales del negocio como fallback cuando no hay logo */
+  tenantInitials(): string {
+    const name = this.tenantName();
+    if (!name) return '';
+    return name
+      .split(' ')
+      .map(w => w.charAt(0))
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  }
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,

@@ -1,0 +1,139 @@
+<p-toast></p-toast>
+
+<!-- Spinner de carga inicial -->
+<div *ngIf="isLoading()" class="flex justify-content-center align-items-center" style="min-height: 400px;">
+  <p-progressSpinner></p-progressSpinner>
+</div>
+
+<!-- Contenido del menú -->
+<div *ngIf="!isLoading()" class="page-container">
+
+  <!-- Barra de acciones (solo visible en pantalla) -->
+  <div class="action-bar no-print">
+    <div class="action-bar-content">
+      <div class="action-info">
+        <h1 class="action-title">Menú Clásico - {{ tenantName() }}</h1>
+        <p class="action-subtitle">Vista optimizada para impresión o descarga como PDF</p>
+      </div>
+      <p-button
+        label="Descargar menú (PDF)"
+        icon="pi pi-print"
+        severity="primary"
+        (click)="printMenu()"
+        [disabled]="menuCategorias().length === 0"
+        styleClass="print-button"
+      ></p-button>
+    </div>
+  </div>
+
+  <!-- Contenedor del menú con header/footer fijos -->
+  <div class="menu-printable">
+
+    <!-- Header fijo (aparece en todas las páginas impresas) -->
+    <header class="menu-header">
+      <div class="header-container">
+        <!-- Logo y nombre del negocio -->
+        <div class="header-left">
+          <div class="logo-wrapper" *ngIf="tenantLogoUrl()">
+            <img [src]="tenantLogoUrl()" [alt]="tenantName()" class="business-logo">
+          </div>
+          <div class="business-info">
+            <h1 class="business-name">{{ tenantName() }}</h1>
+            <p class="business-subtitle">Menú de Productos</p>
+          </div>
+        </div>
+
+        <!-- QR Code -->
+        <!-- QR eliminado del menú -->
+      </div>
+      <p-divider styleClass="header-divider"></p-divider>
+    </header>
+
+    <!-- Contenido principal del menú -->
+    <main class="menu-content">
+
+      <!-- Mensaje si no hay productos -->
+      <div *ngIf="menuCategorias().length === 0" class="no-products-message">
+        <i class="pi pi-info-circle"></i>
+        <p>No hay productos disponibles en este momento</p>
+      </div>
+
+      <!-- Categorías con productos -->
+      <section
+        *ngFor="let categoria of menuCategorias(); let isFirst = first"
+        class="category-section"
+        [class.first-category]="isFirst"
+      >
+        <h2 class="category-title">{{ categoria.name }}</h2>
+
+        <div
+          class="products-list"
+          [ngClass]="{
+            'one-col': categoria.products.length < 5,
+            'two-col': categoria.products.length >= 5 && categoria.products.length <= 10,
+            'three-col': categoria.products.length > 10
+          }"
+        >
+          <article
+            *ngFor="let producto of categoria.products"
+            class="product-item"
+          >
+            <div class="product-header">
+              <h3 class="product-name">{{ producto.name }}</h3>
+              <span class="product-separator"></span>
+              <span class="product-price">{{ producto.price | currency: 'MXN':'symbol-narrow':'1.2-2' }}</span>
+            </div>
+            <p class="product-description" *ngIf="producto.description">
+              {{ producto.description }}
+            </p>
+          </article>
+        </div>
+
+        <p-divider styleClass="category-divider"></p-divider>
+      </section>
+
+    </main>
+
+    <!-- Footer fijo (aparece en todas las páginas impresas) -->
+    <footer class="menu-footer">
+      <p-divider styleClass="footer-divider"></p-divider>
+      <div class="footer-container">
+        <div class="footer-section">
+          <div class="footer-icon">
+            <i class="pi pi-map-marker"></i>
+          </div>
+          <div class="footer-content">
+            <p class="footer-label">Dirección</p>
+            <p class="footer-text">{{ tenantAddress() || 'No disponible' }}</p>
+          </div>
+        </div>
+
+        <div class="footer-section">
+          <div class="footer-icon">
+            <i class="pi pi-phone"></i>
+          </div>
+          <div class="footer-content">
+            <p class="footer-label">Teléfono</p>
+            <p class="footer-text">{{ tenantPhone() || 'No disponible' }}</p>
+          </div>
+        </div>
+
+        <div class="footer-section">
+          <div class="footer-icon">
+            <i class="pi pi-envelope"></i>
+          </div>
+          <div class="footer-content">
+            <p class="footer-label">Contacto</p>
+            <p class="footer-text">{{ tenantEmail() || 'No disponible' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-date">{{ getCurrentDate() }}</p>
+        <p class="footer-schedules" *ngIf="tenantSchedules()">{{ tenantSchedules() }}</p>
+      </div>
+    </footer>
+
+  </div>
+</div>

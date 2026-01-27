@@ -1,0 +1,754 @@
+// Flex para QR y texto juntos y alineados
+.qr-flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  max-width: 120px;
+}
+/* =============================
+  .menu-footer {
+    margin-top: 1.2rem;
+    padding: 0.2rem 0;
+    .footer-divider {
+      margin: 0 0 0.5rem 0;
+      border-color: $accent-color;
+    }
+    .footer-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+      margin-bottom: 0.2rem;
+      flex-wrap: wrap;
+    }
+    .footer-section {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.3rem;
+      min-width: 0;
+    }
+    .footer-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      background: $background-light;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      i {
+        font-size: 0.85rem;
+        color: $accent-color;
+      }
+    }
+    .footer-content {
+      flex: none;
+      min-width: 0;
+    }
+    .footer-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      margin: 0 0.2rem 0 0;
+      color: $primary-color;
+      display: inline;
+    }
+    .footer-text {
+      font-size: 0.65rem;
+      color: $text-light;
+      margin: 0;
+      display: inline;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      max-width: 80px;
+      vertical-align: middle;
+    }
+    .footer-bottom {
+      text-align: center;
+      font-size: 0.65rem;
+      color: $text-light;
+      margin-top: 0.1rem;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+    }
+  }
+  @page {
+    margin: 2.5cm 0.7cm 2.5cm 0.7cm;
+  }
+}
+/* ============================================
+   MENU CLASSIC PRINT - DISEÑO PROFESIONAL
+   Optimizado para impresión nativa del navegador
+   ============================================ */
+
+// Variables de diseño
+$primary-color: #2c3e50;
+$secondary-color: #34495e;
+$accent-color: #3498db;
+$text-color: #2c3e50;
+$text-light: #7f8c8d;
+$border-color: #ecf0f1;
+$background-light: #f8f9fa;
+
+// Estilos para vista en pantalla
+
+.page-container {
+  min-height: 100vh;
+  background-color: #e9ecef;
+  font-size: 0.85rem;
+}
+
+.action-bar {
+  background: white;
+  border-bottom: 1px solid $border-color;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.action-bar-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.action-info {
+  flex: 1;
+}
+
+.action-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: $primary-color;
+  margin: 0 0 0.25rem 0;
+}
+
+.action-subtitle {
+  font-size: 0.875rem;
+  color: $text-light;
+  margin: 0;
+}
+
+.print-button {
+  white-space: nowrap;
+}
+
+// Contenedor principal del menú
+.menu-printable {
+  max-width: 21cm; // A4 width
+  margin: 1rem auto;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 1.2cm 0.7cm;
+  min-height: 29.7cm; // A4 height
+  position: relative;
+}
+
+/* ============================================
+   HEADER DEL MENÚ
+   ============================================ */
+.menu-header {
+  margin-bottom: 1rem;
+
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex: 1;
+  }
+
+  .logo-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid $accent-color;
+    flex-shrink: 0;
+    background: white;
+  }
+
+  .business-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+
+  .business-info {
+    flex: 1;
+  }
+
+  .business-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $primary-color;
+    margin: 0 0 0.2rem 0;
+    line-height: 1.1;
+    letter-spacing: -0.2px;
+  }
+
+  .business-subtitle {
+    font-size: 0.7rem;
+    color: $text-light;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 0.1rem;
+    min-width: 22px;
+  }
+
+  .qr-code {
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    padding: 0;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    width: 14px !important;
+    height: 14px !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+
+  .qr-label {
+    font-size: 0.55rem;
+    color: $text-light;
+    text-align: left;
+    margin: 0;
+    max-width: 80px;
+    line-height: 1.1;
+    word-break: break-word;
+  }
+
+  .header-divider {
+    margin: 0;
+    border-color: $accent-color;
+  }
+}
+
+/* ============================================
+   CONTENIDO DEL MENÚ
+   ============================================ */
+.menu-content {
+  margin: 2rem 0;
+}
+
+.no-products-message {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: $text-light;
+
+  i {
+    font-size: 3rem;
+    color: $accent-color;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  p {
+    font-size: 1.125rem;
+    margin: 0;
+  }
+}
+
+.category-section {
+  margin-bottom: 1.1rem;
+  page-break-inside: avoid;
+
+  &.first-category {
+    margin-top: 0;
+  }
+
+  .category-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $primary-color;
+    margin: 0 0 0.5rem 0;
+    padding-bottom: 0.2rem;
+    border-bottom: 1px solid $accent-color;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+  }
+
+  .category-divider {
+    margin: 1rem 0 0 0;
+    border-color: $border-color;
+  }
+}
+
+.products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  &.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem 1.2rem;
+  }
+  &.three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.4rem 1.2rem;
+  }
+  &.one-col {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.product-item {
+  page-break-inside: avoid;
+  padding: 0.3rem 0;
+
+  .product-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .product-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: $text-color;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .product-separator {
+    flex: 1;
+    border-bottom: 1px dotted $border-color;
+    margin-bottom: 0.1rem;
+    min-width: 10px;
+  }
+
+  .product-price {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $accent-color;
+    white-space: nowrap;
+  }
+
+  .product-description {
+    font-size: 0.7rem;
+    color: $text-light;
+    line-height: 1.2;
+    margin: 0;
+    padding-left: 0;
+  }
+}
+
+/* ============================================
+   FOOTER DEL MENÚ
+   ============================================ */
+.menu-footer {
+  margin-top: 3rem;
+
+  .footer-divider {
+    margin: 0 0 1.5rem 0;
+    border-color: $accent-color;
+  }
+
+  .footer-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .footer-section {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .footer-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: $background-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    i {
+      font-size: 1.125rem;
+      color: $accent-color;
+    }
+  }
+
+  .footer-content {
+    flex: 1;
+  }
+
+  .footer-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: $text-light;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    letter-spacing: 0.5px;
+  }
+
+  .footer-text {
+    font-size: 0.875rem;
+    color: $text-color;
+    margin: 0;
+    word-break: break-word;
+  }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid $border-color;
+  }
+
+  .footer-date,
+  .footer-schedules {
+    font-size: 0.875rem;
+    color: $text-light;
+    margin: 0;
+  }
+
+  .footer-schedules {
+    text-align: right;
+    font-style: italic;
+  }
+}
+
+/* ============================================
+   ESTILOS DE IMPRESIÓN
+   ============================================ */
+@media print {
+  // Ocultar elementos no imprimibles
+  .no-print,
+  .action-bar {
+    display: none !important;
+  }
+
+  // Resetear estilos de página
+  .page-container {
+    background: white;
+  }
+
+  .menu-printable {
+    max-width: 100%;
+    margin: 0;
+    padding: 1.5cm 1.5cm;
+    box-shadow: none;
+    min-height: auto;
+  }
+
+  // Configuración de página
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  // Header fijo en cada página
+  .menu-header {
+    position: running(header);
+    margin-bottom: 1.5rem;
+
+    .header-container {
+      margin-bottom: 0.75rem;
+    }
+
+    .business-name {
+      font-size: 1.75rem;
+    }
+
+    .business-subtitle {
+      font-size: 0.875rem;
+    }
+
+    .logo-wrapper {
+      width: 60px;
+      height: 60px;
+    }
+
+    .qr-code {
+      width: 100px;
+      height: 100px;
+    }
+
+    .qr-label {
+      font-size: 0.7rem;
+    }
+  }
+
+  // Footer fijo en cada página
+  .menu-footer {
+    position: running(footer);
+    margin-top: 2rem;
+
+    .footer-container {
+      gap: 1.5rem;
+    }
+
+    .footer-icon {
+      width: 32px;
+      height: 32px;
+
+      i {
+        font-size: 1rem;
+      }
+    }
+
+    .footer-label {
+      font-size: 0.7rem;
+    }
+
+    .footer-text {
+      font-size: 0.8rem;
+    }
+
+    .footer-date,
+    .footer-schedules {
+      font-size: 0.8rem;
+    }
+  }
+
+  // Contenido principal
+  .menu-content {
+    margin: 1.5rem 0;
+  }
+
+  // Optimización de categorías y productos
+  .category-section {
+    page-break-inside: avoid;
+    margin-bottom: 2rem;
+
+    .category-title {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      page-break-after: avoid;
+    }
+
+    .category-divider {
+      margin: 1.5rem 0 0 0;
+    }
+  }
+
+  .product-item {
+    page-break-inside: avoid;
+    padding: 0.5rem 0;
+
+    .product-header {
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .product-name {
+      font-size: 1rem;
+    }
+
+    .product-price {
+      font-size: 1rem;
+    }
+
+    .product-description {
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+  }
+
+  // Asegurar colores en impresión
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  // Optimizar imágenes para impresión
+  img {
+    max-width: 100%;
+    page-break-inside: avoid;
+  }
+
+  // Dividers
+  ::ng-deep .p-divider {
+    &.header-divider,
+    &.footer-divider {
+      .p-divider-content {
+        background: transparent;
+      }
+    }
+
+    &.category-divider {
+      .p-divider-content {
+        background: transparent;
+      }
+    }
+  }
+
+  // Evitar saltos de página no deseados
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+
+  // Mejorar contraste de texto
+  .business-name,
+  .category-title,
+  .product-name {
+    color: #000 !important;
+  }
+
+  .product-price {
+    color: #2c3e50 !important;
+  }
+
+  .product-description,
+  .footer-text,
+  .footer-date,
+  .footer-schedules {
+    color: #333 !important;
+  }
+
+  .footer-label,
+  .business-subtitle,
+  .qr-label {
+    color: #666 !important;
+  }
+}
+
+/* ============================================
+   ESTILOS PARA PRIMENG
+   ============================================ */
+::ng-deep {
+  // Dividers
+  .p-divider {
+    margin: 1rem 0;
+
+    &.header-divider {
+      margin: 0;
+
+      .p-divider-content {
+        background: white;
+      }
+    }
+
+    &.footer-divider {
+      margin: 0 0 1.5rem 0;
+
+      .p-divider-content {
+        background: white;
+      }
+    }
+
+    &.category-divider {
+      margin: 2rem 0 0 0;
+
+      .p-divider-content {
+        background: white;
+      }
+    }
+  }
+
+  // Spinner
+  .p-progress-spinner {
+    width: 60px;
+    height: 60px;
+  }
+
+  // Toast
+  .p-toast {
+    z-index: 9999;
+  }
+}
+
+/* ============================================
+   RESPONSIVE (Vista en pantalla)
+   ============================================ */
+@media (max-width: 768px) {
+  .action-bar {
+    padding: 1rem;
+  }
+
+  .action-bar-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .action-title {
+    font-size: 1.25rem;
+  }
+
+  .menu-printable {
+    margin: 1rem;
+    padding: 1.5rem 1rem;
+  }
+
+  .menu-header {
+    .header-container {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .header-left {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .business-name {
+      font-size: 1.5rem;
+    }
+
+    .header-right {
+      width: 100%;
+      align-items: center;
+    }
+  }
+
+  .menu-footer {
+    .footer-container {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .footer-bottom {
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: center;
+    }
+
+    .footer-schedules {
+      text-align: center;
+    }
+  }
+}

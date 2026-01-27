@@ -16,7 +16,8 @@ import { CampaignTemplatesListComponent } from '@/pages/campaigns/components/cam
 import { CreateCampaignComponent } from '@/pages/campaigns/components/create-campaign/create-campaign.component';
 import { ManualRedemptionComponent } from '@/pages/manual-redemption/manual-redemption.component';
 import { MiPaginaComponent } from '@/pages/mi-pagina/mi-pagina.component';
-import { MenuPrintComponent } from '@/pages/menu-print/menu-print.component';
+// import eliminado: MenuPrintComponent
+import { MenuClassicPrintComponent } from '@/pages/menu-classic-print/menu-classic-print.component';
 
 export const appRoutes: Routes = [
     // Everything under /dashboard/**
@@ -47,7 +48,8 @@ export const appRoutes: Routes = [
                     { path: 'campaign-templates', component: CampaignTemplatesListComponent, title: 'Plantillas de Campañas' },
                     { path: 'manual-redemption', component: ManualRedemptionComponent, title: 'Redención Manual' },
                     { path: 'mi-pagina', component: MiPaginaComponent, title: 'Mi Página' },
-                    { path: 'menu-print', component: MenuPrintComponent, title: 'Imprimir Menú' }
+                    // Ruta eliminada: menu-print
+                    { path: 'menu-classic-print', component: MenuClassicPrintComponent, title: 'Imprimir Menú Clásico' }
                 ]
             }
         ]

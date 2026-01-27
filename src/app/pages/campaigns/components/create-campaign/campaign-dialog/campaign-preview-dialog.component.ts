@@ -1,6 +1,5 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import html2canvas from 'html2canvas';
 
 // PrimeNG imports
 import { DialogModule } from 'primeng/dialog';
@@ -127,33 +126,28 @@ export class CampaignPreviewDialogComponent {
       return;
     }
 
+    // Alternativa sin html2canvas: abrir la vista previa en una nueva ventana
+    // y permitir que el usuario imprima/guarde como PDF o guarde la página.
     try {
-      const canvas = await html2canvas(this.captureArea.nativeElement, {
-        scale: 3, // Aumentado para mejor calidad (antes era 2)
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: false,
-        imageTimeout: 0
-      });
-
-      const dataUrl = canvas.toDataURL('image/png', 1.0);
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `promocion-${this.previewData?.title?.replace(/\s+/g, '-').toLowerCase() || 'preview'}.png`;
-      link.click();
+      const html = this.buildPreviewHtml(this.captureArea.nativeElement.innerHTML);
+      const w = window.open('', '_blank', 'noopener');
+      if (!w) {
+        throw new Error('No se pudo abrir la ventana de vista previa');
+      }
+      w.document.write(html);
+      w.document.close();
 
       this.messageService.add({
-        severity: 'success',
-        summary: 'Descarga exitosa',
-        detail: 'La imagen se ha descargado correctamente'
+        severity: 'info',
+        summary: 'Vista previa abierta',
+        detail: 'Se abrió una nueva pestaña con la vista previa. Usa imprimir/Guardar como PDF para obtener el archivo.'
       });
     } catch (error) {
-      console.error('Error capturing image:', error);
+      console.error('Error opening preview window:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'No se pudo generar la imagen. Verifica que todas las imágenes se hayan cargado correctamente.'
+        detail: 'No se pudo abrir la vista previa para descarga'
       });
     }
   }
@@ -168,45 +162,46 @@ export class CampaignPreviewDialogComponent {
       return;
     }
 
+    // Sin html2canvas: enviar HTML de la vista previa al backend (por implementar)
     try {
-      const canvas = await html2canvas(this.captureArea.nativeElement, {
-        scale: 3, // Aumentado para mejor calidad
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: false,
-        imageTimeout: 0
-      });
-
-      const imageBase64 = canvas.toDataURL('image/png', 1.0);
+      const previewHtml = this.captureArea.nativeElement.innerHTML;
 
       // Preferir la descripción del reward si está disponible
       const previewToSend = {
         ...this.previewData,
-        description: this.rewardDescription ?? this.previewData.description
+        description: this.rewardDescription ?? this.previewData.description,
+        previewHtml
       };
 
-      // TODO: Implement backend endpoint
-      // await this.campaignService.sendPreviewEmail({
-      //   imageBase64,
-      //   previewData: previewToSend
-      // }).toPromise();
+      // TODO: Implement backend endpoint to accept HTML snapshot
+      // await this.campaignService.sendPreviewEmail({ previewHtml, previewData: previewToSend }).toPromise();
 
       this.messageService.add({
         severity: 'info',
         summary: 'Función en desarrollo',
         detail: 'El envío por email estará disponible próximamente'
       });
-
-      console.log('Image ready to send (using reward description if available):', imageBase64.substring(0, 100) + '...');
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error('Error preparing email content:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'No se pudo enviar el email'
+        detail: 'No se pudo preparar el contenido para el email'
       });
     }
+  }
+
+  /** Construye una página HTML básica para la vista previa/impresión */
+  private buildPreviewHtml(innerHtml: string): string {
+    const styles: string[] = [];
+    // Copiar hojas de estilo cargadas en el documento principal
+    document.querySelectorAll('link[rel="stylesheet"]').forEach((lnk) => {
+      const href = (lnk as HTMLLinkElement).href;
+      if (href) styles.push(`<link rel="stylesheet" href="${href}">`);
+    });
+
+    // Inyectar contenido y un pequeño script para facilitar impresión
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Vista previa</title>${styles.join('')}<style>body{background:#fff;padding:20px;font-family:Segoe UI,Arial,sans-serif}</style></head><body><div id="content">${innerHtml}</div><div style="margin-top:16px;text-align:center"><button onclick="window.print();" style="padding:8px 14px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer">Imprimir / Guardar como PDF</button></div></body></html>`;
   }
 }
 

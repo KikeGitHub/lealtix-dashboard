@@ -34,6 +34,7 @@ import { ConfettiService } from '@/confetti/confetti.service';
 import { ConfettiComponent } from '@/confetti/confetti.component';
 import { environment } from '../commons/environment.dev';
 import { CampaignService } from '@/pages/campaigns/services/campaign.service';
+import Papa from 'papaparse';
 
 interface Column {
     field: string;
@@ -149,7 +150,7 @@ export class ProductMenuComponent implements OnInit {
         this.categoryForm = this.fb.group({
             id: [0],
             name: ['', Validators.required],
-            description: ['', Validators.required],
+            description: [''],
             tenantId: [this.tenantId ? this.tenantId.toString() : ''],
             active: [true],
             categories: this.fb.array([])
@@ -309,6 +310,345 @@ export class ProductMenuComponent implements OnInit {
 
     exportCSV() {
         this.dt.exportCSV();
+    }
+
+    uploadDialogVisible: boolean = false;
+    selectedTemplateFileName: string | null = null;
+    selectedTemplateFile: File | null = null;
+
+    /** Handler for the "Cargar Menú" toolbar button. Opens the modal. */
+    uploadMenu(): void {
+        this.uploadDialogVisible = true;
+        this.selectedTemplateFileName = null;
+        this.selectedTemplateFile = null;
+    }
+
+    /** Download CSV template with sanitized filename. */
+    downloadMenuTemplate(): void {
+        // Sanitize slug: remove spaces, parentheses, and special characters
+        let slug = (this.tenantSlug || 'plantilla').toString().trim();
+        slug = slug.replace(/[^a-z0-9\-_]/gi, '').toLowerCase();
+        if (!slug) slug = 'plantilla';
+
+        const filename = `lealtix_plantilla_menu_productos_${slug}.csv`;
+
+        // CSV content with proper headers
+        const csvContent = `Categoria,Descripcion categoria,Nombre Producto,Descripcion Producto,Precio,Estatus
+,,,,
+,,,,`;
+
+        // Create CSV blob with UTF-8 BOM for Excel compatibility
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    /** Validate selected Excel file (extension + non-empty). */
+    importProductsFromFile(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input?.files && input.files.length > 0 ? input.files[0] : null;
+        if (!file) {
+            this.selectedTemplateFileName = null;
+            this.selectedTemplateFile = null;
+            this.messageService.add({ severity: 'warn', summary: 'Archivo', detail: 'Selecciona un archivo válido.', life: 3000 });
+            return;
+        }
+
+        const name = file.name.toLowerCase();
+        const validExt = name.endsWith('.xlsx') || name.endsWith('.csv');
+        if (!validExt) {
+            this.selectedTemplateFileName = null;
+            this.selectedTemplateFile = null;
+            input.value = '';
+            this.messageService.add({ severity: 'error', summary: 'Formato no válido', detail: 'Solo se acepta .xlsx o .csv.', life: 4000 });
+            return;
+        }
+
+        if (file.size === 0) {
+            this.selectedTemplateFileName = null;
+            this.selectedTemplateFile = null;
+            input.value = '';
+            this.messageService.add({ severity: 'error', summary: 'Archivo vacío', detail: 'El archivo no puede estar vacío.', life: 4000 });
+            return;
+        }
+
+        this.selectedTemplateFileName = file.name;
+        this.selectedTemplateFile = file;
+        this.messageService.add({ severity: 'success', summary: 'Archivo listo', detail: file.name, life: 3000 });
+    }
+
+    /** Process imported file and call bulk API */
+    processImportedFile(): void {
+        if (!this.selectedTemplateFile) {
+            this.messageService.add({ severity: 'warn', summary: 'Error', detail: 'No hay archivo seleccionado', life: 3000 });
+            return;
+        }
+
+        this.startLoading();
+        const isCSV = this.selectedTemplateFile.name.toLowerCase().endsWith('.csv');
+
+        if (isCSV) {
+            this.parseCSVFile(this.selectedTemplateFile);
+        } else {
+            this.parseXLSXFile(this.selectedTemplateFile);
+        }
+    }
+
+    /** Parse CSV file using PapaParse */
+    private parseCSVFile(file: File): void {
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+                this.processFileData(results.data);
+            },
+            error: (error: any) => {
+                console.error('CSV parsing error:', error);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al parsear CSV', life: 4000 });
+                this.stopLoading();
+            }
+        });
+    }
+
+    /** Parse XLSX file (reads as text and treats as CSV) */
+    private parseXLSXFile(file: File): void {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+            const text = e.target.result;
+            const data = Papa.parse(text, {
+                header: true,
+                skipEmptyLines: true
+            });
+            this.processFileData(data.data);
+        };
+        reader.onerror = () => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al leer archivo XLSX', life: 4000 });
+            this.stopLoading();
+        };
+        reader.readAsText(file);
+    }
+
+    /** Process and validate file data, then call bulk API */
+    private processFileData(rows: any[]): void {
+        if (!rows || rows.length === 0) {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No hay datos que cargar', life: 3000 });
+            this.stopLoading();
+            return;
+        }
+
+        const expectedColumns = ['Categoria', 'Descripcion categoria', 'Nombre Producto', 'Descripcion Producto', 'Precio', 'Estatus'];
+
+        const firstRow = rows[0];
+        if (!firstRow) {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No hay datos que cargar', life: 3000 });
+            this.stopLoading();
+            return;
+        }
+
+        const fileColumns = Object.keys(firstRow).map(k => k.trim());
+        const hasValidHeaders = expectedColumns.every(col => fileColumns.includes(col));
+
+        if (!hasValidHeaders) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error de formato',
+                detail: 'El archivo no tiene la estructura esperada. Columnas requeridas: ' + expectedColumns.join(', '),
+                life: 5000
+            });
+            this.stopLoading();
+            return;
+        }
+
+        // Filtrar filas que tengan al menos algún dato (no completamente vacías)
+        const validRows = rows.filter(row => {
+            if (!row) return false;
+            const values = Object.values(row).map(v => String(v || '').trim());
+            return values.some(v => v.length > 0);
+        });
+
+        // Si no hay filas válidas después del filtro, mostrar error
+        if (validRows.length === 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No hay datos que cargar',
+                life: 3000,
+                sticky: true
+            });
+            this.stopLoading();
+            return;
+        }
+
+        // Verificar que haya al menos una fila con datos en campos requeridos (Categoria y Nombre Producto)
+        const rowsWithRequiredData = validRows.filter(row => {
+            const categoria = String(row['Categoria'] || '').trim();
+            const nombreProducto = String(row['Nombre Producto'] || '').trim();
+            return categoria.length > 0 || nombreProducto.length > 0;
+        });
+
+        if (rowsWithRequiredData.length === 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No hay datos que cargar',
+                life: 3000,
+                sticky: true
+            });
+            this.stopLoading();
+            return;
+        }
+
+        const productsToCreate = [];
+        const errors = [];
+
+        for (let i = 0; i < rowsWithRequiredData.length; i++) {
+            const row = rowsWithRequiredData[i];
+
+            const categoria = String(row['Categoria'] || '').trim();
+            const descripcionCategoria = String(row['Descripcion categoria'] || '').trim();
+            const nombreProducto = String(row['Nombre Producto'] || '').trim();
+            const descripcionProducto = String(row['Descripcion Producto'] || '').trim();
+            const precioStr = String(row['Precio'] || '').trim();
+
+            // Si Categoria está vacía -> omitir fila
+            if (!categoria) {
+                continue;
+            }
+
+            // Nombre Producto es obligatorio
+            if (!nombreProducto) {
+                errors.push(`Fila ${i + 1}: Nombre de producto es obligatorio`);
+                continue;
+            }
+
+            // Precio es obligatorio y debe ser numérico
+            let precio: number | null = null;
+            if (!precioStr) {
+                errors.push(`Fila ${i + 1} (${nombreProducto}): Precio es obligatorio`);
+                continue;
+            } else {
+                const cleanPrice = precioStr.replace(/[^\d.,]/g, '').replace(',', '.');
+                precio = parseFloat(cleanPrice);
+
+                if (isNaN(precio) || precio < 0) {
+                    errors.push(`Fila ${i + 1} (${nombreProducto}): Precio inválido '${precioStr}'`);
+                    continue;
+                }
+            }
+
+            const product = {
+                categoryName: categoria,
+                name: nombreProducto,
+                description: descripcionProducto || undefined,
+                price: precio,
+                imageUrl: null,
+                isActive: true
+            };
+
+            productsToCreate.push(product);
+        }
+
+        if (errors.length > 0) {
+            const errorMsg = errors.slice(0, 5).join('\n') + (errors.length > 5 ? `\n... y ${errors.length - 5} errores más` : '');
+            this.messageService.add({
+                severity: 'warn',
+                summary: `${errors.length} registros omitidos`,
+                detail: errorMsg,
+                life: 7000,
+                sticky: true
+            });
+        }
+
+        if (productsToCreate.length === 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No hay datos que cargar',
+                life: 4000,
+                sticky: true
+            });
+            this.stopLoading();
+            return;
+        }
+
+        const payload = {
+            tenantId: this.tenantId,
+            products: productsToCreate
+        };
+
+        this.productService.bulkCreateProducts(payload).subscribe({
+            next: (response) => {
+                this.handleBulkImportResponse(response);
+            },
+            error: (error) => {
+                console.error('Error importing products:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error en la importación',
+                    detail: error?.error?.message || 'Error al procesar los productos',
+                    life: 4000,
+                    sticky: true
+                });
+                this.stopLoading();
+            }
+        });
+    }
+
+    /** Handle bulk import response from backend */
+    private handleBulkImportResponse(response: any): void {
+        const { code, message, object } = response;
+
+        if (code === 201 || code === 207) {
+            const { successCount, failureCount, createdProducts, errors } = object;
+
+            const successMsg = `✓ ${successCount} productos importados exitosamente`;
+            this.messageService.add({
+                severity: successCount > 0 ? 'success' : 'error',
+                summary: successMsg,
+                detail: message,
+                life: 5000,
+                sticky: successCount === 0
+            });
+
+            if (errors && errors.length > 0) {
+                const errorMsg = errors.slice(0, 5).join('\n') + (errors.length > 5 ? `\n... y ${errors.length - 5} errores más` : '');
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: `⚠️ ${failureCount} registros con error`,
+                    detail: errorMsg,
+                    life: 7000,
+                    sticky: true
+                });
+            }
+
+            if (successCount > 0) {
+                this.loadProducts();
+                this.uploadDialogVisible = false;
+                this.selectedTemplateFileName = null;
+                this.selectedTemplateFile = null;
+
+                // Reset file input
+                const fileInput = document.getElementById('menuExcelInput') as HTMLInputElement;
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+            }
+        } else {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: message || 'Error desconocido en la importación',
+                life: 4000,
+                sticky: true
+            });
+        }
+
+        this.stopLoading();
     }
 
     // Load categories from backend for the category select

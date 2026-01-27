@@ -1,0 +1,125 @@
+<p-toast></p-toast>
+
+<!-- Overlay profesional para generación de PDF -->
+<div *ngIf="isExporting()" class="pdf-export-overlay">
+  <div class="pdf-export-backdrop"></div>
+  <div class="pdf-export-modal">
+    <div class="pdf-export-content">
+      <div class="pdf-export-icon">
+        <i class="pi pi-file-pdf" style="font-size: 3rem; color: #ef4444;"></i>
+      </div>
+      <div class="pdf-spinner" role="status" aria-live="polite">
+        <svg width="48" height="48" viewBox="0 0 50 50" class="pdf-spinner-svg" aria-hidden="true">
+          <circle class="pdf-spinner-bg" cx="25" cy="25" r="20" fill="none" stroke="#e5e7eb" stroke-width="4"></circle>
+          <path class="pdf-spinner-fg" fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round"
+                d="M25 5a20 20 0 0 1 0 40"/>
+        </svg>
+      </div>
+      <h3 class="pdf-export-title">Generando PDF...</h3>
+      <p class="pdf-export-subtitle">Por favor espera — este proceso puede tardar hasta 1 minuto</p>
+    </div>
+  </div>
+</div>
+
+<!-- Spinner de carga inicial -->
+<div *ngIf="isLoading()" class="flex justify-content-center align-items-center" style="min-height: 400px;">
+  <p-progressSpinner></p-progressSpinner>
+</div>
+
+<!-- Contenido del menú para imprimir -->
+<div *ngIf="!isLoading()" class="page-wrapper">
+
+  <!-- Header superior con título y botón (solo para vista web) -->
+  <div class="page-header no-print">
+    <div>
+      <h1 class="page-title">Vista de Impresión del Menú</h1>
+      <p class="page-subtitle">{{ tenantName() }}</p>
+    </div>
+    <p-button
+      [label]="isExporting() ? 'Exportando...' : 'Exportar a PDF'"
+      icon="pi pi-file-pdf"
+      severity="danger"
+      (click)="exportMenuToPdf()"
+      [disabled]="isExporting() || menuCategorias().length === 0"
+      [loading]="isExporting()"
+    ></p-button>
+  </div>
+
+  <!-- Contenedor del menú -->
+  <div id="menu" class="menu-container">
+
+    <!-- Header del menú con logo y nombre -->
+    <div class="menu-header">
+      <div class="header-left">
+        <div class="logo-circle">
+          <img *ngIf="tenantLogoUrl()" [src]="tenantLogoUrl()" [alt]="tenantName()" class="tenant-logo">
+          <span *ngIf="!tenantLogoUrl()" class="logo-fallback">☕</span>
+        </div>
+        <div class="header-text">
+          <h1 class="business-name">{{ tenantName() }}</h1>
+          <p class="business-tagline">Menú de Productos</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <qrcode
+          *ngIf="landingUrl()"
+          [qrdata]="landingUrl()"
+          [width]="90"
+          [errorCorrectionLevel]="'M'"
+          [margin]="1"
+          [colorDark]="'#33211D'"
+          [colorLight]="'#FFFBF2'"
+          class="menu-qr"
+        ></qrcode>
+        <p class="qr-text" *ngIf="landingUrl()">Visita nuestra página<br>Escanea este código QR</p>
+      </div>
+    </div>
+
+    <!-- Mensaje si no hay productos -->
+    <div *ngIf="menuCategorias().length === 0" class="no-products">
+      <i class="pi pi-info-circle"></i>
+      <p>No hay productos disponibles</p>
+    </div>
+
+    <!-- Categorías y productos en 2 o 3 columnas -->
+    <div *ngFor="let categoria of menuCategorias()" class="category-section">
+      <h2 class="category-title">{{ categoria.name }}</h2>
+
+      <div class="products-grid" [class.products-grid-3col]="categoria.products.length > 10">
+        <div *ngFor="let producto of categoria.products" class="product-item">
+          <div class="product-content">
+            <div class="product-info">
+              <div class="product-header">
+                <span class="product-name">{{ producto.name }}</span>
+                <span class="product-dots"></span>
+                <span class="product-price">{{ producto.price | currency: 'MXN':'symbol-narrow':'1.2-2' }}</span>
+              </div>
+              <p class="product-description" *ngIf="producto.description">{{ producto.description }}</p>
+            </div>
+            <div class="product-image" *ngIf="producto.imageUrl">
+              <img [src]="getOptimizedImage(producto.imageUrl)" [alt]="producto.name">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="menu-footer">
+      <div class="footer-left">
+        <div class="footer-contact" *ngIf="tenantAddress() || tenantPhone()">
+          <span class="footer-address" *ngIf="tenantAddress()">{{ tenantAddress() }}</span>
+          <span class="footer-sep" *ngIf="tenantAddress() && tenantPhone()">•</span>
+          <a class="footer-phone" *ngIf="tenantPhone()" [href]="'tel:' + tenantPhone()">{{ tenantPhone() }}</a>
+        </div>
+      </div>
+      <div class="footer-center">
+        <p class="footer-date">{{ getCurrentDate() }}</p>
+      </div>
+      <div class="footer-right">
+        <p class="footer-schedules" *ngIf="tenantSchedules()">{{ tenantSchedules() }}</p>
+      </div>
+    </div>
+
+  </div>
+</div>

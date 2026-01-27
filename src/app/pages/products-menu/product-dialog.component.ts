@@ -99,9 +99,11 @@ import { TouchTooltipDirective } from '@/shared/directives/touch-tooltip.directi
                                         <span>No hay archivo seleccionado</span>
                                     </ng-template>
                                 </p-fileUpload>
-                                <div *ngIf="productImagePreview || productForm.get('img_url')?.value" class="flex items-center">
+                                <div *ngIf="productImagePreview || productForm.get('img_url')?.value" class="flex items-center gap-2">
                                     <img [src]="productImagePreview || productForm.get('img_url')?.value" alt="Product image preview"
                                         class="rounded shadow border border-gray-200" style="max-width:100px; max-height:64px; object-fit:contain;" />
+                                    <button pButton type="button" icon="pi pi-times" class="p-button-sm p-button-text p-button-danger"
+                                        (click)="onRemoveImageClick()" pTooltip="Eliminar imagen" tooltipPosition="top"></button>
                                 </div>
                             </div>
                         </div>
@@ -141,10 +143,32 @@ export class ProductDialogComponent implements OnChanges {
     @Output() onProductFileSelect = new EventEmitter<any>();
     @Output() categoryChange = new EventEmitter<any>();
     @Output() activeChange = new EventEmitter<boolean>();
+    @Output() removeImage = new EventEmitter<void>();
 
     onHide() {
         this.visibleChange.emit(false);
         this.hide.emit();
+    }
+
+    onRemoveImageClick() {
+        // Clear preview and form control, then notify parent so it can persist null
+        try {
+            this.productImagePreview = null;
+            if (this.productForm && this.productForm.get && this.productForm.get('img_url')) {
+                this.productForm.get('img_url').setValue(null);
+            }
+            // Also update the bound product object so parents that read `product` see the change
+            if (this.product) {
+                try {
+                    this.product.img_url = null;
+                } catch (e) {
+                    // ignore
+                }
+            }
+        } catch (e) {
+            // ignore errors
+        }
+        this.removeImage.emit();
     }
 
     closeCategoryDialog() {

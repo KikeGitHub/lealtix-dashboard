@@ -82,7 +82,10 @@
                 </div>
                 <div class="ml-3 text-sm text-gray-600">
                   <div translate="no" class="font-medium notranslate">Preview del logo</div>
-                  <div translate="no" class="text-xs text-gray-500 notranslate">Tu marca se mostrará asi en la pagina web.</div>
+                  <div class="flex items-center gap-2">
+                    <div translate="no" class="text-xs text-gray-500 notranslate">Tu marca se mostrará asi en la pagina web.</div>
+                    <button pButton type="button" icon="pi pi-times" class="p-button-sm p-button-text p-button-danger" (click)="removeLogo()" pTooltip="Eliminar logo" tooltipPosition="top"></button>
+                  </div>
                 </div>
               </div>
             </ng-container>
@@ -90,7 +93,7 @@
           </div>
           <div class="flex flex-col gap-2 mb-2">
               <div class="flex items-center gap-2">
-              <label translate="no" class="font-semibold text-gray-800 notranslate" for="businessName">Nombre del negocio</label>
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="businessName">Nombre del negocio <span class="text-red-500" *ngIf="isRequired('businessName')">*</span></label>
               <button
                 pButton
                 type="button"
@@ -108,7 +111,7 @@
 
           <div class="flex flex-col gap-2 mb-2">
               <div class="flex items-center gap-2">
-              <label translate="no" class="font-semibold text-gray-800 notranslate" for="slogan">Eslogan o breve descripción</label>
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="slogan">Eslogan o breve descripción <span class="text-red-500" *ngIf="isRequired('slogan')">*</span></label>
               <button
                 pButton
                 type="button"
@@ -130,7 +133,7 @@
         <div *ngSwitchCase="2" class="flex flex-col gap-4">
           <div class="flex flex-col gap-2 mb-2">
               <div class="flex items-center gap-2">
-              <label translate="no" class="font-semibold text-gray-800 notranslate" for="history">Historia</label>
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="history">Historia <span class="text-red-500" *ngIf="isRequired('history')">*</span></label>
               <button
                 pButton
                 type="button"
@@ -151,7 +154,7 @@
           </div>
           <div class="flex flex-col gap-2 mb-2">
               <div class="flex items-center gap-2">
-              <label translate="no" class="font-semibold text-gray-800 notranslate" for="vision">Visión</label>
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="vision">Visión <span class="text-red-500" *ngIf="isRequired('vision')">*</span></label>
               <button
                 pButton
                 type="button"
@@ -175,7 +178,7 @@
         <div *ngSwitchCase="3" class="flex flex-col gap-4">
           <div class="flex flex-col gap-2 mb-2">
               <div class="flex items-center gap-2">
-              <label translate="no" class="font-semibold text-gray-800 notranslate" for="address">Dirección</label>
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="address">Dirección <span class="text-red-500" *ngIf="isRequired('address')">*</span></label>
               <button
                 pButton
                 type="button"
@@ -192,7 +195,7 @@
           </div>
           <div class="flex flex-col gap-2 mb-2">
               <div class="flex items-center gap-2">
-              <label translate="no" class="font-semibold text-gray-800 notranslate" for="phone">Teléfono</label>
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="phone">Teléfono <span class="text-red-500" *ngIf="isRequired('phone')">*</span></label>
               <button
                 pButton
                 type="button"
@@ -226,7 +229,7 @@
           </div>
           <div class="flex flex-col gap-2">
               <div class="flex items-center gap-2">
-              <label translate="no" class="font-semibold text-gray-800 notranslate" for="schedule">Horarios <span translate="no" class="text-red-500">*</span></label>
+              <label translate="no" class="font-semibold text-gray-800 notranslate" for="schedule">Horarios <span translate="no" class="text-red-500" *ngIf="isRequired('schedule')">*</span></label>
               <button
                 pButton
                 type="button"

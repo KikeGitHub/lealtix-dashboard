@@ -66,7 +66,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
 
   // Dialog para solicitar monto
   showAmountDialog: boolean = false;
-  originalAmount: number = 0;
+  originalAmount: number | null = null;
   minRedemptionAmount: number = 0;
 
   // Reward data y cálculos de descuento
@@ -268,7 +268,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
     // Si rewardData ya está cargado, usarlo directamente
     if (this.rewardData) {
       this.minRedemptionAmount = this.rewardData.minPurchaseAmount || 0;
-      this.originalAmount = 0;
+      this.originalAmount = null;
 
       // Validar límite de uso
       if (this.rewardData.usageCount >= this.rewardData.usageLimit) {
@@ -305,7 +305,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
         next: (reward: any) => {
           this.rewardData = reward;
           this.minRedemptionAmount = reward.minPurchaseAmount || 0;
-          this.originalAmount = 0;
+          this.originalAmount = null;
 
           // Validar límite de uso
           if (this.rewardData && this.rewardData.usageCount >= this.rewardData.usageLimit) {
@@ -324,7 +324,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
           console.error('Error obteniendo reward:', error);
           // Si no hay reward definido, usar valores por defecto
           this.minRedemptionAmount = this.validationData?.minRedemptionAmount || this.validationData?.minPurchaseAmount || 0;
-          this.originalAmount = 0;
+          this.originalAmount = null;
           this.showAmountDialog = true;
         }
       });
@@ -335,6 +335,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
    */
   confirmRedemption(): void {
     // Convertir explícitamente a números para evitar comparaciones incorrectas
+    debugger;
     const amount = Number(this.originalAmount);
     const minAmount = Number(this.minRedemptionAmount);
 
@@ -425,43 +426,14 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
    */
   cancelAmountDialog(): void {
     this.showAmountDialog = false;
-    this.originalAmount = 0;
+    this.originalAmount = null;
   }
 
   /**
    * Ejecuta la redención del cupón
    */
   private redeemCoupon(): void {
-    // Validaciones previas: asegurar que el monto ingresado es válido
-    const amount = Number(this.originalAmount);
-    const minAmount = Number(this.minRedemptionAmount || this.validationData?.minPurchaseAmount || 0);
-
-    if (isNaN(amount) || amount <= 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Monto inválido',
-        detail: 'Por favor ingresa un monto de compra válido',
-        life: 4000
-      });
-      // Mantener la vista en estado válido y reabrir diálogo si corresponde
-      this.isRedeeming = false;
-      this.pageState = 'valid';
-      this.showAmountDialog = true;
-      return;
-    }
-
-    if (amount < minAmount) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Monto insuficiente',
-        detail: `Este cupón requiere una compra mínima de $${minAmount.toFixed(2)}`,
-        life: 4000
-      });
-      this.isRedeeming = false;
-      this.pageState = 'valid';
-      this.showAmountDialog = true;
-      return;
-    }
+    debugger;
 
     this.isRedeeming = true;
     this.pageState = 'redeeming';
@@ -471,7 +443,7 @@ export class RedeemPageComponent implements OnInit, OnDestroy {
     const request: RedemptionRequest = {
       redeemedBy: currentUser?.email || currentUser?.userEmail || 'unknown',
       channel: RedemptionChannel.QR_WEB,
-      originalAmount: this.originalAmount,
+      originalAmount: this.originalAmount ?? undefined,
       location: 'Web Dashboard',
       metadata: JSON.stringify({
         device: this.getDeviceType(),

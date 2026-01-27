@@ -237,14 +237,13 @@ export class CampaignListComponent implements OnInit {
                 }
                 this.loadCampaigns();
                 this.checkBannerConditions();
+                // Check if we should show welcome confetti after data loads
+                setTimeout(() => this.checkForWelcomeConfetti(), 500);
             },
             error: (error) => {
                 console.error('No tenant found:');
             }
         });
-
-        // Check if we should show welcome confetti
-        this.checkForWelcomeConfetti();
     }
 
     private loadCampaigns(): void {
@@ -258,9 +257,6 @@ export class CampaignListComponent implements OnInit {
                     // También actualizar la lista de campañas sin validación para compatibilidad
                     this.campaigns.set(campaignsWithValidation.map(item => item.campaign));
                     this.loading.set(false);
-
-                    // Check if we should show confetti after campaigns loaded
-                    this.checkForWelcomeConfetti();
                 },
                 error: (error) => {
                     console.error('Error loading campaigns:', error);

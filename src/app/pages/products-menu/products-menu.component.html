@@ -184,7 +184,13 @@
                         <div class="font-medium text-900">{{ row.name }}</div>
                         <div class="text-xs text-500">{{ row.price | currency: 'MXN' }}</div>
                         <div class="flex flex-wrap gap-1 mt-1" *ngIf="rowCategories(row).length">
-                            <span class="cat-chip-mini" *ngFor="let c of rowCategories(row)">{{ c.name }}</span>
+                            <span class="cat-chip-mini" *ngFor="let c of visibleRowCategories(row)">{{ c.name }}</span>
+                            <button type="button" class="cat-chip-more" *ngIf="hiddenCategoryCount(row) > 0"
+                                (click)="toggleCategories(row)"
+                                [pTooltip]="isCategoryRowExpanded(row) ? 'Ocultar categorías' : 'Ver todas las categorías'"
+                                tooltipPosition="top">
+                                {{ isCategoryRowExpanded(row) ? 'ocultar' : '... +' + hiddenCategoryCount(row) }}
+                            </button>
                         </div>
                     </td>
                     <td style="width: 30%">
@@ -207,7 +213,13 @@
                         <div class="font-medium text-900">{{ row.nombre }}</div>
                         <div class="text-xs text-500">{{ row.unidad || 'pieza' }} · min {{ row.stockMinimo }} · {{ row.precioVenta | currency: 'MXN' }}</div>
                         <div class="flex flex-wrap gap-1 mt-1" *ngIf="rowCategories(row).length">
-                            <span class="cat-chip-mini" *ngFor="let c of rowCategories(row)">{{ c.name }}</span>
+                            <span class="cat-chip-mini" *ngFor="let c of visibleRowCategories(row)">{{ c.name }}</span>
+                            <button type="button" class="cat-chip-more" *ngIf="hiddenCategoryCount(row) > 0"
+                                (click)="toggleCategories(row)"
+                                [pTooltip]="isCategoryRowExpanded(row) ? 'Ocultar categorías' : 'Ver todas las categorías'"
+                                tooltipPosition="top">
+                                {{ isCategoryRowExpanded(row) ? 'ocultar' : '... +' + hiddenCategoryCount(row) }}
+                            </button>
                         </div>
                     </td>
                     <td style="width: 30%">
@@ -231,7 +243,13 @@
                         <div class="font-medium text-900">{{ row.nombre }}</div>
                         <div class="text-xs text-500">{{ row.unidad || 'pieza' }} · mín {{ row.stockMinimo }}</div>
                         <div class="flex flex-wrap gap-1 mt-1" *ngIf="rowCategories(row).length">
-                            <span class="cat-chip-mini" *ngFor="let c of rowCategories(row)">{{ c.name }}</span>
+                            <span class="cat-chip-mini" *ngFor="let c of visibleRowCategories(row)">{{ c.name }}</span>
+                            <button type="button" class="cat-chip-more" *ngIf="hiddenCategoryCount(row) > 0"
+                                (click)="toggleCategories(row)"
+                                [pTooltip]="isCategoryRowExpanded(row) ? 'Ocultar categorías' : 'Ver todas las categorías'"
+                                tooltipPosition="top">
+                                {{ isCategoryRowExpanded(row) ? 'ocultar' : '... +' + hiddenCategoryCount(row) }}
+                            </button>
                         </div>
                     </td>
                     <td style="width: 30%">

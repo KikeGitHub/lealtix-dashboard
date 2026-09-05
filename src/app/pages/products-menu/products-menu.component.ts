@@ -431,6 +431,40 @@ export class ProductMenuComponent implements OnInit {
         return cats;
     }
 
+    /* ============ Mini-cards de categorías (máx 3 + "..." expandible) ============ */
+
+    private expandedCatRows = new Set<string>();
+
+    private categoryRowKey(row: any): string {
+        const rawId = row?.id ?? 0;
+        const id = typeof rawId === 'number' ? rawId : String(rawId);
+        const name = row?.name ?? row?.nombre ?? '';
+        return `${id}_${name}`;
+    }
+
+    isCategoryRowExpanded(row: any): boolean {
+        return this.expandedCatRows.has(this.categoryRowKey(row));
+    }
+
+    toggleCategories(row: any): void {
+        const key = this.categoryRowKey(row);
+        if (this.expandedCatRows.has(key)) {
+            this.expandedCatRows.delete(key);
+        } else {
+            this.expandedCatRows.add(key);
+        }
+    }
+
+    visibleRowCategories(row: any, limit = 3): { id: number; name: string }[] {
+        const all = this.rowCategories(row);
+        if (all.length <= limit || this.isCategoryRowExpanded(row)) return all;
+        return all.slice(0, limit);
+    }
+
+    hiddenCategoryCount(row: any): number {
+        return Math.max(0, this.rowCategories(row).length - 3);
+    }
+
     stockBadgeClass(product: any): string {
         const id = this.normalizeProductId(product?.id);
         const item = id == null ? null : this.inventoryItems().find((i: any) => Number(i.id) === id);

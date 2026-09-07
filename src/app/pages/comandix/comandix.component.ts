@@ -851,6 +851,12 @@ export class ComandixComponent implements OnInit, OnDestroy {
           const products = Array.isArray(responseObject)
             ? responseObject
             : Array.isArray(pagedProducts) ? pagedProducts : [];
+          console.log('[Comandix] Catálogo recibido:', {
+            tieneObject: responseObject !== undefined && responseObject !== null,
+            objectEsArray: Array.isArray(responseObject),
+            objectEsPagina: !Array.isArray(responseObject) && !!responseObject?.content,
+            totalProductos: products.length
+          });
           const categories = this.mapProductsToCategories(products);
           this.categories.set(categories);
           this.loading.set(false);
@@ -1152,16 +1158,16 @@ export class ComandixComponent implements OnInit, OnDestroy {
     );
 
     if (existingItem) {
-      this.cart.set(
-        this.cart().map((item) =>
+      this.cart.update((items) =>
+        items.map((item) =>
           item.product.id === product.id && item.configKey === configKey
             ? { ...item, cantidad: item.cantidad + 1, precioUnitario: unitPrice }
             : item
         )
       );
     } else {
-      this.cart.set([
-        ...this.cart(),
+      this.cart.update((items) => [
+        ...items,
         {
           product,
           cantidad: 1,
@@ -1185,8 +1191,11 @@ export class ComandixComponent implements OnInit, OnDestroy {
       life: 2500
     });
 
-    // Forzar actualización de la vista del carrito.
+    // Forzar actualización de la vista del carrito y dejar evidencia si el estado no reflejó el cambio.
     console.log('[Comandix] Producto agregado, items en carrito:', this.cart().length, { product: product.name });
+    if (this.cart().length === 0 || this.cart().findIndex((i) => i.product.id === product.id) === -1) {
+      console.warn('[Comandix] ⚠️ El carrito NO reflejó el producto en este instante. cantidades:', this.cart().map((i) => `${i.product.name}x${i.cantidad}`));
+    }
     this.cdr.detectChanges();
   }
 
@@ -1201,6 +1210,7 @@ export class ComandixComponent implements OnInit, OnDestroy {
       )
     );
     this.persistCartDraft();
+    this.cdr.detectChanges();
   }
 
   removeFromCart(item: CartItem): void {
@@ -1208,6 +1218,7 @@ export class ComandixComponent implements OnInit, OnDestroy {
       items.filter((i) => this.cartItemKey(i) !== this.cartItemKey(item))
     );
     this.persistCartDraft();
+    this.cdr.detectChanges();
     this.messageService.add({
       severity: 'info',
       summary: 'Producto eliminado',
@@ -1224,9 +1235,9 @@ export class ComandixComponent implements OnInit, OnDestroy {
     return Number(item.precioUnitario ?? item.product.price ?? 0);
   }
 
-  trackByProductId(index: number, item: CartItem): string {
+  trackByProductId = (index: number, item: CartItem): string => {
     return this.cartItemKey(item);
-  }
+  };
 
   trackByOrderId(index: number, order: PendingOrder): string {
     return order.id;
@@ -1300,8 +1311,6 @@ export class ComandixComponent implements OnInit, OnDestroy {
   }
 
   async finalizarVenta(): Promise<void> {
-
-    debugger;
     if (this.cart().length === 0) {
       this.messageService.add({
         severity: 'warn',
@@ -1335,7 +1344,6 @@ export class ComandixComponent implements OnInit, OnDestroy {
       }));
 
       const editingOrder = this.editingPendingOrder();
-      debugger;
       if (editingOrder) {
         const updateRequest: TenantClientOrderUpdateRequest = {
           customerId: this.selectedCliente?.id ?? editingOrder.customerId ?? null,
@@ -1391,7 +1399,8 @@ export class ComandixComponent implements OnInit, OnDestroy {
         totalFinal: this.totalFinal(),
         couponCode: this.codigoCupon.trim() || null,
         redeemedBy: this.selectedCliente?.id ?? null,
-        redemptionChannel: 'COMANDIX'
+        redemptionChannel: 'COMANDIX',
+        source: 'POS'
       };
 
       const response = await firstValueFrom(this.orderService.createOrder(orderRequest));

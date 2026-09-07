@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import {
   TenantClientOrderCreateRequest,
@@ -34,7 +34,12 @@ export class OrderService {
    * Crea una nueva orden de cliente
    */
   createOrder(order: TenantClientOrderCreateRequest): Observable<TenantClientOrderResponse> {
-    return this.http.post<TenantClientOrderResponse>(this.baseUrl, order).pipe(
+    return this.http.post<{ object?: TenantClientOrderResponse } | TenantClientOrderResponse>(this.baseUrl, order).pipe(
+      map((response): TenantClientOrderResponse =>
+        'object' in response && response.object
+          ? response.object
+          : response as TenantClientOrderResponse
+      ),
       catchError((error) => {
         console.error('Error al crear orden:', error);
         return throwError(() => error);

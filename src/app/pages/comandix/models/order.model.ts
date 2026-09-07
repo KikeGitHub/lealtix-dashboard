@@ -54,7 +54,7 @@ export interface RecordPaymentResponse {
 
 export interface TenantClientOrderCreateRequest {
   customerId?: number | null;
-    tenantId: number;
+  tenantId: number;
   items: OrderItem[];
   subtotal: number;
   descuento: number;
@@ -62,6 +62,7 @@ export interface TenantClientOrderCreateRequest {
   couponCode?: string | null;
   redeemedBy?: number | null;
   redemptionChannel?: string | null;
+  source?: string;
 }
 
 export interface TenantClientOrderUpdateRequest {

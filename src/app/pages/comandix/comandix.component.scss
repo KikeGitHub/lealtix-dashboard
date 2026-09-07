@@ -8,17 +8,19 @@
   min-height: 100vh;
 }
 
+:host {
+  display: block;
+  width: 100%;
+}
+
 .comandix-main-content {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
   gap: 1.5rem;
   width: 100%;
   max-width: 100%;
   margin: 0;
-  flex-wrap: wrap;
-
-  @media (min-width: 992px) {
-    flex-wrap: nowrap;
-  }
 }
 
 // ==================== HEADER ====================
@@ -113,22 +115,17 @@
 
 // ==================== COLUMNAS ====================
 .comandix-left-column {
-  flex: 1 1 100%;
+  display: block;
+  width: 100%;
   min-width: 0;
-
-  @media (min-width: 992px) {
-    flex: 1 1 65%;
-  }
 }
 
 .comandix-right-column {
-  flex: 1 1 100%;
+  display: block;
+  width: 100%;
   min-width: 0;
 
-  @media (min-width: 992px) {
-    flex: 0 0 340px;
-    max-width: 340px;
-  }
+  max-width: 340px;
 
   .cart-sticky-container {
     position: sticky;
@@ -141,6 +138,28 @@
       max-height: none;
     }
   }
+}
+
+:host ::ng-deep .step-card,
+:host ::ng-deep .cart-card {
+  display: block !important;
+  visibility: visible !important;
+  height: auto !important;
+  min-height: 120px;
+}
+
+:host ::ng-deep .step-card .p-card-header,
+:host ::ng-deep .step-card .p-card-body,
+:host ::ng-deep .step-card .p-card-content,
+:host ::ng-deep .cart-card .p-card-header,
+:host ::ng-deep .cart-card .p-card-body,
+:host ::ng-deep .cart-card .p-card-content {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 
@@ -804,6 +823,10 @@
 
 // ==================== RESPONSIVE ====================
 @media (max-width: 991px) {
+  .comandix-main-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .comandix-right-column {
     display: none;
   }
@@ -1670,6 +1693,29 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   border: 1px solid var(--surface-200);
   z-index: 2;
+}
+
+.cfg-panel-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 14px 14px 0 0;
+  background: var(--surface-100);
+
+  .cfg-panel-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &.no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color-secondary);
+    font-size: 0.875rem;
+  }
 }
 
 .cfg-panel-header {

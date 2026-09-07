@@ -141,8 +141,7 @@
     <div class="comandix-left-column">
 
       <!-- PASO 1: Identificación del Cliente -->
-      <p-card class="mb-3 step-card">
-        <ng-template #header>
+      <div class="mb-3 step-card">
           <div class="step-header">
             <div class="step-number">1</div>
             <div class="step-title">
@@ -150,7 +149,6 @@
               <p class="text-xs text-color-secondary m-0">Identifica o deja en blanco para venta general</p>
             </div>
           </div>
-        </ng-template>
 
         <div class="flex flex-column gap-3">
           <label class="text-xs font-semibold text-color-secondary uppercase tracking-wide">Cliente (Opcional)</label>
@@ -175,11 +173,10 @@
             <p-button icon="pi pi-plus" label="Nuevo" severity="secondary" size="small" (onClick)="openDialogNuevoCliente()" class="flex-shrink-0"></p-button>
           </div>
         </div>
-      </p-card>
+      </div>
 
       <!-- PASO 2: Selección de Productos -->
-      <p-card class="step-card catalog-card">
-        <ng-template #header>
+      <div class="step-card catalog-card">
           <div class="step-header">
             <div class="step-number">2</div>
             <div class="step-title">
@@ -189,7 +186,6 @@
               <p class="text-xs text-color-secondary m-0">Selecciona productos para agregar</p>
             </div>
           </div>
-        </ng-template>
 
         <div *ngIf="categories().length === 0" class="empty-catalog">
           <i class="pi pi-inbox text-5xl text-surface-300 mb-3"></i>
@@ -216,21 +212,19 @@
               <p-tabpanel *ngFor="let category of categories()" [value]="category.id">
                 <div class="products-grid">
                   <div *ngFor="let product of category.products" class="product-item">
-                    <p-card
-                      styleClass="product-card h-full cursor-pointer"
+                    <div
+                      class="product-card h-full cursor-pointer"
                       [class.no-image]="!product.imageUrl || !product.imageUrl.trim()"
                       (click)="addToCart(product)"
                     >
-                      <ng-template #header *ngIf="product.imageUrl && product.imageUrl.trim()">
-                        <div class="product-image">
-                          <img
-                            [src]="product.imageUrl"
-                            [alt]="product.name"
-                            class="w-full h-full object-cover"
-                            (error)="onImageError($event)"
-                          />
-                        </div>
-                      </ng-template>
+                      <div class="product-image" *ngIf="product.imageUrl && product.imageUrl.trim()">
+                        <img
+                          [src]="product.imageUrl"
+                          [alt]="product.name"
+                          class="w-full h-full object-cover"
+                          (error)="onImageError($event)"
+                        />
+                      </div>
 
                       <div class="product-content">
                         <h4 class="product-name">{{ product.name }}</h4>
@@ -248,21 +242,20 @@
                           ></p-button>
                         </div>
                       </div>
-                    </p-card>
+                    </div>
                   </div>
                 </div>
               </p-tabpanel>
             </p-tabpanels>
           </p-tabs>
         </div>
-      </p-card>
+      </div>
     </div>
 
     <!-- COLUMNA DERECHA: CARRITO DESKTOP -->
     <div class="comandix-right-column">
       <div class="cart-sticky-container">
-        <p-card styleClass="cart-card">
-          <ng-template #header>
+        <div class="cart-card">
             <div class="cart-header">
               <div class="flex align-items-center gap-2">
                 <i class="pi pi-shopping-cart"></i>
@@ -273,7 +266,6 @@
                 [styleClass]="cart().length > 0 ? 'p-tag-success' : 'p-tag-secondary'"
               ></p-tag>
             </div>
-          </ng-template>
 
           <div *ngIf="cart().length === 0" class="empty-cart">
             <i class="pi pi-shopping-cart"></i>
@@ -349,11 +341,11 @@
             <p-divider></p-divider>
 
             <div class="action-buttons">
-              <p-button icon="pi pi-check-circle" [label]="editingPendingOrder() ? 'Guardar Cambios' : 'Finalizar Venta'" severity="success" [loading]="processingOrder()" [disabled]="processingOrder()" styleClass="w-full" (onClick)="finalizarVenta()"></p-button>
+              <p-button icon="pi pi-send" [label]="editingPendingOrder() ? 'Guardar Cambios' : 'Enviar a cocina'" severity="success" [loading]="processingOrder()" [disabled]="processingOrder()" styleClass="w-full" (onClick)="finalizarVenta()"></p-button>
               <p-button icon="pi pi-times" [label]="editingPendingOrder() ? 'Cancelar edición' : 'Limpiar'" severity="secondary" [outlined]="true" styleClass="w-full" [disabled]="processingOrder()" (onClick)="editingPendingOrder() ? cancelPendingOrderEdition() : limpiarCarrito()"></p-button>
             </div>
           </div>
-        </p-card>
+        </div>
       </div>
     </div>
   </div>
@@ -570,8 +562,7 @@
 
   <!-- ==================== TEMPLATE CARRITO ==================== -->
   <ng-template #carritoTemplate>
-    <p-card styleClass="cart-card">
-      <ng-template #header>
+    <div class="cart-card">
         <div class="cart-header">
           <div class="flex align-items-center gap-2">
             <i class="pi pi-shopping-cart"></i>
@@ -582,7 +573,6 @@
             [styleClass]="cart().length > 0 ? 'p-tag-success' : 'p-tag-secondary'"
           ></p-tag>
         </div>
-      </ng-template>
 
       <!-- Carrito Vacío -->
       <div *ngIf="cart().length === 0" class="empty-cart">
@@ -669,11 +659,11 @@
         <p-divider></p-divider>
 
         <div class="action-buttons">
-          <p-button icon="pi pi-check-circle" [label]="editingPendingOrder() ? 'Guardar Cambios' : 'Finalizar Venta'" severity="success" [loading]="processingOrder()" [disabled]="processingOrder()" styleClass="w-full" (onClick)="finalizarVenta()"></p-button>
+          <p-button icon="pi pi-send" [label]="editingPendingOrder() ? 'Guardar Cambios' : 'Enviar a cocina'" severity="success" [loading]="processingOrder()" [disabled]="processingOrder()" styleClass="w-full" (onClick)="finalizarVenta()"></p-button>
           <p-button icon="pi pi-times" [label]="editingPendingOrder() ? 'Cancelar edición' : 'Limpiar'" severity="secondary" [outlined]="true" styleClass="w-full" [disabled]="processingOrder()" (onClick)="editingPendingOrder() ? cancelPendingOrderEdition() : limpiarCarrito()"></p-button>
         </div>
       </div>
-    </p-card>
+    </div>
   </ng-template>
 
   <!-- ==================== DIALOG DETALLE DE ORDEN ==================== -->
@@ -950,6 +940,14 @@
   <div *ngIf="ingredientConfigVisible" class="cfg-overlay">
     <div class="cfg-backdrop" (click)="cancelIngredientConfig()"></div>
     <div class="cfg-panel" *ngIf="configProduct">
+      <div class="cfg-panel-image" *ngIf="configProduct.imageUrl && configProduct.imageUrl.trim()">
+        <img
+          [src]="configProduct.imageUrl"
+          [alt]="configProduct.name"
+          class="cfg-panel-img"
+          (error)="onImageError($event)"
+        />
+      </div>
       <div class="cfg-panel-header">
         <h3 class="cfg-product-name">{{ configProduct.name }}</h3>
         <button type="button" class="cfg-close-btn" (click)="cancelIngredientConfig()" aria-label="Cerrar">

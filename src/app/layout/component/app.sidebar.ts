@@ -18,7 +18,7 @@ import { LayoutService } from '../service/layout.service';
                 <span class="logo-text">LEALTIX</span>
             </div>
             <button class="toggle-pin-btn" (click)="toggleSidebar()" title="Fijar / Colapsar">
-                <i class="pi" [ngClass]="isCollapsed ? 'pi-circle' : 'pi-circle-fill'"></i>
+                <i class="pi" [ngClass]="isCollapsed ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
             </button>
         </div>
 

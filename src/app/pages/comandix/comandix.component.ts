@@ -353,13 +353,19 @@ export class ComandixComponent implements OnInit, OnDestroy {
         return mergedOrders;
       });
 
-      // Mostrar alerta en primera carga si hay órdenes
-      if (isFirstPoll && mappedOrders.length > 0) {
-        console.log('[Comandix] 📊 Primera carga:', mappedOrders.length, 'órdenes activas');
+      // Contar SOLO órdenes realmente activas (el polling incluye PAGADA para
+      // poblar el historial de hoy, pero no deben contarse como "activas").
+      const trulyActive = mappedOrders.filter(
+        (order) => !['PAGADA', 'CANCELADA', 'RECHAZADO'].includes(this.normalizeOrderStatus(order.estado))
+      );
+
+      // Mostrar alerta en primera carga si hay órdenes activas
+      if (isFirstPoll && trulyActive.length > 0) {
+        console.log('[Comandix] 📊 Primera carga:', trulyActive.length, 'órdenes activas');
         this.messageService.add({
           severity: 'info',
           summary: 'Órdenes Activas',
-          detail: `Tienes ${mappedOrders.length} orden${mappedOrders.length === 1 ? '' : 'es'} activa${mappedOrders.length === 1 ? '' : 's'}`,
+          detail: `Tienes ${trulyActive.length} orden${trulyActive.length === 1 ? '' : 'es'} activa${trulyActive.length === 1 ? '' : 's'}`,
           life: 5000,
           icon: 'pi pi-info-circle'
         });

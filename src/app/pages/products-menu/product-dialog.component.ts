@@ -87,6 +87,16 @@ import { TreeNode } from 'primeng/api';
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-field" style="flex:1">
+                            <label for="autoAvailability" class="field-label">Control de stock automático</label>
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox formControlName="autoAvailability" binary="true" inputId="autoAvailability" (onChange)="onAutoAvailabilityChange($event.checked)"></p-checkbox>
+                                <button pButton type="button" icon="pi pi-info-circle" class="p-button-sm p-button-text p-button-plain info-button" pTooltip="Si está activo, el producto se oculta automáticamente del menú cuando no hay insumos suficientes para prepararlo, y se vuelve a mostrar cuando se abastece. Desactívalo para controlar 'Activo' manualmente." tooltipPosition="top" appTouchTooltip></button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-field">
                         <div class="flex align-items-center justify-between mb-2">
                             <label class="field-label">Imagen (URL o subir)</label>
@@ -392,6 +402,7 @@ export class ProductDialogComponent implements OnChanges {
     @Output() onProductFileSelect = new EventEmitter<any>();
     @Output() categoryChange = new EventEmitter<any>();
     @Output() activeChange = new EventEmitter<boolean>();
+    @Output() autoAvailabilityChange = new EventEmitter<boolean>();
     @Output() removeImage = new EventEmitter<void>();
 
     categoryPicker: any = null;
@@ -563,12 +574,27 @@ export class ProductDialogComponent implements OnChanges {
                 this.activeChange.emit(true);
             }
 
+            // Auto-disponibilidad: default true (null de registros viejos se trata como activado)
+            if (this.product.autoAvailability === undefined || this.product.autoAvailability === null) {
+                this.product.autoAvailability = true;
+                this.autoAvailabilityChange.emit(true);
+            }
+
             // If a reactive form with 'isActive' control is provided, set its value from the product
             if (this.productForm && this.productForm.get) {
                 const isActiveControl = this.productForm.get('isActive');
                 if (isActiveControl) {
                     try {
                         isActiveControl.setValue(this.product.isActive, { emitEvent: false });
+                    } catch (e) {
+                        // ignore if unable to set
+                    }
+                }
+
+                const autoAvailabilityControl = this.productForm.get('autoAvailability');
+                if (autoAvailabilityControl) {
+                    try {
+                        autoAvailabilityControl.setValue(this.product.autoAvailability, { emitEvent: false });
                     } catch (e) {
                         // ignore if unable to set
                     }
@@ -604,6 +630,20 @@ export class ProductDialogComponent implements OnChanges {
             this.product = this.product || {};
             this.product.isActive = value;
             this.activeChange.emit(value);
+        }
+    }
+
+    onAutoAvailabilityChange(value: boolean) {
+        if (this.productForm && this.productForm.get && this.productForm.get('autoAvailability')) {
+            try {
+                this.productForm.get('autoAvailability').setValue(value);
+            } catch (e) {
+                // ignore
+            }
+        } else {
+            this.product = this.product || {};
+            this.product.autoAvailability = value;
+            this.autoAvailabilityChange.emit(value);
         }
     }
 

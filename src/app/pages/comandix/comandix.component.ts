@@ -32,6 +32,7 @@ import { RedemptionService } from '@/pages/redeem/services/redemption.service';
 import { TenantService } from '@/pages/admin-page/service/tenant.service';
 import { AuthService } from '@/auth/auth.service';
 import { ProductService } from '@/pages/products-menu/service/product.service';
+import { environment } from '@/pages/commons/environment';
 
 // Componentes
 import { ClienteDialogComponent } from '@/pages/clientes/components/cliente-dialog/cliente-dialog.component';
@@ -874,6 +875,39 @@ export class ComandixComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Normaliza la URL de imagen para que apunte al backend actual:
+  // - URLs relativas (/api/...) o con host localhost/127.0.0.1 se reconstruyen
+  //   contra el apiUrl del entorno (corrige https://localhost guardado en BD).
+  // - URLs externas (Cloudinary, etc.) y data: se dejan intactas.
+  private resolveImageUrlForRendering(url: string | null | undefined): string | null {
+    if (!url || typeof url !== 'string' || !url.trim()) return null;
+    const value = url.trim();
+    if (value.startsWith('data:') || value.startsWith('blob:')) return value;
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      try {
+        const parsed = new URL(value);
+        const host = parsed.hostname.toLowerCase();
+        const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.localhost');
+        if (isLocalHost) {
+          const apiOrigin = new URL(environment.apiUrl).origin;
+          return `${apiOrigin}${parsed.pathname}${parsed.search}`;
+        }
+      } catch {
+        return value;
+      }
+      return value;
+    }
+    if (value.startsWith('/')) {
+      try {
+        const apiOrigin = new URL(environment.apiUrl).origin;
+        return `${apiOrigin}${value}`;
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
+
   private mapProductsToCategories(products: any[]): MenuCategory[] {
     if (!products || products.length === 0) return [];
 
@@ -894,9 +928,10 @@ export class ComandixComponent implements OnInit, OnDestroy {
     };
 
     activeProducts.forEach((product) => {
-      const imageUrl: string | null = product.imageUrl && typeof product.imageUrl === 'string'
+      const rawImageUrl: string | null = product.imageUrl && typeof product.imageUrl === 'string'
         ? product.imageUrl.trim() || null
         : (product.img_url?.trim() || null) || (product.image?.trim() || null) || null;
+      const imageUrl = this.resolveImageUrlForRendering(rawImageUrl);
 
       const description: string = (product.description && typeof product.description === 'string'
         ? product.description.trim()

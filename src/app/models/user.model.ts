@@ -57,7 +57,11 @@ export const ROLE_PERMISSIONS: { [key in UserRole]: string[] } = {
     'manage_categories',
     'manage_products',
     'view_reports',
-    'manage_settings'
+    'manage_settings',
+    'view_mesas',
+    'manage_mesas',
+    'view_reservaciones',
+    'manage_reservaciones'
   ],
   [UserRole.MESERO]: [
     'view_comanda',

@@ -49,35 +49,31 @@ export class AppMenu implements OnInit {
     }
 
     private buildMenu() {
-        // Un solo Dashboard: si el usuario es admin (view_dashboard) va a KPIs,
-        // si es mesero (solo dashboard_mesero) va a su dashboard de mesero.
-        const dashboardRoute = this.userPermissions.includes('view_dashboard')
-            ? '/dashboard/kpis'
-            : '/dashboard/mesero';
-
         const allMenuItems: MenuItem[] = [
-            { label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: [dashboardRoute], requiredPermissions: ['view_dashboard', 'dashboard_mesero'] },
-            { label: 'Admin Page', icon: 'pi pi-fw pi-globe', routerLink: ['/dashboard/adminPage'], requiredPermissions: ['manage_admin_page'] },
-            { label: 'Categorías', icon: 'pi pi-fw pi-tags', routerLink: ['/dashboard/categoriesMenu'], requiredPermissions: ['manage_categories'] },
+            { label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/dashboard/kpis'], roles: ['ADMIN', 'MARKETING', 'CAJA'], requiredPermissions: ['view_dashboard'] },
+            { label: 'Admin Page', icon: 'pi pi-fw pi-globe', routerLink: ['/dashboard/adminPage'], roles: ['ADMIN'], requiredPermissions: ['manage_admin_page'] },
+            { label: 'Categorías', icon: 'pi pi-fw pi-tags', routerLink: ['/dashboard/categoriesMenu'], roles: ['ADMIN'], requiredPermissions: ['manage_categories'] },
             {
                 label: 'Productos',
                 icon: 'pi pi-fw pi-bars',
                 routerLink: ['/dashboard/adminMenu'],
                 disabled: true,
                 title: 'Primero crea al menos una categoría',
+                roles: ['ADMIN'],
                 requiredPermissions: ['create_product', 'edit_product']
             },
-            { label: 'Campañas', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/campaigns'], requiredPermissions: ['manage_campaigns'] },
-            { label: 'Plantillas', icon: 'pi pi-fw pi-file', routerLink: ['/dashboard/campaign-templates'], requiredPermissions: ['manage_campaign_templates'] },
-            { label: 'Redención', icon: 'pi pi-fw pi-ticket', routerLink: ['/dashboard/manual-redemption'], requiredPermissions: ['process_redemption'] },
-            { label: 'Inventario', icon: 'pi pi-fw pi-box', routerLink: ['/dashboard/inventario'], requiredPermissions: ['view_products'] },
-            { label: 'Gestión de Clientes', icon: 'pi pi-fw pi-users', routerLink: ['/dashboard/clientes'], requiredPermissions: ['view_customers'] },
-            { label: 'Gestión de Equipo', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/users'], requiredPermissions: ['view_users', 'manage_user_roles'] },
+            { label: 'Campañas', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/campaigns'], roles: ['ADMIN', 'MARKETING'], requiredPermissions: ['manage_campaigns'] },
+            { label: 'Plantillas', icon: 'pi pi-fw pi-file', routerLink: ['/dashboard/campaign-templates'], roles: ['ADMIN', 'MARKETING'], requiredPermissions: ['manage_campaign_templates'] },
+            { label: 'Redención', icon: 'pi pi-fw pi-ticket', routerLink: ['/dashboard/manual-redemption'], roles: ['ADMIN', 'MARKETING', 'CAJA'], requiredPermissions: ['process_redemption'] },
+            { label: 'Inventario', icon: 'pi pi-fw pi-box', routerLink: ['/dashboard/inventario'], roles: ['ADMIN'], requiredPermissions: ['view_products'] },
+            { label: 'Gestión de Clientes', icon: 'pi pi-fw pi-users', routerLink: ['/dashboard/clientes'], roles: ['ADMIN'], requiredPermissions: ['view_customers'] },
+            { label: 'Gestión de Equipo', icon: 'pi pi-fw pi-id-card', routerLink: ['/dashboard/users'], roles: ['ADMIN'], requiredPermissions: ['view_users', 'manage_user_roles'] },
             {
                 label: 'Mi Página',
                 icon: 'pi pi-fw pi-qrcode',
                 routerLink: ['/dashboard/mi-pagina'],
                 visible: false,
+                roles: ['ADMIN'],
                 requiredPermissions: ['view_products']
             },
             {
@@ -85,23 +81,28 @@ export class AppMenu implements OnInit {
                 icon: 'pi pi-fw pi-shopping-cart',
                 routerLink: ['/dashboard/comandix'],
                 visible: false,
+                roles: ['MESERO'],
                 requiredPermissions: ['create_order']
             },
             {
                 label: 'Cocina',
                 icon: 'pi pi-fw pi-box',
                 routerLink: ['/dashboard/cocina'],
+                roles: ['COCINA'],
                 requiredPermissions: ['view_kitchen_orders', 'update_order_status']
             },
             {
                 label: 'Dashboard Cocina',
                 icon: 'pi pi-fw pi-chart-line',
                 routerLink: ['/dashboard/cocina-dashboard'],
+                roles: ['COCINA'],
                 requiredPermissions: ['dashboard_kitchen'],
                 requiredRole: 'COCINA'
             },
-            { label: 'Reportes', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/dashboard/uikit/charts'], visible: false, requiredPermissions: ['view_reports', 'admin_access'] },
-            { label: 'Utils', icon: 'pi pi-fw pi-table', routerLink: ['/dashboard/uikit/table'], visible: false, requiredPermissions: ['admin_access'] }
+            { label: 'Mesas', icon: 'pi pi-fw pi-table', routerLink: ['/dashboard/mesas'], roles: ['HOSTESS', 'ADMIN'], requiredPermissions: ['view_mesas'] },
+            { label: 'Reservaciones', icon: 'pi pi-fw pi-calendar', routerLink: ['/dashboard/reservaciones'], roles: ['HOSTESS', 'ADMIN'], requiredPermissions: ['view_reservaciones'] },
+            { label: 'Reportes', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/dashboard/uikit/charts'], visible: false, roles: ['ADMIN'], requiredPermissions: ['view_reports', 'admin_access'] },
+            { label: 'Utils', icon: 'pi pi-fw pi-table', routerLink: ['/dashboard/uikit/table'], visible: false, roles: ['ADMIN'], requiredPermissions: ['admin_access'] }
         ];
 
         // Filtrar items según permisos
@@ -127,6 +128,11 @@ export class AppMenu implements OnInit {
     private hasRequiredPermissions(item: any): boolean {
         const user = this.authService.getCurrentUser();
         const userRole = user?.role || user?.rol;
+
+        // Validar restricción de rol por lista de roles permitidos
+        if (item.roles && item.roles.length > 0 && !item.roles.includes(userRole)) {
+            return false;
+        }
 
         // Validar restricción de rol (ej: requiredRole: 'MESERO')
         if (item.requiredRole && item.requiredRole !== userRole) {

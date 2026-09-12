@@ -1,0 +1,114 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [closable]="!loading"
+  [header]="'Cobrar por separado'"
+  [style]="{ width: '100%', 'max-width': '680px' }"
+  styleClass="split-order-dialog"
+  (onHide)="onClose()"
+>
+  <ng-container *ngIf="order as currentOrder">
+    <div class="split-header-summary">
+      <div class="summary-grid">
+        <div>
+          <div class="summary-label">Comanda</div>
+          <div class="summary-value">{{ ticket }}</div>
+        </div>
+        <div>
+          <div class="summary-label">Cliente</div>
+          <div class="summary-value">{{ clienteLabel }}</div>
+        </div>
+      </div>
+      <div class="split-hint">
+        <i class="pi pi-info-circle mr-2"></i>
+        Marca los artículos que irán a la nueva cuenta. Se quitarán de esta comanda
+        y la nueva comanda quedará lista para pagar.
+      </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <div class="items-wrapper">
+      <div class="summary-label mb-2">Artículos de la comanda</div>
+
+      <div *ngIf="items.length === 0" class="no-items">
+        No hay artículos disponibles en esta comanda.
+      </div>
+
+      <div *ngIf="items.length > 0" class="split-items-list">
+        <div
+          *ngFor="let item of items; let i = index; trackBy: trackByItem"
+          class="split-item-row"
+          [class.selected]="item.seleccionado"
+        >
+          <p-checkbox
+            [binary]="true"
+            [(ngModel)]="item.seleccionado"
+            inputId="split-item-{{ i }}"
+          ></p-checkbox>
+          <div class="split-item-main">
+            <span class="split-item-name">{{ item.productName }}</span>
+            <span *ngIf="getComentarios(item)" class="split-item-coment">
+              📝 {{ getComentarios(item) }}
+            </span>
+            <span class="split-item-meta">
+              x{{ item.cantidad }}
+              <ng-container *ngIf="item.additionalIngredientIds?.length">
+                &middot; con extras
+              </ng-container>
+              <ng-container *ngIf="item.excludedIngredientIds?.length">
+                &middot; sin modificables
+              </ng-container>
+            </span>
+          </div>
+          <span class="split-item-price">
+            ${{ (item.precioUnitario * item.cantidad) | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <div class="split-footer-info">
+      <div>
+        <div class="summary-label">Artículos seleccionados</div>
+        <div class="summary-value">{{ seleccionTotal }} ({{ seleccionCantidad }} pzas)</div>
+      </div>
+      <div>
+        <div class="summary-label">Monto de la nueva cuenta</div>
+        <div class="summary-total">${{ seleccionMonto | number:'1.2-2' }}</div>
+      </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <p-message *ngIf="errorMessage" severity="error" [text]="errorMessage" styleClass="mt-2"></p-message>
+    <p-message *ngIf="successMessage" severity="success" [text]="successMessage" styleClass="mt-2"></p-message>
+
+    <div class="footer-actions mt-4">
+      <p-button
+        label="Cancelar"
+        icon="pi pi-times"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading"
+        (onClick)="onClose()"
+      ></p-button>
+
+      <p-button
+        label="Crear nueva cuenta"
+        icon="pi pi-plus"
+        severity="help"
+        [disabled]="loading || !tieneSeleccion || items.length === 0"
+        (onClick)="onCrearCuenta()"
+      ></p-button>
+    </div>
+
+    <div *ngIf="loading" class="loading-overlay">
+      <p-progressSpinner strokeWidth="4" [style]="{ width: '42px', height: '42px' }"></p-progressSpinner>
+      <span>Creando nueva cuenta...</span>
+    </div>
+  </ng-container>
+</p-dialog>

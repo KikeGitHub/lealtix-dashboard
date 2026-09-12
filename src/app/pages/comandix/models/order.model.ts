@@ -7,6 +7,10 @@ export interface OrderItem {
   cantidad: number;
   precioUnitario: number;
   comentarios?: string;
+  /** Ingredientes modificables que el cliente pidió quitar (no se descuentan) */
+  excludedIngredientIds?: number[];
+  /** Insumos adicionales seleccionados por el cliente (se descuentan) */
+  additionalIngredientIds?: number[];
 }
 
 export type OrderStatus =
@@ -50,7 +54,7 @@ export interface RecordPaymentResponse {
 
 export interface TenantClientOrderCreateRequest {
   customerId?: number | null;
-    tenantId: number;
+  tenantId: number;
   items: OrderItem[];
   subtotal: number;
   descuento: number;
@@ -58,6 +62,7 @@ export interface TenantClientOrderCreateRequest {
   couponCode?: string | null;
   redeemedBy?: number | null;
   redemptionChannel?: string | null;
+  source?: string;
 }
 
 export interface TenantClientOrderUpdateRequest {
@@ -92,6 +97,8 @@ export interface PendingOrderItem {
   precioUnitario: number;
   precio?: number;
   comentarios?: string;
+  excludedIngredientIds?: number[];
+  additionalIngredientIds?: number[];
 }
 
 export interface PendingOrder {
@@ -139,4 +146,22 @@ export interface UpdateOrderStatusRequest {
   estado: OrderStatus | string;
   userEmail?: string;
   reason?: string;
+}
+
+// ==================== DIVISIÓN DE CUENTA (split) ====================
+
+export interface SplitOrderRequest {
+  tenantId: number;
+  customerId?: number | null;
+  items: OrderItem[];
+  source?: string;
+}
+
+export interface SplitOrderResponse {
+  code: number;
+  message: string;
+  object?: {
+    originalOrder?: TenantClientOrderResponse;
+    newOrder?: TenantClientOrderResponse;
+  };
 }

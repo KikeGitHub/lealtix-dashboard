@@ -19,6 +19,7 @@ interface InvItem {
   id: number;
   name: string;
   categoryName?: string;
+  categories?: { id: number; name: string }[];
   stock: number;
   lowStock: boolean;
   outOfStock: boolean;
@@ -58,14 +59,16 @@ export class InventarioComponent implements OnInit {
 
   items = signal<InvItem[]>([]);
   insumos = signal<Insumo[]>([]);
+  bebidas = signal<any[]>([]);
   loading = signal(false);
   loadingInsumos = signal(false);
+  loadingBebidas = signal(false);
   tenantId = 0;
 
-  // Pestaña activa de la tabla unificada: 'products' | 'insumos'
-  activeTab = signal<'products' | 'insumos'>('products');
+  // Pestaña activa de la tabla unificada: 'products' | 'insumos' | 'bebidas'
+  activeTab = signal<'products' | 'insumos' | 'bebidas'>('products');
 
-  setActiveTab(tab: 'products' | 'insumos') {
+  setActiveTab(tab: 'products' | 'insumos' | 'bebidas') {
     this.activeTab.set(tab);
     this.dt?.reset();
   }
@@ -77,6 +80,7 @@ export class InventarioComponent implements OnInit {
   insumoRestockVisible = false;
   insumoRestockTarget: Insumo | null = null;
   insumoRestockCantidad = 0;
+  insumoRestockCostoTotal = 0;
 
   constructor(
     private inventoryService: InventoryService,
@@ -90,6 +94,7 @@ export class InventarioComponent implements OnInit {
     if (this.tenantId) {
       this.load();
       this.loadInsumos();
+      this.loadBebidas();
     }
   }
 
@@ -121,6 +126,20 @@ export class InventarioComponent implements OnInit {
     });
   }
 
+  loadBebidas() {
+    this.loadingBebidas.set(true);
+    this.inventoryService.getBebidas(this.tenantId).subscribe({
+      next: (res) => {
+        this.bebidas.set(res.object || []);
+        this.loadingBebidas.set(false);
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las bebidas' });
+        this.loadingBebidas.set(false);
+      }
+    });
+  }
+
   /* ============ Badges de stock (estilo products-menu) ============ */
 
   productBadgeClass(item: InvItem): string {
@@ -136,21 +155,71 @@ export class InventarioComponent implements OnInit {
     return insumo.stock <= insumo.stockMinimo ? 'stock-low' : 'stock-ok';
   }
 
+  rowCategories(row: any): { id: number; name: string }[] {
+    const cats: { id: number; name: string }[] = [];
+    if (row && Array.isArray(row.categories)) {
+      row.categories.forEach((c: any) => {
+        if (c && c.id != null && c.name) {
+          const id = Number(c.id);
+          if (!Number.isNaN(id) && !cats.some((x) => x.id === id)) cats.push({ id, name: c.name });
+        }
+      });
+    }
+    if (!cats.length && row && row.categoryId != null && row.categoryName) cats.push({ id: Number(row.categoryId), name: row.categoryName });
+    return cats;
+  }
+
+  /* ============ Mini-cards de categorías (máx 3 + "..." expandible) ============ */
+
+  private expandedCatRows = new Set<string>();
+
+  private categoryRowKey(row: any): string {
+    const rawId = row?.id ?? 0;
+    const id = typeof rawId === 'number' ? rawId : String(rawId);
+    const name = row?.name ?? row?.nombre ?? '';
+    return `${id}_${name}`;
+  }
+
+  isCategoryRowExpanded(row: any): boolean {
+    return this.expandedCatRows.has(this.categoryRowKey(row));
+  }
+
+  toggleCategories(row: any): void {
+    const key = this.categoryRowKey(row);
+    if (this.expandedCatRows.has(key)) {
+      this.expandedCatRows.delete(key);
+    } else {
+      this.expandedCatRows.add(key);
+    }
+  }
+
+  visibleRowCategories(row: any, limit = 3): { id: number; name: string }[] {
+    const all = this.rowCategories(row);
+    if (all.length <= limit || this.isCategoryRowExpanded(row)) return all;
+    return all.slice(0, limit);
+  }
+
+  hiddenCategoryCount(row: any): number {
+    return Math.max(0, this.rowCategories(row).length - 3);
+  }
+
   /* ============ Restock de insumo ============ */
 
   openInsumoRestock(insumo: Insumo) {
     this.insumoRestockTarget = insumo;
     this.insumoRestockCantidad = 0;
+    this.insumoRestockCostoTotal = 0;
     this.insumoRestockVisible = true;
   }
 
   doInsumoRestock() {
     if (!this.insumoRestockTarget || this.insumoRestockCantidad <= 0) return;
-    this.inventoryService.restockInsumo(this.insumoRestockTarget.id, this.insumoRestockCantidad).subscribe({
+    this.inventoryService.restockInsumo(this.insumoRestockTarget.id, this.insumoRestockCantidad, this.insumoRestockCostoTotal).subscribe({
       next: (res) => {
         this.messageService.add({ severity: 'success', summary: 'Exitoso', detail: `Stock del insumo: ${res.object}` });
         this.insumoRestockVisible = false;
         this.loadInsumos();
+        this.loadBebidas();
         this.load();
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo reabastecer' })

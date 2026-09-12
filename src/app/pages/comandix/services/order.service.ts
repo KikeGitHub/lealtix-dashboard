@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import {
   TenantClientOrderCreateRequest,
@@ -11,7 +11,9 @@ import {
   UpdateOrderStatusResponse,
   UpdateOrderStatusRequest,
   RecordPaymentRequest,
-  RecordPaymentResponse
+  RecordPaymentResponse,
+  SplitOrderRequest,
+  SplitOrderResponse
 } from '../models/order.model';
 import { environment } from '@/pages/commons/environment';
 
@@ -34,7 +36,12 @@ export class OrderService {
    * Crea una nueva orden de cliente
    */
   createOrder(order: TenantClientOrderCreateRequest): Observable<TenantClientOrderResponse> {
-    return this.http.post<TenantClientOrderResponse>(this.baseUrl, order).pipe(
+    return this.http.post<{ object?: TenantClientOrderResponse } | TenantClientOrderResponse>(this.baseUrl, order).pipe(
+      map((response): TenantClientOrderResponse =>
+        'object' in response && response.object
+          ? response.object
+          : response as TenantClientOrderResponse
+      ),
       catchError((error) => {
         console.error('Error al crear orden:', error);
         return throwError(() => error);
@@ -44,17 +51,25 @@ export class OrderService {
 
   /**
    * Actualiza una orden existente (items, cantidades, comentarios, totales)
-   * Intenta PUT /{orderId} y si el backend no lo soporta, hace fallback a PATCH /{orderId}
+   * Usa PUT /{orderId} y si el backend anterior no lo soporta (404/405),
+   * hace fallback a PATCH /{orderId}. Otros errores (p. ej. prórroga vencida 400)
+   * se propagan sin sobrescribirlos para mostrar el mensaje real.
    */
   updateOrder(orderId: string, order: TenantClientOrderUpdateRequest): Observable<TenantClientOrderResponse> {
     return this.http.put<TenantClientOrderResponse>(`${this.baseUrl}/${orderId}`, order).pipe(
       catchError((putError) => {
-        console.warn('PUT no disponible para actualización de orden, intentando PATCH:', putError);
-        return this.http.patch<TenantClientOrderResponse>(`${this.baseUrl}/${orderId}`, order);
-      }),
-      catchError((error) => {
-        console.error('Error al actualizar orden:', error);
-        return throwError(() => error);
+        const status = putError?.status;
+        if (status === 404 || status === 405) {
+          console.warn('PUT no disponible para actualización de orden, intentando PATCH:', putError);
+          return this.http.patch<TenantClientOrderResponse>(`${this.baseUrl}/${orderId}`, order).pipe(
+            catchError((patchError) => {
+              console.error('Error al actualizar orden:', patchError);
+              return throwError(() => patchError);
+            })
+          );
+        }
+        console.error('Error al actualizar orden:', putError);
+        return throwError(() => putError);
       })
     );
   }
@@ -132,6 +147,20 @@ export class OrderService {
       }),
       catchError((error) => {
         console.error('Error al registrar pago de orden:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Divide una cuenta: mueve los artículos indicados de la comanda a una
+   * comanda nueva lista para pagar.
+   * POST /{orderId}/split
+   */
+  splitOrder(orderId: string, request: SplitOrderRequest): Observable<SplitOrderResponse> {
+    return this.http.post<SplitOrderResponse>(`${this.baseUrl}/${orderId}/split`, request).pipe(
+      catchError((error) => {
+        console.error('Error al dividir cuenta:', error);
         return throwError(() => error);
       })
     );

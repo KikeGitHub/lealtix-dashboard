@@ -19,6 +19,7 @@ interface InvItem {
   id: number;
   name: string;
   categoryName?: string;
+  categories?: { id: number; name: string }[];
   stock: number;
   lowStock: boolean;
   outOfStock: boolean;
@@ -152,6 +153,54 @@ export class InventarioComponent implements OnInit {
 
   insumoLowClass(insumo: Insumo): string {
     return insumo.stock <= insumo.stockMinimo ? 'stock-low' : 'stock-ok';
+  }
+
+  rowCategories(row: any): { id: number; name: string }[] {
+    const cats: { id: number; name: string }[] = [];
+    if (row && Array.isArray(row.categories)) {
+      row.categories.forEach((c: any) => {
+        if (c && c.id != null && c.name) {
+          const id = Number(c.id);
+          if (!Number.isNaN(id) && !cats.some((x) => x.id === id)) cats.push({ id, name: c.name });
+        }
+      });
+    }
+    if (!cats.length && row && row.categoryId != null && row.categoryName) cats.push({ id: Number(row.categoryId), name: row.categoryName });
+    return cats;
+  }
+
+  /* ============ Mini-cards de categorías (máx 3 + "..." expandible) ============ */
+
+  private expandedCatRows = new Set<string>();
+
+  private categoryRowKey(row: any): string {
+    const rawId = row?.id ?? 0;
+    const id = typeof rawId === 'number' ? rawId : String(rawId);
+    const name = row?.name ?? row?.nombre ?? '';
+    return `${id}_${name}`;
+  }
+
+  isCategoryRowExpanded(row: any): boolean {
+    return this.expandedCatRows.has(this.categoryRowKey(row));
+  }
+
+  toggleCategories(row: any): void {
+    const key = this.categoryRowKey(row);
+    if (this.expandedCatRows.has(key)) {
+      this.expandedCatRows.delete(key);
+    } else {
+      this.expandedCatRows.add(key);
+    }
+  }
+
+  visibleRowCategories(row: any, limit = 3): { id: number; name: string }[] {
+    const all = this.rowCategories(row);
+    if (all.length <= limit || this.isCategoryRowExpanded(row)) return all;
+    return all.slice(0, limit);
+  }
+
+  hiddenCategoryCount(row: any): number {
+    return Math.max(0, this.rowCategories(row).length - 3);
   }
 
   /* ============ Restock de insumo ============ */

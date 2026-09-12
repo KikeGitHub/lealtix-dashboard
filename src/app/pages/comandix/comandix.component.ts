@@ -22,6 +22,7 @@ import { BadgeModule } from 'primeng/badge';
 import { DataViewModule } from 'primeng/dataview';
 import { SkeletonModule } from 'primeng/skeleton';
 import { CheckboxModule } from 'primeng/checkbox';
+import { TooltipModule } from 'primeng/tooltip';
 
 // Servicios
 import { MenuService } from './services/menu.service';
@@ -32,10 +33,14 @@ import { RedemptionService } from '@/pages/redeem/services/redemption.service';
 import { TenantService } from '@/pages/admin-page/service/tenant.service';
 import { AuthService } from '@/auth/auth.service';
 import { ProductService } from '@/pages/products-menu/service/product.service';
+import { InventoryService } from '@/pages/inventario/service/inventory.service';
+import { environment } from '@/pages/commons/environment';
 
 // Componentes
 import { ClienteDialogComponent } from '@/pages/clientes/components/cliente-dialog/cliente-dialog.component';
 import { CloseOrderModalComponent } from './components/close-order-modal/close-order-modal.component';
+import { RegistrarMermaModalComponent } from './components/registrar-merma-modal/registrar-merma-modal.component';
+import { SplitOrderModalComponent } from './components/split-order-modal/split-order-modal.component';
 
 // Modelos
 import { MenuCategory, Product, IngredientOption } from './models/menu.model';
@@ -61,6 +66,13 @@ interface CartItem {
   configKey?: string;
 }
 
+interface StockInfo {
+  stock: number;
+  stockMinimo: number;
+  low: boolean;
+  out: boolean;
+}
+
 @Component({
   selector: 'app-comandix',
   standalone: true,
@@ -84,8 +96,11 @@ interface CartItem {
     DataViewModule,
     SkeletonModule,
     CheckboxModule,
+    TooltipModule,
     ClienteDialogComponent,
-    CloseOrderModalComponent
+    CloseOrderModalComponent,
+    RegistrarMermaModalComponent,
+    SplitOrderModalComponent
   ],
   providers: [MessageService],
   templateUrl: './comandix.component.html',
@@ -119,6 +134,9 @@ export class ComandixComponent implements OnInit, OnDestroy {
   tenantId: number = 0;
   private readonly CART_DRAFT_STORAGE_KEY = 'lealtix-comandix-cart-draft';
 
+  // Mapa stock por producto (lo entrega /inventory/tenant/:id) para el badge de "cuántos salen aún"
+  private stockMap: Map<number, StockInfo> = new Map();
+
   // Computed POS
   subtotal = computed(() => {
     return this.cart().reduce((sum, item) => sum + (this.getCartItemUnitPrice(item) * item.cantidad), 0);
@@ -134,7 +152,8 @@ export class ComandixComponent implements OnInit, OnDestroy {
   configModificables: IngredientOption[] = [];
   configAdicionales: IngredientOption[] = [];
   configExcludedIds = new Set<number>();
-  configAdditionalIds = new Set<number>();
+configAdditionalIds = new Set<number>();
+configEditingItem: CartItem | null = null;
 
   // ==================== SIGNALS DASHBOARD DE ÓRDENES (nuevo) ====================
   activeView = signal<'pos' | 'orders'>('pos');
@@ -153,7 +172,14 @@ export class ComandixComponent implements OnInit, OnDestroy {
   cancellationReason: string = '';
 
   canCloseOrders = false;
+  canRegistrarMerma = false;
   currentUserEmail: string = '';
+
+  // Modal de merma
+  showMermaModal = signal<boolean>(false);
+  selectedOrderForMerma = signal<PendingOrder | null>(null);
+  showSplitModal = signal<boolean>(false);
+  selectedOrderForSplit = signal<PendingOrder | null>(null);
 
   // Computed: Órdenes activas (excluyendo PAGADA y CANCELADA)
   activeOrders = computed(() => {
@@ -217,10 +243,17 @@ export class ComandixComponent implements OnInit, OnDestroy {
   cancelledOrdersCount = computed(() => this.cancelledOrders().length);
 
   private pollingInterval: ReturnType<typeof setInterval> | null = null;
+  private editCountdownTimer: ReturnType<typeof setInterval> | null = null;
   private knownOrderIds = new Set<string>();
   private readonly POLLING_INTERVAL_MS = 30_000;
   private readonly NOTIFICATION_SOUND = 'assets/sounds/dragon-studio-correct-472358.mp3';
   private readonly ACTIVE_DASHBOARD_STATUSES: OrderStatus[] = ['PENDIENTE', 'CONFIRMADA', 'EN_PREPARACION', 'LISTO', 'PAGADA'];
+
+  /** Prórroga de edición de comandas enviadas (minutos) */
+  private readonly EDIT_WINDOW_MINUTES = 3;
+  /** Timestamp 'ahora' para refrescar el countdown de edición cada segundo */
+  nowTick = signal<number>(Date.now());
+  private readonly editableStates: OrderStatus[] = ['PENDIENTE', 'CONFIRMADA'];
 
   private destroy$ = new Subject<void>();
 
@@ -233,6 +266,7 @@ export class ComandixComponent implements OnInit, OnDestroy {
     private tenantService: TenantService,
     private authService: AuthService,
     private productService: ProductService,
+    private inventoryService: InventoryService,
     private messageService: MessageService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef
@@ -242,9 +276,11 @@ export class ComandixComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     this.restoreCartDraft();
+    this.startEditCountdown();
     await this.initializeTenant();
     if (this.tenantId > 0) {
       this.loadCatalog();
+      this.loadStockInfo();
       this.loadClientes();
       this.startPolling();
       this.startSseConnection();
@@ -256,6 +292,10 @@ export class ComandixComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopPolling();
+    if (this.editCountdownTimer) {
+      clearInterval(this.editCountdownTimer);
+      this.editCountdownTimer = null;
+    }
     // NO desconectar el SSE aquí: la conexión es global (AppLayout la mantiene
     // viva en todos los módulos). Desconectarla al salir de esta página cortaría
     // las notificaciones en el resto del dashboard.
@@ -366,6 +406,8 @@ export class ComandixComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error al consultar órdenes activas:', error);
     }
+
+    this.loadStockInfo();
   }
 
   private mapBackendOrder(order: any): PendingOrder {
@@ -559,6 +601,30 @@ export class ComandixComponent implements OnInit, OnDestroy {
     }
   }
 
+  openMermaModal(order: PendingOrder): void {
+    if (!this.canRegistrarMerma || this.processingOrderAction()) {
+      return;
+    }
+    this.selectedOrderForMerma.set(order);
+    this.showMermaModal.set(true);
+  }
+
+  onMermaModalVisibilityChange(visible: boolean): void {
+    this.showMermaModal.set(visible);
+    if (!visible) {
+      this.selectedOrderForMerma.set(null);
+    }
+  }
+
+  onMermaRegistrada(orderId: string): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Merma registrada',
+      detail: `Merma registrada para la orden #${orderId.slice(0, 8)}`,
+      life: 4000
+    });
+  }
+
   onPaymentRecorded(event: { orderId: string; method: PaymentMethod; reference?: string | null; paidAt: string }): void {
     const existing = this.pendingOrders().find((order) => order.id === event.orderId);
     if (!existing) {
@@ -594,7 +660,43 @@ export class ComandixComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ==================== DIVISIÓN DE CUENTA (pagar por separado) ====================
+
+  onCobroSeparado(order: PendingOrder): void {
+    this.closeCloseOrderModal();
+    this.selectedOrderForSplit.set(order);
+    this.showSplitModal.set(true);
+  }
+
+  onSplitModalVisibilityChange(visible: boolean): void {
+    this.showSplitModal.set(visible);
+    if (!visible) {
+      this.selectedOrderForSplit.set(null);
+    }
+  }
+
+  async onCuentaCreada(event: { originalOrderId: string; newOrderId: string }): Promise<void> {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Cuenta dividida',
+      detail: `La cuenta #${event.originalOrderId.slice(0, 8)} se separó y se creó la comanda #${event.newOrderId.slice(0, 8)}`,
+      life: 4500
+    });
+
+    await this.pollOrders();
+  }
+
   editPendingOrderInPos(order: PendingOrder): void {
+    if (!this.canEditOrder(order)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Prórroga vencida',
+        detail: 'La comanda se envió hace más de 3 minutos y ya no puede editarse',
+        life: 3000
+      });
+      return;
+    }
+
     const latestOrder = this.pendingOrders().find((existingOrder) => existingOrder.id === order.id) ?? order;
 
     this.selectedCliente = this.resolveClienteFromOrder(latestOrder);
@@ -648,6 +750,45 @@ export class ComandixComponent implements OnInit, OnDestroy {
     return diffMs < 2 * 60 * 1000;
   }
 
+  /** Arranca el timer que refresca nowTick cada segundo para el countdown de edición */
+  private startEditCountdown(): void {
+    if (this.editCountdownTimer) {
+      clearInterval(this.editCountdownTimer);
+    }
+    this.editCountdownTimer = setInterval(() => {
+      this.nowTick.set(Date.now());
+    }, 1000);
+  }
+
+  /** True si la comanda aún puede editarse (estado pendiente/confirmada y dentro de la prórroga) */
+  canEditOrder(order: PendingOrder): boolean {
+    if (!order) return false;
+    if (!this.editableStates.includes(order.estado as OrderStatus)) return false;
+    if (!order.fechaCreacion) return false;
+    const created = new Date(order.fechaCreacion).getTime();
+    const now = this.nowTick();
+    const diffMs = now - created;
+    return diffMs >= 0 && diffMs < this.EDIT_WINDOW_MINUTES * 60 * 1000;
+  }
+
+  /** Segundos restantes de la prórroga para la orden (0 si venció) */
+  private getEditableRemainingSeconds(order: PendingOrder): number {
+    if (!order?.fechaCreacion) return 0;
+    const created = new Date(order.fechaCreacion).getTime();
+    const diffMs = this.nowTick() - created;
+    const remainingSec = Math.ceil((this.EDIT_WINDOW_MINUTES * 60 * 1000 - diffMs) / 1000);
+    return remainingSec > 0 ? remainingSec : 0;
+  }
+
+  /** Etiqueta "Editable por mm:ss" para la tarjeta de la comanda */
+  editCountdownLabel(order: PendingOrder): string {
+    const seconds = this.getEditableRemainingSeconds(order);
+    if (seconds <= 0) return '';
+    const mm = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const ss = (seconds % 60).toString().padStart(2, '0');
+    return `Editable por ${mm}:${ss}`;
+  }
+
   /** Nombre legible del cliente para mostrar en la tarjeta */
   getClientLabel(order: PendingOrder): string {
     return order.customerName ?? order.nombre ?? 'Cliente General';
@@ -661,6 +802,75 @@ export class ComandixComponent implements OnInit, OnDestroy {
   /** Precio unitario del item (normaliza campo) */
   getItemPrice(item: any): number {
     return item.precioUnitario ?? item.precio ?? 0;
+  }
+
+  // ==================== STOCK DISPONIBLE POR PRODUCTO ("cuántos salen aún") ====================
+
+  /** Carga el stock actual de cada producto del menú (dinámico si tiene receta). */
+  private async loadStockInfo(): Promise<void> {
+    if (this.tenantId <= 0) return;
+    try {
+      const resp = await firstValueFrom(this.inventoryService.getByTenant(this.tenantId));
+      const items = Array.isArray(resp?.object) ? resp.object : [];
+      const map = new Map<number, StockInfo>();
+      for (const p of items) {
+        if (p?.id == null) continue;
+        map.set(Number(p.id), {
+          stock: typeof p.stock === 'number' ? p.stock : 0,
+          stockMinimo: typeof p.stockMinimo === 'number' ? p.stockMinimo : 0,
+          low: !!p.lowStock,
+          out: !!p.outOfStock
+        });
+      }
+      this.stockMap = map;
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.warn('[Comandix] No se pudo cargar el stock de productos:', error);
+    }
+  }
+
+  /** Stock tracked del item (null si el producto no está en inventario). */
+  getStockInfo(item: any): StockInfo | null {
+    if (!item || item.productId == null) return null;
+    return this.stockMap.get(Number(item.productId)) ?? null;
+  }
+
+  /** Piezas que quedan disponibles de este producto. */
+  getRemainingStock(item: any): number {
+    const info = this.getStockInfo(item);
+    return info ? Math.max(0, Math.floor(info.stock)) : 0;
+  }
+
+  /** True si el artículo está por debajo del stock mínimo o agotado. */
+  isLowStock(item: any): boolean {
+    const info = this.getStockInfo(item);
+    return !!info && (info.low || info.out);
+  }
+
+  /** True si no quedan piezas. */
+  isStockZero(item: any): boolean {
+    const info = this.getStockInfo(item);
+    return !!info && info.stock <= 0;
+  }
+
+  /** Productos de la orden por debajo del stock mínimo/agotados, para la tarjeta de orden. */
+  getLowStockItems(order: any): { label: string; remaining: number; zero: boolean }[] {
+    if (!order?.items) return [];
+    const seen = new Set<number>();
+    const result: { label: string; remaining: number; zero: boolean }[] = [];
+    for (const item of order.items) {
+      const info = this.getStockInfo(item);
+      if (!info || !(info.low || info.out)) continue;
+      const pid = item.productId != null ? Number(item.productId) : null;
+      if (pid != null && seen.has(pid)) continue;
+      if (pid != null) seen.add(pid);
+      result.push({
+        label: this.getProductLabel(item),
+        remaining: this.getRemainingStock(item),
+        zero: this.isStockZero(item)
+      });
+    }
+    return result;
   }
 
   canCloseOrder(order: PendingOrder): boolean {
@@ -819,6 +1029,7 @@ export class ComandixComponent implements OnInit, OnDestroy {
       this.tenantId = currentUser?.tenantId ?? 0;
       this.currentUserEmail = currentUser?.email ?? 'usuario';
       this.canCloseOrders = this.authService.hasAnyPermission(['process_payment', 'create_order']);
+      this.canRegistrarMerma = this.authService.hasAnyPermission(['manage_mermas']);
     } catch (error) {
       console.error('Error obteniendo tenant:', error);
       this.messageService.add({
@@ -868,6 +1079,39 @@ export class ComandixComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Normaliza la URL de imagen para que apunte al backend actual:
+  // - URLs relativas (/api/...) o con host localhost/127.0.0.1 se reconstruyen
+  //   contra el apiUrl del entorno (corrige https://localhost guardado en BD).
+  // - URLs externas (Cloudinary, etc.) y data: se dejan intactas.
+  private resolveImageUrlForRendering(url: string | null | undefined): string | null {
+    if (!url || typeof url !== 'string' || !url.trim()) return null;
+    const value = url.trim();
+    if (value.startsWith('data:') || value.startsWith('blob:')) return value;
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      try {
+        const parsed = new URL(value);
+        const host = parsed.hostname.toLowerCase();
+        const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.localhost');
+        if (isLocalHost) {
+          const apiOrigin = new URL(environment.apiUrl).origin;
+          return `${apiOrigin}${parsed.pathname}${parsed.search}`;
+        }
+      } catch {
+        return value;
+      }
+      return value;
+    }
+    if (value.startsWith('/')) {
+      try {
+        const apiOrigin = new URL(environment.apiUrl).origin;
+        return `${apiOrigin}${value}`;
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
+
   private mapProductsToCategories(products: any[]): MenuCategory[] {
     if (!products || products.length === 0) return [];
 
@@ -875,22 +1119,23 @@ export class ComandixComponent implements OnInit, OnDestroy {
     const categoriesMap = new Map<string, MenuCategory>();
     let autoId = 1;
 
-    activeProducts.forEach((product) => {
-      const categoryName = product.categoryName || product.category?.name || product.category || 'Sin Categoría';
-      const categoryId = product.categoryId || product.category?.id || categoryName;
-      const categoryKey = String(categoryId ?? categoryName);
-
-      if (!categoriesMap.has(categoryKey)) {
-        categoriesMap.set(categoryKey, {
-          id: typeof categoryId === 'number' ? categoryId : autoId++,
-          name: categoryName,
+    const ensureCategory = (name: string, id: number | string): MenuCategory => {
+      const key = String(id ?? name);
+      if (!categoriesMap.has(key)) {
+        categoriesMap.set(key, {
+          id: typeof id === 'number' ? id : autoId++,
+          name: name,
           products: []
         });
       }
+      return categoriesMap.get(key)!;
+    };
 
-      const imageUrl: string | null = product.imageUrl && typeof product.imageUrl === 'string'
+    activeProducts.forEach((product) => {
+      const rawImageUrl: string | null = product.imageUrl && typeof product.imageUrl === 'string'
         ? product.imageUrl.trim() || null
         : (product.img_url?.trim() || null) || (product.image?.trim() || null) || null;
+      const imageUrl = this.resolveImageUrlForRendering(rawImageUrl);
 
       const description: string = (product.description && typeof product.description === 'string'
         ? product.description.trim()
@@ -906,7 +1151,22 @@ export class ComandixComponent implements OnInit, OnDestroy {
         additionals: Array.isArray(product.additionals) ? product.additionals as IngredientOption[] : []
       };
 
-      categoriesMap.get(categoryKey)!.products.push(mappedProduct);
+      // Multicategoría: el producto aparece en TODAS sus categorías (principal + extras).
+      const productCategories = (Array.isArray(product.categories) && product.categories.length > 0)
+        ? product.categories
+        : null;
+
+      if (productCategories) {
+        productCategories.forEach((cat: any) => {
+          const name = cat?.name || product.categoryName || 'Sin Categoría';
+          const id = cat?.id ?? product.categoryId ?? name;
+          ensureCategory(name, id).products.push(mappedProduct);
+        });
+      } else {
+        const categoryName = product.categoryName || product.category?.name || product.category || 'Sin Categoría';
+        const categoryId = product.categoryId || product.category?.id || categoryName;
+        ensureCategory(categoryName, categoryId).products.push(mappedProduct);
+      }
     });
 
     return Array.from(categoriesMap.values());
@@ -1038,6 +1298,24 @@ export class ComandixComponent implements OnInit, OnDestroy {
     // Los modificables vienen incluidos por defecto; el cliente desmarca lo que no quiere
     this.configExcludedIds = new Set();
     this.configAdditionalIds = new Set();
+    this.configEditingItem = null;
+    this.ingredientConfigVisible = true;
+    this.cdr.detectChanges();
+  }
+
+  editCartItem(item: CartItem): void {
+    const product = item.product;
+    const modificables = (product.recipes || []).filter((r) => r.modificable);
+    const adicionales = product.additionals || [];
+
+    if (modificables.length === 0 && adicionales.length === 0) return;
+
+    this.configProduct = product;
+    this.configModificables = modificables;
+    this.configAdicionales = adicionales;
+    this.configExcludedIds = new Set(item.excludedIngredientIds || []);
+    this.configAdditionalIds = new Set(item.additionalIngredientIds || []);
+    this.configEditingItem = item;
     this.ingredientConfigVisible = true;
     this.cdr.detectChanges();
   }
@@ -1102,12 +1380,18 @@ export class ComandixComponent implements OnInit, OnDestroy {
     const additionalIds: number[] = Array.from(this.configAdditionalIds);
     const extraPrice = this.getConfigExtraPrice();
 
+const editingItem = this.configEditingItem;
+
     this.ingredientConfigVisible = false;
     this.cdr.detectChanges();
     try {
-      this.appendToCart(product, excludedIds, additionalIds, extraPrice);
+      if (editingItem) {
+        this.updateCartItemConfig(editingItem, excludedIds, additionalIds, extraPrice);
+      } else {
+        this.appendToCart(product, excludedIds, additionalIds, extraPrice);
+      }
     } catch (error: any) {
-      console.error('[Comandix] Error al agregar producto a la comanda:', error);
+      console.error('[Comandix] Error al guardar configuración de ingrediente:', error);
     } finally {
       this.resetIngredientConfig();
       this.ingredientConfigVisible = false;
@@ -1126,6 +1410,32 @@ export class ComandixComponent implements OnInit, OnDestroy {
     this.configAdicionales = [];
     this.configExcludedIds = new Set();
     this.configAdditionalIds = new Set();
+    this.configEditingItem = null;
+  }
+
+  private updateCartItemConfig(item: CartItem, excludedIds: number[], additionalIds: number[], extraPrice: number): void {
+    const product = item.product;
+    const unitPrice = (Number(product.price) || 0) + extraPrice;
+    const configKey = JSON.stringify([[...excludedIds].sort((a, b) => a - b), [...additionalIds].sort((a, b) => a - b)]);
+
+    this.cart.update((items) =>
+      items.map((i) =>
+        i === item
+          ? { ...i, excludedIngredientIds: excludedIds, additionalIngredientIds: additionalIds, precioUnitario: unitPrice, configKey }
+          : i
+      )
+    );
+
+    this.persistCartDraft();
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Producto actualizado',
+      detail: `${product.name} actualizado ($${unitPrice.toFixed(2)})`,
+      life: 2500
+    });
+
+    this.cdr.detectChanges();
   }
 
   private appendToCart(product: Product, excludedIds: number[], additionalIds: number[], extraPrice: number): void {
@@ -1137,16 +1447,16 @@ export class ComandixComponent implements OnInit, OnDestroy {
     );
 
     if (existingItem) {
-      this.cart.set(
-        this.cart().map((item) =>
+      this.cart.update((items) =>
+        items.map((item) =>
           item.product.id === product.id && item.configKey === configKey
             ? { ...item, cantidad: item.cantidad + 1, precioUnitario: unitPrice }
             : item
         )
       );
     } else {
-      this.cart.set([
-        ...this.cart(),
+      this.cart.update((items) => [
+        ...items,
         {
           product,
           cantidad: 1,
@@ -1170,7 +1480,7 @@ export class ComandixComponent implements OnInit, OnDestroy {
       life: 2500
     });
 
-    // Forzar actualización de la vista del carrito.
+// Forzar actualización de la vista del carrito.
     console.log('[Comandix] Producto agregado, items en carrito:', this.cart().length, { product: product.name });
     this.cdr.detectChanges();
   }
@@ -1186,6 +1496,7 @@ export class ComandixComponent implements OnInit, OnDestroy {
       )
     );
     this.persistCartDraft();
+    this.cdr.detectChanges();
   }
 
   removeFromCart(item: CartItem): void {
@@ -1193,6 +1504,7 @@ export class ComandixComponent implements OnInit, OnDestroy {
       items.filter((i) => this.cartItemKey(i) !== this.cartItemKey(item))
     );
     this.persistCartDraft();
+    this.cdr.detectChanges();
     this.messageService.add({
       severity: 'info',
       summary: 'Producto eliminado',
@@ -1209,9 +1521,9 @@ export class ComandixComponent implements OnInit, OnDestroy {
     return Number(item.precioUnitario ?? item.product.price ?? 0);
   }
 
-  trackByProductId(index: number, item: CartItem): string {
+trackByProductId = (index: number, item: CartItem): string => {
     return this.cartItemKey(item);
-  }
+  };
 
   trackByOrderId(index: number, order: PendingOrder): string {
     return order.id;
@@ -1285,8 +1597,6 @@ export class ComandixComponent implements OnInit, OnDestroy {
   }
 
   async finalizarVenta(): Promise<void> {
-
-    debugger;
     if (this.cart().length === 0) {
       this.messageService.add({
         severity: 'warn',
@@ -1320,8 +1630,18 @@ export class ComandixComponent implements OnInit, OnDestroy {
       }));
 
       const editingOrder = this.editingPendingOrder();
-      debugger;
       if (editingOrder) {
+        if (!this.canEditOrder(editingOrder)) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Prórroga vencida',
+            detail: 'La comanda se envió hace más de 3 minutos y ya no puede editarse',
+            life: 3000
+          });
+          this.processingOrder.set(false);
+          return;
+        }
+
         const updateRequest: TenantClientOrderUpdateRequest = {
           customerId: this.selectedCliente?.id ?? editingOrder.customerId ?? null,
           tenantId: editingOrder.tenantId,
@@ -1376,7 +1696,8 @@ export class ComandixComponent implements OnInit, OnDestroy {
         totalFinal: this.totalFinal(),
         couponCode: this.codigoCupon.trim() || null,
         redeemedBy: this.selectedCliente?.id ?? null,
-        redemptionChannel: 'COMANDIX'
+        redemptionChannel: 'COMANDIX',
+        source: 'POS'
       };
 
       const response = await firstValueFrom(this.orderService.createOrder(orderRequest));
@@ -1421,11 +1742,12 @@ export class ComandixComponent implements OnInit, OnDestroy {
       this.switchView('orders');
       void this.pollOrders();
     } catch (error: any) {
+      const detail = error?.error?.message || error?.error?.error || error?.message || 'Error al registrar la venta';
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: error.message || 'Error al registrar la venta',
-        life: 3000
+        detail,
+        life: 4000
       });
     } finally {
       this.processingOrder.set(false);
@@ -1507,6 +1829,10 @@ export class ComandixComponent implements OnInit, OnDestroy {
     const catalogProduct = this.findProductInCatalog(productId);
     const precioUnitario = Number(item.precioUnitario ?? item.precio ?? catalogProduct?.price ?? 0);
 
+    const excludedIngredientIds = Array.isArray(item.excludedIngredientIds) ? item.excludedIngredientIds.map(Number).filter((n) => !Number.isNaN(n)) : [];
+    const additionalIngredientIds = Array.isArray(item.additionalIngredientIds) ? item.additionalIngredientIds.map(Number).filter((n) => !Number.isNaN(n)) : [];
+    const configKey = JSON.stringify([[...excludedIngredientIds].sort((a, b) => a - b), [...additionalIngredientIds].sort((a, b) => a - b)]);
+
     return {
       product: catalogProduct ?? {
         id: productId,
@@ -1517,7 +1843,10 @@ export class ComandixComponent implements OnInit, OnDestroy {
       },
       cantidad: Number(item.cantidad ?? 1),
       comentarios: item.comentarios ?? '',
-      precioUnitario
+      precioUnitario,
+      excludedIngredientIds,
+      additionalIngredientIds,
+      configKey
     };
   }
 

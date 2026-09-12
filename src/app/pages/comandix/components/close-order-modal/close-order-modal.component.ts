@@ -54,6 +54,7 @@ export class CloseOrderModalComponent implements OnChanges, OnDestroy {
     reference?: string | null;
     paidAt: string;
   }>();
+  @Output() cobroSeparado = new EventEmitter<PendingOrder>();
 
   readonly paymentMethods: PaymentMethodOption[] = [
     { value: 'CASH', label: 'CASH', icon: 'pi pi-wallet', hint: 'Sin referencia' },
@@ -122,6 +123,13 @@ export class CloseOrderModalComponent implements OnChanges, OnDestroy {
     }
     this.visible = false;
     this.visibleChange.emit(false);
+  }
+
+  onCobroSeparado(): void {
+    if (!this.order || this.loading) {
+      return;
+    }
+    this.cobroSeparado.emit(this.order);
   }
 
   async onConfirmPayment(): Promise<void> {

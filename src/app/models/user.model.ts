@@ -3,7 +3,8 @@ export enum UserRole {
   MESERO = 'MESERO',
   COCINA = 'COCINA',
   CAJA = 'CAJA',
-  MARKETING = 'MARKETING'
+  MARKETING = 'MARKETING',
+  HOSTESS = 'HOSTESS'
 }
 
 export interface UserDTO {
@@ -56,7 +57,14 @@ export const ROLE_PERMISSIONS: { [key in UserRole]: string[] } = {
     'manage_categories',
     'manage_products',
     'view_reports',
-    'manage_settings'
+    'manage_settings',
+    'view_mesas',
+    'manage_mesas',
+    'view_reservaciones',
+    'manage_reservaciones',
+    'manage_recetas',
+    'manage_mermas',
+    'manage_horarios'
   ],
   [UserRole.MESERO]: [
     'view_comanda',
@@ -79,6 +87,12 @@ export const ROLE_PERMISSIONS: { [key in UserRole]: string[] } = {
     'create_campaign',
     'view_analytics',
     'manage_redemptions'
+  ],
+  [UserRole.HOSTESS]: [
+    'view_mesas',
+    'manage_mesas',
+    'view_reservaciones',
+    'manage_reservaciones'
   ]
 };
 
@@ -88,5 +102,6 @@ export const ROLE_COLORS: { [key in UserRole]: string } = {
   [UserRole.MESERO]: 'info',
   [UserRole.COCINA]: 'success',
   [UserRole.CAJA]: 'warning',
-  [UserRole.MARKETING]: 'secondary'
+  [UserRole.MARKETING]: 'secondary',
+  [UserRole.HOSTESS]: 'contrast'
 };

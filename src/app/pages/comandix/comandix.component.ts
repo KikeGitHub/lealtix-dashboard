@@ -146,6 +146,13 @@ export class ComandixComponent implements OnInit, OnDestroy {
     return Math.max(0, this.subtotal() - this.descuentoAplicado());
   });
 
+  // ==================== VERIFICACIÓN DE ALERGIAS (cliente seleccionado) ====================
+  allergyDialogVisible = false;
+  allergyCheckNames: string[] = [];
+  allergyCheckProductName = '';
+  allergyCheckClienteName = '';
+  private allergyPending: { product: Product; excludedIds: number[]; additionalIds: number[]; extraPrice: number } | null = null;
+
   // ==================== CONFIGURACIÓN DE INGREDIENTES (modificables / adicionales) ====================
   ingredientConfigVisible = false;
   configProduct: Product | null = null;
@@ -1204,7 +1211,8 @@ configEditingItem: CartItem | null = null;
       email: ['', [Validators.required, Validators.email]],
       telefono: [''],
       fechaNacimiento: ['', [Validators.required]],
-      genero: ['', [Validators.required]]
+      genero: ['', [Validators.required]],
+      alergias: ['']
     });
   }
 
@@ -1227,7 +1235,8 @@ configEditingItem: CartItem | null = null;
         email: this.formNuevoCliente.value.email,
         telefono: this.formNuevoCliente.value.telefono || undefined,
         fechaNacimiento: this.formNuevoCliente.value.fechaNacimiento,
-        genero: this.formNuevoCliente.value.genero
+        genero: this.formNuevoCliente.value.genero,
+        alergias: this.formNuevoCliente.value.alergias || ''
       };
 
       const response = await firstValueFrom(
@@ -1285,7 +1294,68 @@ configEditingItem: CartItem | null = null;
       return;
     }
 
-    this.appendToCart(product, [], [], 0);
+    this.addToCartWithAllergyCheck(product, [], [], 0);
+  }
+
+  /************************************************************************
+   *  VERIFICACIÓN DE ALERGIAS
+   *  Si el cliente seleccionado tiene alergias registradas, se consulta al
+   *  backend si el platillo contiene insumos que coincidan. De ser así, se
+   *  muestra un aviso antes de guardar el platillo en la comanda.
+   ************************************************************************/
+  private addToCartWithAllergyCheck(product: Product, excludedIds: number[], additionalIds: number[], extraPrice: number): void {
+    if (!this.selectedCliente || !this.selectedCliente.id) {
+      this.appendToCart(product, excludedIds, additionalIds, extraPrice);
+      return;
+    }
+    const alergias = this.selectedCliente.alergias;
+    if (!alergias || alergias.length === 0) {
+      this.appendToCart(product, excludedIds, additionalIds, extraPrice);
+      return;
+    }
+
+    this.clienteService.checkClienteAllergens(this.selectedCliente.id, product.id, excludedIds, additionalIds).subscribe({
+      next: (matches) => {
+        if (!matches || matches.length === 0) {
+          this.appendToCart(product, excludedIds, additionalIds, extraPrice);
+          return;
+        }
+        this.allergyPending = { product, excludedIds, additionalIds, extraPrice };
+        this.allergyCheckNames = matches.map((m) => m.insumoName).filter(Boolean);
+        this.allergyCheckProductName = product.name;
+        this.allergyCheckClienteName = this.selectedCliente?.nombreCompleto ?? '';
+        this.allergyDialogVisible = true;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Si la verificación falla, no bloquear la venta
+        this.appendToCart(product, excludedIds, additionalIds, extraPrice);
+      }
+    });
+  }
+
+  confirmAddWithAllergy(): void {
+    const pending = this.allergyPending;
+    this.allergyDialogVisible = false;
+    this.allergyPending = null;
+    if (pending) {
+      this.appendToCart(pending.product, pending.excludedIds, pending.additionalIds, pending.extraPrice);
+    }
+    this.cdr.detectChanges();
+  }
+
+  cancelAddWithAllergy(): void {
+    this.allergyDialogVisible = false;
+    this.allergyPending = null;
+    this.cdr.detectChanges();
+  }
+
+  hasClientAllergies(cliente: Cliente | null): boolean {
+    return !!cliente?.alergias && Array.isArray(cliente.alergias) && cliente.alergias.length > 0;
+  }
+
+  allergensText(cliente: Cliente | null): string {
+    return (cliente?.alergias ?? []).join(', ');
   }
 
   // ==================== PANEL DE INGREDIENTES (modificables / adicionales) ====================
@@ -1388,7 +1458,7 @@ const editingItem = this.configEditingItem;
       if (editingItem) {
         this.updateCartItemConfig(editingItem, excludedIds, additionalIds, extraPrice);
       } else {
-        this.appendToCart(product, excludedIds, additionalIds, extraPrice);
+        this.addToCartWithAllergyCheck(product, excludedIds, additionalIds, extraPrice);
       }
     } catch (error: any) {
       console.error('[Comandix] Error al guardar configuración de ingrediente:', error);

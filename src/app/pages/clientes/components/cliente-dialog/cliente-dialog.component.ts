@@ -34,7 +34,7 @@ import { MessageModule } from 'primeng/message';
       [dismissableMask]="true"
       [maximizable]="true"
       [resizable]="true"
-      styleClass="cliente-dialog"
+      styleClass="cliente-dialog minimal-modal"
       (onHide)="onHide()"
     >
       <ng-template #header>
@@ -48,7 +48,7 @@ import { MessageModule } from 'primeng/message';
 
       <div class="cliente-form-container">
         <form [formGroup]="clienteForm" class="p-fluid">
-          <div class="grid grid-cols-2">
+          <div class="grid grid-cols-1">
             <!-- Nombre Completo -->
             <div class="col-span-full">
               <label for="nombreCompleto">
@@ -181,6 +181,7 @@ import { MessageModule } from 'primeng/message';
           <p-button
             [label]="clienteEnEdicion ? 'Actualizar' : 'Crear'"
             icon="pi pi-check"
+            styleClass="minimal-submit"
             (click)="save.emit()"
             [disabled]="clienteForm.invalid"
           ></p-button>

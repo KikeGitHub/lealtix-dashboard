@@ -7,7 +7,7 @@ import { finalize, takeUntil } from 'rxjs/operators';
 // PrimeNG
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
-import { TabsModule } from 'primeng/tabs';
+import { SelectModule } from 'primeng/select';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -82,7 +82,7 @@ interface StockInfo {
     ReactiveFormsModule,
     CardModule,
     ButtonModule,
-    TabsModule,
+    SelectModule,
     AutoCompleteModule,
     InputTextModule,
     InputNumberModule,
@@ -109,6 +109,55 @@ interface StockInfo {
 export class ComandixComponent implements OnInit, OnDestroy {
   // ==================== SIGNALS POS (existente) ====================
   categories = signal<MenuCategory[]>([]);
+
+  // Filtro de categoría para el catálogo (0 = todas las categorías)
+  selectedCategoryId = signal<number>(0);
+
+  // Lista plana y deduplicada de productos de todas las categorías
+  allProducts = computed<Product[]>(() => {
+    const seen = new Set<number>();
+    const list: Product[] = [];
+    for (const cat of this.categories()) {
+      for (const p of cat.products) {
+        if (p?.id && !seen.has(p.id)) {
+          seen.add(p.id);
+          list.push(p);
+        }
+      }
+    }
+    return list;
+  });
+
+  // Map de categoría -> ids de productos (un producto puede vivir en varias categorías)
+  categoryProductIds = computed<Map<number, Set<number>>>(() => {
+    const map = new Map<number, Set<number>>();
+    for (const cat of this.categories()) {
+      map.set(
+        Number(cat.id),
+        new Set(cat.products.map((p) => p.id))
+      );
+    }
+    return map;
+  });
+
+  // Opciones para el selector de categoría (lista seleccionadora minimalista)
+  categoryFilterOptions = computed(() => {
+    const cats = this.categories();
+    return [
+      { label: 'Todas las categorías', value: 0 },
+      ...cats.map((c) => ({ label: c.name, value: Number(c.id) }))
+    ];
+  });
+
+  // Productos visibles según el filtro de categoría seleccionado
+  filteredProducts = computed<Product[]>(() => {
+    const all = this.allProducts();
+    const selected = this.selectedCategoryId();
+    if (!selected) return all;
+    const ids = this.categoryProductIds().get(selected);
+    if (!ids) return [];
+    return all.filter((p) => ids.has(p.id));
+  });
   clientes = signal<Cliente[]>([]);
   cart = signal<CartItem[]>([]);
   loading = signal<boolean>(false);
@@ -852,6 +901,13 @@ configEditingItem: CartItem | null = null;
   isLowStock(item: any): boolean {
     const info = this.getStockInfo(item);
     return !!info && (info.low || info.out);
+  }
+
+  /** True si el stock es crítico (quedan 3 o menos piezas, o está marcado bajo/agotado). */
+  isCriticalStock(item: any): boolean {
+    const info = this.getStockInfo(item);
+    if (!info) return false;
+    return info.low || info.out || this.getRemainingStock(item) <= 3;
   }
 
   /** True si no quedan piezas. */
@@ -1601,11 +1657,40 @@ trackByProductId = (index: number, item: CartItem): string => {
 
   onImageError(event: Event): void {
     const imgElement = event.target as HTMLImageElement;
-    if (imgElement) {
-      imgElement.style.display = 'none';
-      const placeholder = imgElement.nextElementSibling as HTMLElement;
-      if (placeholder) placeholder.style.display = 'flex';
-    }
+    if (!imgElement) return;
+    imgElement.style.display = 'none';
+    const placeholder = imgElement.nextElementSibling as HTMLElement;
+    if (placeholder) placeholder.style.display = 'flex';
+  }
+
+  // ==================== STOCK DEL CATÁLOGO (badge en tarjeta) ====================
+  getProductStockInfo(product: Product): StockInfo | null {
+    if (!product) return null;
+    return this.stockMap.get(Number(product.id)) ?? null;
+  }
+
+  getProductStockText(product: Product): string {
+    const info = this.getProductStockInfo(product);
+    if (!info) return '';
+    if (info.stock <= 0) return 'Agotado';
+    return `Stock: ${Math.round(info.stock)}`;
+  }
+
+  isProductLowStock(product: Product): boolean {
+    const info = this.getProductStockInfo(product);
+    if (!info) return false;
+    if (info.stock <= 0 || info.low === true || info.out === true) return true;
+    if (info.stockMinimo && info.stockMinimo > 0 && info.stock <= info.stockMinimo) return true;
+    return false;
+  }
+
+  /** True si el stock del producto del catálogo es crítico (quedan 3 o menos piezas). */
+  isProductCriticalStock(product: Product): boolean {
+    return this.isCriticalStock({ productId: product?.id } as any);
+  }
+
+  onCategoryFilterChange(categoryId: number | null | undefined): void {
+    this.selectedCategoryId.set(Number(categoryId) || 0);
   }
 
   async validarCupon(): Promise<void> {

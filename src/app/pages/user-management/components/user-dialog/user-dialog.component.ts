@@ -38,7 +38,7 @@ import { UserRole, ROLE_PERMISSIONS } from '@/models/user.model';
       [dismissableMask]="true"
       [maximizable]="true"
       [resizable]="true"
-      styleClass="user-dialog"
+      styleClass="user-dialog minimal-modal"
       (onHide)="onHide()"
     >
       <ng-template #header>
@@ -199,6 +199,7 @@ import { UserRole, ROLE_PERMISSIONS } from '@/models/user.model';
           <p-button
             [label]="usuarioEnEdicion ? 'Actualizar' : 'Crear'"
             icon="pi pi-check"
+            styleClass="minimal-submit"
             (click)="save.emit()"
             [disabled]="usuarioForm.invalid || loading"
             [loading]="loading"

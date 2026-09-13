@@ -320,7 +320,7 @@
     [(visible)]="insumoDialogVisible"
     [modal]="true"
     [style]="{ width: '38rem', maxWidth: '95vw' }"
-    styleClass="insumo-dialog"
+    styleClass="insumo-dialog minimal-modal"
     [dismissableMask]="true"
     (onHide)="insumoDialogVisible = false">
     <ng-template pTemplate="header">
@@ -358,7 +358,7 @@
     </div>
     <ng-template #footer>
         <p-button label="Cancelar" severity="secondary" [text]="true" (click)="insumoDialogVisible = false"></p-button>
-        <p-button label="Guardar" icon="pi pi-check" [disabled]="!insumoNombre.trim()" (click)="saveInsumo()"></p-button>
+        <p-button label="Guardar" icon="pi pi-check" styleClass="minimal-submit" [disabled]="!insumoNombre.trim()" (click)="saveInsumo()"></p-button>
     </ng-template>
 </p-dialog>
 
@@ -367,7 +367,7 @@
     [(visible)]="bebidaDialogVisible"
     [modal]="true"
     [style]="{ width: '38rem', maxWidth: '95vw' }"
-    styleClass="insumo-dialog bebida-dialog"
+    styleClass="insumo-dialog bebida-dialog minimal-modal"
     [dismissableMask]="true"
     (onHide)="bebidaDialogVisible = false">
     <ng-template pTemplate="header">
@@ -412,7 +412,7 @@
     </div>
     <ng-template #footer>
         <p-button label="Cancelar" severity="secondary" [text]="true" (click)="bebidaDialogVisible = false"></p-button>
-        <p-button label="Guardar" icon="pi pi-check" (click)="saveBebida()"></p-button>
+        <p-button label="Guardar" icon="pi pi-check" styleClass="minimal-submit" (click)="saveBebida()"></p-button>
     </ng-template>
 </p-dialog>
 
@@ -421,7 +421,7 @@
     [(visible)]="insumoRestockVisible"
     [modal]="true"
     [style]="{ width: '34rem', maxWidth: '95vw' }"
-    styleClass="insumo-dialog restock-dialog"
+    styleClass="insumo-dialog restock-dialog minimal-modal"
     [dismissableMask]="true"
     (onHide)="insumoRestockVisible = false">
     <ng-template pTemplate="header">
@@ -443,7 +443,7 @@
     </div>
     <ng-template #footer>
         <p-button label="Cancelar" severity="secondary" [text]="true" (click)="insumoRestockVisible = false"></p-button>
-        <p-button label="Reabastecer" icon="pi pi-refresh" severity="success"
+        <p-button label="Reabastecer" icon="pi pi-refresh" severity="success" styleClass="minimal-submit"
             [disabled]="insumoRestockCantidad <= 0" (click)="doInsumoRestock()"></p-button>
     </ng-template>
 </p-dialog>

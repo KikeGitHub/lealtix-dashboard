@@ -91,7 +91,7 @@
         [(visible)]="mermaDialogVisible"
         [modal]="true"
         [style]="{ width: '42rem', maxWidth: '95vw' }"
-        styleClass="merma-dialog"
+        styleClass="merma-dialog minimal-modal"
         [dismissableMask]="true"
         (onHide)="closeMermaModal()">
         <ng-template pTemplate="header">
@@ -176,6 +176,7 @@
                         label="Registrar Merma"
                         icon="pi pi-save"
                         severity="warn"
+                        styleClass="minimal-submit"
                         [loading]="registeringMerma()"
                         [disabled]="registeringMerma() || getSeleccionTotal() === 0"
                         (onClick)="registerMerma()"

@@ -21,7 +21,7 @@ import { TreeNode } from 'primeng/api';
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, FormsModule, DialogModule, ButtonModule, FileUploadModule, InputTextModule, TextareaModule, InputNumberModule, MessageModule, CheckboxModule, SelectModule, TreeSelectModule, TooltipModule, TouchTooltipDirective],
     template: `
-    <p-dialog [(visible)]="visible" [style]="{ width: '46rem', maxWidth: '94vw' }" header="Detalle de Producto" [modal]="true" styleClass="product-dialog" contentStyleClass="product-dialog-content" (onHide)="onHide()">
+    <p-dialog [(visible)]="visible" [style]="{ width: '46rem', maxWidth: '94vw' }" header="Detalle de Producto" [modal]="true" styleClass="product-dialog minimal-modal" contentStyleClass="product-dialog-content" (onHide)="onHide()">
         <ng-template #content>
             <div class="product-form-container">
                 <!-- Categories Row -->
@@ -208,7 +208,7 @@ import { TreeNode } from 'primeng/api';
         <ng-template #footer>
             <div class="product-dialog-footer">
                 <p-button label="Cancelar" icon="pi pi-times" severity="secondary" [outlined]="true" (onClick)="hide.emit()" />
-                <p-button label="Guardar" icon="pi pi-check" severity="success" (onClick)="save.emit()" />
+                <p-button label="Guardar" icon="pi pi-check" severity="success" styleClass="minimal-submit" (onClick)="save.emit()" />
             </div>
         </ng-template>
     </p-dialog>

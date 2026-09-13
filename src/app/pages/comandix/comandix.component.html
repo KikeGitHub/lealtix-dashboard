@@ -49,9 +49,9 @@
     </div>
 
     <!-- ==================== TOGGLE DE VISTA ==================== -->
-    <div class="view-toggle">
+    <div class="catalog-tabs view-toggle mb-3">
       <button
-        class="view-toggle-btn"
+        class="catalog-tab view-toggle-btn"
         [class.active]="activeView() === 'pos'"
         (click)="switchView('pos')"
         type="button"
@@ -60,10 +60,8 @@
         <span class="view-btn-label">Nueva Venta</span>
       </button>
 
-      <div class="view-toggle-divider"></div>
-
       <button
-        class="view-toggle-btn"
+        class="catalog-tab view-toggle-btn"
         [class.active]="activeView() === 'orders' && ordersView() === 'active'"
         (click)="switchOrdersView('active')"
         type="button"
@@ -74,7 +72,7 @@
       </button>
 
       <button
-        class="view-toggle-btn"
+        class="catalog-tab view-toggle-btn"
         [class.active]="activeView() === 'orders' && ordersView() === 'closed'"
         (click)="switchOrdersView('closed')"
         type="button"
@@ -85,7 +83,7 @@
       </button>
 
       <button
-        class="view-toggle-btn"
+        class="catalog-tab view-toggle-btn"
         [class.active]="activeView() === 'orders' && ordersView() === 'cancelled'"
         (click)="switchOrdersView('cancelled')"
         type="button"
@@ -150,31 +148,34 @@
             </div>
           </div>
 
-        <div class="flex flex-column gap-3">
-          <label class="text-xs font-semibold text-color-secondary uppercase tracking-wide">Cliente (Opcional)</label>
-          <div class="flex flex-column sm:flex-row gap-2 align-items-end">
-            <p-autoComplete
-              [(ngModel)]="selectedCliente"
-              [suggestions]="filteredClientes"
-              (completeMethod)="filterClientes($event)"
-              field="nombreCompleto"
-              optionLabel="nombreCompleto"
-              [dropdown]="true"
-              placeholder="Buscar cliente..."
-              [style]="{'width': '100%'}"
-              [inputStyle]="{'width': '100%'}"
-              styleClass="flex-grow-1"
-              [showEmptyMessage]="false"
-              [autoHighlight]="true">
-              <ng-template let-cliente #item>
-                <div class="flex align-items-center py-2"><span class="font-semibold">{{ cliente.nombreCompleto }}</span><span class="text-xs text-color-secondary ml-2">{{ cliente.email }}</span></div>
-              </ng-template>
-            </p-autoComplete>
-            <p-button icon="pi pi-plus" label="Nuevo" severity="secondary" size="small" (onClick)="openDialogNuevoCliente()" class="flex-shrink-0"></p-button>
+        <div class="client-panel">
+          <div class="flex flex-column gap-2">
+            <label class="text-xs font-semibold text-color-secondary uppercase tracking-wide">Cliente (Opcional)</label>
+            <div class="client-search-row">
+              <p-autoComplete
+                [(ngModel)]="selectedCliente"
+                [suggestions]="filteredClientes"
+                (completeMethod)="filterClientes($event)"
+                field="nombreCompleto"
+                optionLabel="nombreCompleto"
+                [dropdown]="true"
+                placeholder="Buscar cliente..."
+                [showEmptyMessage]="false"
+                [autoHighlight]="true"
+                styleClass="client-search">
+                <ng-template let-cliente #item>
+                  <div class="flex align-items-center py-2"><span class="font-semibold">{{ cliente.nombreCompleto }}</span><span class="text-xs text-color-secondary ml-2">{{ cliente.email }}</span></div>
+                </ng-template>
+              </p-autoComplete>
+              <button type="button" class="client-new-btn" (click)="openDialogNuevoCliente()">
+                <i class="pi pi-plus"></i>
+                Nuevo
+              </button>
+            </div>
           </div>
 
           <!-- Alergias registradas del cliente seleccionado -->
-          <div *ngIf="selectedCliente && hasClientAllergies(selectedCliente)" class="mt-2">
+          <div *ngIf="selectedCliente && hasClientAllergies(selectedCliente)">
             <div class="allergy-hint" style="display:flex; align-items:center; gap:0.5rem; padding:0.625rem 0.75rem; border:1px solid rgba(217,119,6,0.2); background:rgba(217,119,6,0.05); border-radius:8px; font-size:0.825rem; color:#92400e;">
               <i class="pi pi-exclamation-triangle" style="color:#d97706; font-size:0.9rem; flex-shrink:0;"></i>
               <span><strong>Alergias:</strong> {{ allergensText(selectedCliente) }}</span>
@@ -202,60 +203,78 @@
         </div>
 
         <div *ngIf="categories().length > 0" class="catalog-content">
-          <p-tabs>
-            <p-tablist>
-              <p-tab *ngFor="let category of categories()" [value]="category.id">
-                <div class="flex align-items-center gap-2">
-                  <i class="pi pi-tag text-xs"></i>
-                  <span class="text-sm">{{ category.name }}</span>
-                  <p-tag
-                    [value]="category.products.length.toString()"
-                    styleClass="ml-1 p-tag-secondary"
-                  ></p-tag>
+          <div class="catalog-toolbar">
+            <h3 class="catalog-title">
+              <i class="pi pi-tags"></i>
+              <span>Platillos Populares</span>
+              <small>{{ filteredProducts().length }} opciones</small>
+            </h3>
+            <div class="catalog-filter">
+              <i class="pi pi-filter"></i>
+              <p-select
+                [ngModel]="selectedCategoryId()"
+                (ngModelChange)="onCategoryFilterChange($event)"
+                [options]="categoryFilterOptions()"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Todas las categorías"
+                appendTo="body"
+                panelStyleClass="catalog-select-panel"
+              ></p-select>
+            </div>
+          </div>
+
+          <div class="products-grid">
+            <div *ngFor="let product of filteredProducts()" class="product-item">
+              <div
+                class="product-card"
+                (click)="addToCart(product)"
+              >
+                <div
+                  class="product-image"
+                  [class.placeholder-shown]="!product.imageUrl || !product.imageUrl.trim()"
+                >
+                  <img
+                    *ngIf="product.imageUrl && product.imageUrl.trim()"
+                    [src]="product.imageUrl"
+                    [alt]="product.name"
+                    class="product-img"
+                    loading="lazy"
+                    (error)="onImageError($event)"
+                  />
+                  <div class="image-placeholder">
+                    <i class="pi pi-image"></i>
+                  </div>
+
+                  <span
+                    *ngIf="getProductStockInfo(product)"
+                    class="stock-badge"
+                    [class.stock-high]="!isProductLowStock(product) && !isProductCriticalStock(product)"
+                    [class.stock-low]="isProductLowStock(product) && !isProductCriticalStock(product)"
+                    [class.stock-critical]="isProductCriticalStock(product)"
+                  >
+                    <i class="pi pi-circle-fill"></i>
+                    {{ getProductStockText(product) }}
+                  </span>
                 </div>
-              </p-tab>
-            </p-tablist>
 
-            <p-tabpanels>
-              <p-tabpanel *ngFor="let category of categories()" [value]="category.id">
-                <div class="products-grid">
-                  <div *ngFor="let product of category.products" class="product-item">
-                    <div
-                      class="product-card h-full cursor-pointer"
-                      [class.no-image]="!product.imageUrl || !product.imageUrl.trim()"
-                      (click)="addToCart(product)"
+                <div class="product-content">
+                  <h4 class="product-name">{{ product.name }}</h4>
+                  <div class="product-footer">
+                    <span class="product-price">${{ product.price | number:'1.2-2' }}</span>
+                    <button
+                      type="button"
+                      class="add-to-cart-btn"
+                      [attr.aria-label]="'Agregar ' + product.name"
+                      (click)="$event.stopPropagation(); addToCart(product)"
                     >
-                      <div class="product-image" *ngIf="product.imageUrl && product.imageUrl.trim()">
-                        <img
-                          [src]="product.imageUrl"
-                          [alt]="product.name"
-                          class="w-full h-full object-cover"
-                          (error)="onImageError($event)"
-                        />
-                      </div>
-
-                      <div class="product-content">
-                        <h4 class="product-name">{{ product.name }}</h4>
-                        <p *ngIf="product.description" class="product-description">
-                          {{ product.description }}
-                        </p>
-                        <div class="product-footer">
-                          <span class="product-price">${{ product.price | number:'1.2-2' }}</span>
-                          <p-button
-                            icon="pi pi-plus"
-                            [rounded]="true"
-                            severity="success"
-                            size="small"
-                            (click)="$event.stopPropagation(); addToCart(product)"
-                          ></p-button>
-                        </div>
-                      </div>
-                    </div>
+                      <i class="pi pi-plus"></i>
+                    </button>
                   </div>
                 </div>
-              </p-tabpanel>
-            </p-tabpanels>
-          </p-tabs>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -748,8 +767,8 @@
                 <span
                   *ngIf="getStockInfo(item) as stock"
                   class="order-detail-stock-chip"
-                  [class.stock-low]="isLowStock(item)"
-                  [title]="stock.out ? 'Agotado' : 'Piezas que aún salen (stock disponible)'"
+                  [class.stock-low]="isCriticalStock(item)"
+                  [title]="stock.out ? 'Agotado' : (stock.stock <= 3 ? '¡Stock crítico! Quedan pocas piezas' : 'Piezas que aún salen (stock disponible)')"
                 >
                   <i class="pi pi-box"></i>
                   <span class="order-detail-stock-count">{{ getRemainingStock(item) }}</span>
@@ -849,7 +868,7 @@
             label="Cerrar Comanda"
             severity="help"
             [disabled]="processingOrderAction()"
-            styleClass="order-action-btn"
+            styleClass="order-action-btn order-purple-btn"
             (onClick)="openCloseOrderModal(order)"
           ></p-button>
 
@@ -860,7 +879,7 @@
             severity="warn"
             [outlined]="true"
             [disabled]="processingOrderAction() || order.estado === 'PENDIENTE'"
-            styleClass="order-action-btn"
+            styleClass="order-action-btn order-purple-btn"
             (onClick)="openMermaModal(order)"
           ></p-button>
 
@@ -919,7 +938,7 @@
     [modal]="true"
     [closable]="!cancellingOrder()"
     [style]="{ width: '100%', 'max-width': '500px' }"
-    styleClass="cancel-order-dialog"
+    styleClass="cancel-order-dialog minimal-modal"
   >
     <ng-container *ngIf="selectedOrderForCancellation() as order">
       <!-- Información de la orden - Inline -->
@@ -996,10 +1015,10 @@
           label="Confirmar Cancelación"
           icon="pi pi-check-circle"
           severity="danger"
+          styleClass="minimal-submit"
           [loading]="cancellingOrder()"
           [disabled]="cancellingOrder() || cancellationReason.trim().length === 0"
           (onClick)="onCancelOrderConfirmed(cancellationReason)"
-          styleClass="p-button-sm"
         ></p-button>
       </div>
     </ng-template>
@@ -1049,7 +1068,7 @@
           icon="pi pi-check"
           severity="warn"
           (onClick)="confirmAddWithAllergy()"
-          styleClass="p-button-sm"
+            styleClass="p-button-sm order-purple-btn"
         ></p-button>
       </div>
     </ng-template>

@@ -5,7 +5,7 @@
   [closable]="!loading"
   [header]="'Registrar Merma'"
   [style]="{ width: '100%', 'max-width': '720px' }"
-  styleClass="registrar-merma-dialog"
+  styleClass="registrar-merma-dialog minimal-modal"
   (onHide)="onClose()"
 >
   <ng-container *ngIf="order as currentOrder">
@@ -121,6 +121,7 @@
         label="Registrar Merma"
         icon="pi pi-save"
         severity="warn"
+        styleClass="minimal-submit"
         [disabled]="loading || loadingInsumos || insumos.length === 0"
         (onClick)="onRegistrar()"
       ></p-button>

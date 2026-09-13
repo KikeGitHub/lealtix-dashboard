@@ -221,7 +221,7 @@
   </p-dialog>
 
   <!-- Modal: Restock de insumo -->
-  <p-dialog header="Restock de insumo" [visible]="restockVisible()" [style]="{ width: '400px' }" [modal]="true" [dismissableMask]="true" (visibleChange)="restockVisible.set($event)">
+  <p-dialog header="Restock de insumo" [visible]="restockVisible()" [style]="{ width: '400px' }" [modal]="true" [dismissableMask]="true" styleClass="minimal-modal" (visibleChange)="restockVisible.set($event)">
     <div class="flex flex-col gap-3">
       <p-message severity="info"
         [text]="'Stock actual: ' + (restockTarget()?.stock ?? 0) + ' ' + (restockTarget()?.unidad || 'pieza')"
@@ -241,13 +241,13 @@
     </div>
     <ng-template #footer>
       <p-button label="Cancelar" severity="secondary" [text]="true" (click)="closeRestock()"></p-button>
-      <p-button label="Actualizar stock" icon="pi pi-refresh" severity="success"
+      <p-button label="Actualizar stock" icon="pi pi-refresh" severity="success" styleClass="minimal-submit"
         [disabled]="restockCantidad() <= 0" (click)="doRestock()"></p-button>
     </ng-template>
   </p-dialog>
 
   <!-- Modal: Costos (configuraciones de porcentaje + contexto) -->
-  <p-dialog header="Costos" [visible]="costosModalVisible()" [style]="{ width: '560px' }" [modal]="true" [dismissableMask]="true" (visibleChange)="costosModalVisible.set($event)">
+  <p-dialog header="Costos" [visible]="costosModalVisible()" [style]="{ width: '560px' }" [modal]="true" [dismissableMask]="true" styleClass="minimal-modal" (visibleChange)="costosModalVisible.set($event)">
     <div class="flex flex-col gap-4">
       <div>
         <label class="costs-label mb-1">Modo de cálculo</label>
@@ -377,7 +377,7 @@
       <ng-container *ngIf="costosModo() === 'porcentaje'; else footerAuto">
         <p-button label="Reiniciar" severity="secondary" [text]="true" icon="pi pi-refresh" (click)="reiniciarPorcentajes()"></p-button>
         <p-button label="Cancelar" severity="secondary" (click)="closeCostosModal()"></p-button>
-        <p-button label="Guardar" icon="pi pi-check" severity="success" (click)="guardarPorcentajes(); closeCostosModal()"></p-button>
+        <p-button label="Guardar" icon="pi pi-check" severity="success" styleClass="minimal-submit" (click)="guardarPorcentajes(); closeCostosModal()"></p-button>
       </ng-container>
       <ng-template #footerAuto>
         <p-button *ngIf="!costosAutomaticos() && !costosAutomaticosLoading()" label="Reintentar" severity="secondary" icon="pi pi-refresh" (click)="cargarCostosAutomaticos()"></p-button>

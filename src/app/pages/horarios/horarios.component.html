@@ -83,7 +83,7 @@
     [(visible)]="jornadaVisible"
     [modal]="true"
     [style]="{ width: '38rem', maxWidth: '95vw' }"
-    styleClass="horarios-jornada-dialog"
+    styleClass="horarios-jornada-dialog minimal-modal"
     [dismissableMask]="true"
     (onHide)="jornadaVisible = false">
     <ng-template pTemplate="header">
@@ -101,12 +101,12 @@
         </div>
 
         <div class="grid">
-            <div class="col-6">
+            <div class="col-12">
                 <label class="block text-sm font-medium mb-1">Hora de inicio</label>
                 <p-datepicker [(ngModel)]="jornadaInicio" timeOnly="true" hourFormat="24" [showIcon]="true"
                     [showButtonBar]="true" hideOnDateTimeSelect="true" placeholder="10:00" styleClass="w-full" [inputStyleClass]="'w-full'" [appendTo]="'body'" />
             </div>
-            <div class="col-6">
+            <div class="col-12">
                 <label class="block text-sm font-medium mb-1">Hora de finalización</label>
                 <p-datepicker [(ngModel)]="jornadaFin" timeOnly="true" hourFormat="24" [showIcon]="true"
                     [showButtonBar]="true" hideOnDateTimeSelect="true" placeholder="18:00" styleClass="w-full" [inputStyleClass]="'w-full'" [appendTo]="'body'" />
@@ -129,7 +129,7 @@
         <div class="flex gap-2 justify-content-end">
             <p-button label="Cancelar" icon="pi pi-times" severity="secondary" [text]="true"
                 (onClick)="jornadaVisible = false"></p-button>
-            <p-button label="Crear jornada" icon="pi pi-check" [loading]="jornadaSaving()"
+            <p-button label="Crear jornada" icon="pi pi-check" styleClass="minimal-submit" [loading]="jornadaSaving()"
                 [disabled]="jornadaSaving()" (onClick)="crearJornada()"></p-button>
         </div>
     </ng-template>
@@ -140,7 +140,7 @@
     [(visible)]="asignarVisible"
     [modal]="true"
     [style]="{ width: '42rem', maxWidth: '95vw' }"
-    styleClass="horarios-asignar-dialog"
+    styleClass="horarios-asignar-dialog minimal-modal"
     [dismissableMask]="true"
     (onHide)="asignarVisible = false">
     <ng-template pTemplate="header">
@@ -164,12 +164,12 @@
         </div>
 
         <div class="grid">
-            <div class="col-6">
+            <div class="col-12">
                 <label class="block text-sm font-medium mb-1">Día de la semana</label>
                 <p-select [options]="dias" optionLabel="label" optionValue="value"
                     [(ngModel)]="asignarDia" placeholder="Día" styleClass="w-full" [appendTo]="'body'"></p-select>
             </div>
-            <div class="col-6">
+            <div class="col-12">
                 <label class="block text-sm font-medium mb-1">Jornada</label>
                 <p-select [options]="jornadas()" optionLabel="titulo" optionValue="id"
                     [(ngModel)]="asignarJornadaId" placeholder="Jornada" styleClass="w-full" [appendTo]="'body'"></p-select>
@@ -186,7 +186,7 @@
         <div class="flex gap-2 justify-content-end">
             <p-button label="Cancelar" icon="pi pi-times" severity="secondary" [text]="true"
                 (onClick)="asignarVisible = false"></p-button>
-            <p-button label="Asignar turno" icon="pi pi-check" [loading]="asignarSaving()"
+            <p-button label="Asignar turno" icon="pi pi-check" styleClass="minimal-submit" [loading]="asignarSaving()"
                 [disabled]="asignarEmpleadoId == null || asignarDia == null || asignarJornadaId == null || asignarSaving()"
                 (onClick)="asignarTurno()"></p-button>
         </div>

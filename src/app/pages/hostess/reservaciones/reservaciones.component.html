@@ -86,7 +86,7 @@
     </ng-template>
 </p-table>
 
-<p-dialog [(visible)]="reservaDialogVisible" [style]="{ width: '480px' }" [modal]="true" [closable]="false">
+<p-dialog [(visible)]="reservaDialogVisible" [style]="{ width: '480px' }" [modal]="true" [closable]="false" styleClass="minimal-modal">
     <ng-template pTemplate="header">
         <div class="inline-flex align-items-center gap-2">
             <i class="pi pi-calendar mr-2"></i>
@@ -138,6 +138,6 @@
     </div>
     <ng-template pTemplate="footer">
         <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="reservaDialogVisible = false"></p-button>
-        <p-button [label]="editingReserva ? 'Actualizar' : 'Crear'" icon="pi pi-check" [loading]="saving" (onClick)="saveReserva()"></p-button>
+        <p-button [label]="editingReserva ? 'Actualizar' : 'Crear'" icon="pi pi-check" styleClass="minimal-submit" [loading]="saving" (onClick)="saveReserva()"></p-button>
     </ng-template>
 </p-dialog>

@@ -5,7 +5,7 @@
   [closable]="!loading"
   [header]="'Cerrar Comanda'"
   [style]="{ width: '100%', 'max-width': '640px' }"
-  styleClass="close-order-dialog"
+  styleClass="close-order-dialog minimal-modal"
   (onHide)="onClose()"
 >
   <ng-container *ngIf="order as currentOrder">
@@ -128,6 +128,7 @@
           label="Confirmar Pago"
           icon="pi pi-check"
           severity="success"
+          styleClass="minimal-submit"
           [disabled]="loading || form.invalid"
         ></p-button>
       </div>

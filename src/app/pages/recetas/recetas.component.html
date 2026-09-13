@@ -182,7 +182,7 @@
     [(visible)]="recipeVisible"
     [modal]="true"
     [style]="{ width: '60rem', maxWidth: '95vw' }"
-    styleClass="recipe-dialog recetas-recipe-dialog"
+    styleClass="recipe-dialog recetas-recipe-dialog minimal-modal"
     [dismissableMask]="false"
     (onHide)="recipeVisible = false">
     <ng-template pTemplate="header">
@@ -215,7 +215,7 @@
                         locale="en-US" styleClass="w-full" />
                 </div>
                 <div>
-                    <p-button label="Agregar a la receta" icon="pi pi-plus" severity="primary" styleClass="w-full"
+                    <p-button label="Agregar a la receta" icon="pi pi-plus" severity="primary" styleClass="w-full minimal-submit"
                         [loading]="recipeAddLoading()" [disabled]="!recipeInsumoId || recipeCantidad <= 0"
                         (onClick)="addRecipeIngredient()"></p-button>
                 </div>
@@ -326,7 +326,7 @@
     [(visible)]="pickerVisible"
     [modal]="true"
     [style]="{ width: '48rem', maxWidth: '95vw' }"
-    styleClass="recetas-picker-dialog"
+    styleClass="recetas-picker-dialog minimal-modal"
     [dismissableMask]="false"
     (onHide)="pickerVisible = false">
     <ng-template pTemplate="header">
@@ -363,7 +363,7 @@
         <div class="flex gap-2 justify-content-end">
             <p-button label="Cancelar" icon="pi pi-times" severity="secondary" [text]="true"
                 (onClick)="pickerVisible = false"></p-button>
-            <p-button label="Configurar receta" icon="pi pi-book" [disabled]="!pickerSelectedId || pickerLoading()"
+            <p-button label="Configurar receta" icon="pi pi-book" styleClass="minimal-submit" [disabled]="!pickerSelectedId || pickerLoading()"
                 (onClick)="confirmPicker()"></p-button>
         </div>
     </ng-template>
@@ -374,7 +374,7 @@
     [(visible)]="subRecetaVisible"
     [modal]="true"
     [style]="{ width: '52rem', maxWidth: '95vw' }"
-    styleClass="recetas-subreceta-dialog"
+    styleClass="recetas-subreceta-dialog minimal-modal"
     [dismissableMask]="false"
     (onHide)="subRecetaVisible = false">
     <ng-template pTemplate="header">
@@ -433,7 +433,7 @@
         <div class="flex gap-2 justify-content-end">
             <p-button label="Cancelar" icon="pi pi-times" severity="secondary" [text]="true"
                 (onClick)="subRecetaVisible = false"></p-button>
-            <p-button label="Crear sub-receta" icon="pi pi-check" [loading]="subRecetaSaving()"
+            <p-button label="Crear sub-receta" icon="pi pi-check" styleClass="minimal-submit" [loading]="subRecetaSaving()"
                 [disabled]="!subRecetaNombre?.trim() || !subRecetaLines().length || subRecetaSaving()"
                 (onClick)="saveSubReceta()"></p-button>
         </div>

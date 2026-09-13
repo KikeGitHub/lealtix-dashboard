@@ -76,7 +76,7 @@
     </div>
 </div>
 
-<p-dialog [(visible)]="mesaDialogVisible" [style]="{ width: '450px' }" [modal]="true" [closable]="false">
+<p-dialog [(visible)]="mesaDialogVisible" [style]="{ width: '450px' }" [modal]="true" [closable]="false" styleClass="minimal-modal">
     <ng-template pTemplate="header">
         <div class="inline-flex align-items-center gap-2">
             <i class="pi pi-table mr-2"></i>
@@ -110,6 +110,6 @@
     </div>
     <ng-template pTemplate="footer">
         <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="mesaDialogVisible = false"></p-button>
-        <p-button [label]="editingMesa ? 'Actualizar' : 'Crear'" icon="pi pi-check" [loading]="saving" (onClick)="saveMesa()"></p-button>
+        <p-button [label]="editingMesa ? 'Actualizar' : 'Crear'" icon="pi pi-check" styleClass="minimal-submit" [loading]="saving" (onClick)="saveMesa()"></p-button>
     </ng-template>
 </p-dialog>

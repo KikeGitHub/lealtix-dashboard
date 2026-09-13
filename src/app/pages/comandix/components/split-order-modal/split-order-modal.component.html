@@ -5,7 +5,7 @@
   [closable]="!loading"
   [header]="'Cobrar por separado'"
   [style]="{ width: '100%', 'max-width': '680px' }"
-  styleClass="split-order-dialog"
+  styleClass="split-order-dialog minimal-modal"
   (onHide)="onClose()"
 >
   <ng-container *ngIf="order as currentOrder">
@@ -101,6 +101,7 @@
         label="Crear nueva cuenta"
         icon="pi pi-plus"
         severity="help"
+        styleClass="minimal-submit"
         [disabled]="loading || !tieneSeleccion || items.length === 0"
         (onClick)="onCrearCuenta()"
       ></p-button>

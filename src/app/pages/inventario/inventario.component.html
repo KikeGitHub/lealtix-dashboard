@@ -188,7 +188,7 @@
   </div>
 
   <!-- ============ DIALOGO RESTOCK DE INSUMO ============ -->
-  <p-dialog header="Restock de insumo" [(visible)]="insumoRestockVisible" [style]="{ width: '400px' }" [modal]="true" [dismissableMask]="true" (onHide)="insumoRestockVisible = false">
+  <p-dialog header="Restock de insumo" [(visible)]="insumoRestockVisible" [style]="{ width: '400px' }" [modal]="true" [dismissableMask]="true" styleClass="minimal-modal" (onHide)="insumoRestockVisible = false">
     <div class="flex flex-col gap-3">
       <p-message severity="info"
         [text]="'Stock actual: ' + (insumoRestockTarget?.stock ?? 0) + ' ' + (insumoRestockTarget?.unidad || 'pieza')"
@@ -208,7 +208,7 @@
     </div>
     <ng-template #footer>
       <p-button label="Cancelar" severity="secondary" [text]="true" (click)="insumoRestockVisible = false"></p-button>
-      <p-button label="Actualizar stock" icon="pi pi-refresh" severity="success"
+      <p-button label="Actualizar stock" icon="pi pi-refresh" severity="success" styleClass="minimal-submit"
         [disabled]="insumoRestockCantidad <= 0" (click)="doInsumoRestock()"></p-button>
     </ng-template>
   </p-dialog>
